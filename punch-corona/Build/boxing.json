@@ -2,7 +2,7 @@
 "companyName": "Marc.ai",
 "productName": "Punch Corona by Marc.ai",
 "productVersion": "0.1",
-"dataUrl": "https://github.com/marcsto/punch-corona/releases/download/v0.1/boxing.data.unityweb",
+"dataUrl": "boxing.data.unityweb",
 "wasmCodeUrl": "boxing.wasm.code.unityweb",
 "wasmFrameworkUrl": "boxing.wasm.framework.unityweb",
 "graphicsAPI": ["WebGL 2.0","WebGL 1.0"],
