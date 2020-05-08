@@ -1,0 +1,672 @@
+[
+    {
+        "path": "404.html",
+        "type": "file",
+        "md5": "cb0dac89340bd64edd91e494767617ae"
+    },
+    {
+        "path": "about-marc-stogaitis.html",
+        "type": "file",
+        "md5": "7f3236da90f376b568c243e726847c89"
+    },
+    {
+        "path": "assets",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "assets/css",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/assets/css/editor.css",
+        "type": "file",
+        "md5": "e5909a88ba1158a79ba2dbf82d6b2d86"
+    },
+    {
+        "path": "/assets/css/main.css",
+        "type": "file",
+        "md5": "89deef1ad15bc00143c48aaa9310cf10"
+    },
+    {
+        "path": "/assets/css/photoswipe.css",
+        "type": "file",
+        "md5": "357f87f4e9502a5318d89e8e76e0a344"
+    },
+    {
+        "path": "/assets/css/style.css",
+        "type": "file",
+        "md5": "078d7d2a9d6b52395857f9eacf73ed79"
+    },
+    {
+        "path": "assets/js",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/assets/js/photoswipe-ui-default.min.js",
+        "type": "file",
+        "md5": "d067f0883540b1ddda0e2c9ad1b14260"
+    },
+    {
+        "path": "/assets/js/photoswipe.min.js",
+        "type": "file",
+        "md5": "017385b552f7e0d979e2e2fe6f324015"
+    },
+    {
+        "path": "/assets/js/scripts.js",
+        "type": "file",
+        "md5": "b00814b406ac7700d941b23e08c545b0"
+    },
+    {
+        "path": "/assets/js/scripts.min.js",
+        "type": "file",
+        "md5": "f56b13ba141d95ea2a0b7aab75ca9528"
+    },
+    {
+        "path": "/assets/js/svg-fix.js",
+        "type": "file",
+        "md5": "7c0d2bb7276904b382e80bf2d85e8a96"
+    },
+    {
+        "path": "/assets/js/svg2js.js",
+        "type": "file",
+        "md5": "f1b2af45feed0620bb95e4521fb768c2"
+    },
+    {
+        "path": "assets/svg",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/assets/svg/gallery-icons-dark.svg",
+        "type": "file",
+        "md5": "452594838e74a3df91ad4a20cf53c831"
+    },
+    {
+        "path": "/assets/svg/gallery-icons-light.svg",
+        "type": "file",
+        "md5": "ca77079e0fe8270a7447d7f1f5d543b0"
+    },
+    {
+        "path": "/assets/svg/search.svg",
+        "type": "file",
+        "md5": "a5bb83b82b98f41b359f20dbf9db6e44"
+    },
+    {
+        "path": "/assets/svg/svg-map.svg",
+        "type": "file",
+        "md5": "63bac2a8e88021dd997efbd9d8271be2"
+    },
+    {
+        "path": "authors",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "authors/marc-stogaitis",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/authors/marc-stogaitis/index.html",
+        "type": "file",
+        "md5": "b2d830b526448e43a5ebcaf14b8caf79"
+    },
+    {
+        "path": "celebrity-look-alike-for-android.html",
+        "type": "file",
+        "md5": "f432acb047be91493e316e232abd670d"
+    },
+    {
+        "path": "dont-touch-face.html",
+        "type": "file",
+        "md5": "4dd35e819f8aaa4d1c754499bc8a387f"
+    },
+    {
+        "path": "doodlecast-for-chromecast-android-app.html",
+        "type": "file",
+        "md5": "2842983e9f41200e7163c06a5230ea56"
+    },
+    {
+        "path": "feed.json",
+        "type": "file",
+        "md5": "307e2c78473d20b880b651a7adb53eab"
+    },
+    {
+        "path": "feed.xml",
+        "type": "file",
+        "md5": "d5b246aac5a307f2b0a003d45863255e"
+    },
+    {
+        "path": "index.html",
+        "type": "file",
+        "md5": "78d9700d76b011e84781b50c9d319050"
+    },
+    {
+        "path": "introducing-punch-corona-alpha-release.html",
+        "type": "file",
+        "md5": "56f164662fc25123a72db6a1486592b9"
+    },
+    {
+        "path": "media",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "media/files",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "media/posts",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "media/posts/1",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/1/punch-corona-1.png",
+        "type": "file",
+        "md5": "106a291ad901aa0e4edaef65f7fe8eb7"
+    },
+    {
+        "path": "media/posts/1/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/1/responsive/punch-corona-1-2xl.png",
+        "type": "file",
+        "md5": "1c26290e35078864f8b180a46ada405c"
+    },
+    {
+        "path": "/media/posts/1/responsive/punch-corona-1-lg.png",
+        "type": "file",
+        "md5": "1169fb4e139d96a5ca770dd3bc5f6473"
+    },
+    {
+        "path": "/media/posts/1/responsive/punch-corona-1-md.png",
+        "type": "file",
+        "md5": "16467a74a0added5a871e482356b1c78"
+    },
+    {
+        "path": "/media/posts/1/responsive/punch-corona-1-sm.png",
+        "type": "file",
+        "md5": "bee90afd896f2743e2ecd4fd42e78908"
+    },
+    {
+        "path": "/media/posts/1/responsive/punch-corona-1-xl.png",
+        "type": "file",
+        "md5": "a0efd9aae5f041193c18fa5c13ba5672"
+    },
+    {
+        "path": "/media/posts/1/responsive/punch-corona-1-xs.png",
+        "type": "file",
+        "md5": "bb4522313b4846978e4b5651101f8924"
+    },
+    {
+        "path": "media/posts/2",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/2/appicon.png",
+        "type": "file",
+        "md5": "4322d97ad04116cc1e66556f3aad93c9"
+    },
+    {
+        "path": "/media/posts/2/dont-touch-face.png",
+        "type": "file",
+        "md5": "9b134eaf89f73f8612a74be5741c3186"
+    },
+    {
+        "path": "media/posts/2/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/2/responsive/appicon-2xl.png",
+        "type": "file",
+        "md5": "551541bea3a01e51359b03d5384fb9b6"
+    },
+    {
+        "path": "/media/posts/2/responsive/appicon-lg.png",
+        "type": "file",
+        "md5": "551541bea3a01e51359b03d5384fb9b6"
+    },
+    {
+        "path": "/media/posts/2/responsive/appicon-md.png",
+        "type": "file",
+        "md5": "551541bea3a01e51359b03d5384fb9b6"
+    },
+    {
+        "path": "/media/posts/2/responsive/appicon-sm.png",
+        "type": "file",
+        "md5": "758e714dae581a3bdcefc85a986fedb4"
+    },
+    {
+        "path": "/media/posts/2/responsive/appicon-xl.png",
+        "type": "file",
+        "md5": "551541bea3a01e51359b03d5384fb9b6"
+    },
+    {
+        "path": "/media/posts/2/responsive/appicon-xs.png",
+        "type": "file",
+        "md5": "27eeedf24baa82a8feb072bcdee8b96b"
+    },
+    {
+        "path": "/media/posts/2/responsive/dont-touch-face-2xl.png",
+        "type": "file",
+        "md5": "343da7ec40e1c9e5494ff8d63c92b55f"
+    },
+    {
+        "path": "/media/posts/2/responsive/dont-touch-face-lg.png",
+        "type": "file",
+        "md5": "343da7ec40e1c9e5494ff8d63c92b55f"
+    },
+    {
+        "path": "/media/posts/2/responsive/dont-touch-face-md.png",
+        "type": "file",
+        "md5": "343da7ec40e1c9e5494ff8d63c92b55f"
+    },
+    {
+        "path": "/media/posts/2/responsive/dont-touch-face-sm.png",
+        "type": "file",
+        "md5": "b5d35a0829522e3038b95c7033ad8797"
+    },
+    {
+        "path": "/media/posts/2/responsive/dont-touch-face-xl.png",
+        "type": "file",
+        "md5": "343da7ec40e1c9e5494ff8d63c92b55f"
+    },
+    {
+        "path": "/media/posts/2/responsive/dont-touch-face-xs.png",
+        "type": "file",
+        "md5": "e304835e8f1e8132a6aeb5c889ea6dfe"
+    },
+    {
+        "path": "media/posts/3",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/3/celebrity-look-alike.png",
+        "type": "file",
+        "md5": "f36934cbcd7911939b395ddd0d373510"
+    },
+    {
+        "path": "media/posts/3/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/3/responsive/celebrity-look-alike-2xl.png",
+        "type": "file",
+        "md5": "24ebad551b00fd3600250f1a035cdbff"
+    },
+    {
+        "path": "/media/posts/3/responsive/celebrity-look-alike-lg.png",
+        "type": "file",
+        "md5": "10aee5297aab1438f104c12bf1c2d1a3"
+    },
+    {
+        "path": "/media/posts/3/responsive/celebrity-look-alike-md.png",
+        "type": "file",
+        "md5": "4dbd2b3adbd9fa429482932d21aa009f"
+    },
+    {
+        "path": "/media/posts/3/responsive/celebrity-look-alike-sm.png",
+        "type": "file",
+        "md5": "0b48a3cdc2f0681332432d6c5ab85f03"
+    },
+    {
+        "path": "/media/posts/3/responsive/celebrity-look-alike-xl.png",
+        "type": "file",
+        "md5": "388c89712f7f8e7cfa3961db7a4ae5d8"
+    },
+    {
+        "path": "/media/posts/3/responsive/celebrity-look-alike-xs.png",
+        "type": "file",
+        "md5": "34e7bf4a632faf62a8f85a671e1b8d4d"
+    },
+    {
+        "path": "media/posts/4",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/4/doodlecast-bird.png",
+        "type": "file",
+        "md5": "6802128509849bd7f2e81c947ae7aa3b"
+    },
+    {
+        "path": "/media/posts/4/doodlecast-logo.png",
+        "type": "file",
+        "md5": "272e732ee9fbc7a043f69bfee4685499"
+    },
+    {
+        "path": "media/posts/4/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-bird-2xl.png",
+        "type": "file",
+        "md5": "e4fac565d8d81ce283f054f99da8717a"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-bird-lg.png",
+        "type": "file",
+        "md5": "61f6749709f9e3793d4206f800510149"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-bird-md.png",
+        "type": "file",
+        "md5": "ac9f089cf96525b6c3630fac4d4e8d32"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-bird-sm.png",
+        "type": "file",
+        "md5": "a2017269229ce4a5284492cb9a1cd79a"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-bird-xl.png",
+        "type": "file",
+        "md5": "90c4e6c8878f288557ccd745b8a95828"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-bird-xs.png",
+        "type": "file",
+        "md5": "850543254311c92949ab0eaae9b34881"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-logo-2xl.png",
+        "type": "file",
+        "md5": "982c658ff2ca79f0f94d5ca4567ec372"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-logo-lg.png",
+        "type": "file",
+        "md5": "982c658ff2ca79f0f94d5ca4567ec372"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-logo-md.png",
+        "type": "file",
+        "md5": "982c658ff2ca79f0f94d5ca4567ec372"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-logo-sm.png",
+        "type": "file",
+        "md5": "982c658ff2ca79f0f94d5ca4567ec372"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-logo-xl.png",
+        "type": "file",
+        "md5": "982c658ff2ca79f0f94d5ca4567ec372"
+    },
+    {
+        "path": "/media/posts/4/responsive/doodlecast-logo-xs.png",
+        "type": "file",
+        "md5": "982c658ff2ca79f0f94d5ca4567ec372"
+    },
+    {
+        "path": "media/posts/5",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "media/posts/5/gallery",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/5/gallery/piclearn-front-thumbnail.png",
+        "type": "file",
+        "md5": "2b5af1d19f17d636a3827928f3f6fc9d"
+    },
+    {
+        "path": "/media/posts/5/gallery/piclearn-front.png",
+        "type": "file",
+        "md5": "23f38c4bf195cbb41f66adbcca04a0f9"
+    },
+    {
+        "path": "/media/posts/5/gallery/piclearn-images-thumbnail.png",
+        "type": "file",
+        "md5": "382c7809f96c26940e2394c6e03bab02"
+    },
+    {
+        "path": "/media/posts/5/gallery/piclearn-images.png",
+        "type": "file",
+        "md5": "9c0dd74fff998bb552515681c941f749"
+    },
+    {
+        "path": "/media/posts/5/piclearn-audio-recognition.png",
+        "type": "file",
+        "md5": "76ad7051004bb739559b2429bd010246"
+    },
+    {
+        "path": "/media/posts/5/piclearn-front.png",
+        "type": "file",
+        "md5": "23f38c4bf195cbb41f66adbcca04a0f9"
+    },
+    {
+        "path": "/media/posts/5/piclearn-logo2.png",
+        "type": "file",
+        "md5": "34b26a707569684a5a978e591c4b4225"
+    },
+    {
+        "path": "media/posts/5/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-audio-recognition-2xl.png",
+        "type": "file",
+        "md5": "1e3dbff6f51e201d47f5d5454ed56397"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-audio-recognition-lg.png",
+        "type": "file",
+        "md5": "1e3dbff6f51e201d47f5d5454ed56397"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-audio-recognition-md.png",
+        "type": "file",
+        "md5": "1e3dbff6f51e201d47f5d5454ed56397"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-audio-recognition-sm.png",
+        "type": "file",
+        "md5": "1e3dbff6f51e201d47f5d5454ed56397"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-audio-recognition-xl.png",
+        "type": "file",
+        "md5": "1e3dbff6f51e201d47f5d5454ed56397"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-audio-recognition-xs.png",
+        "type": "file",
+        "md5": "7a849ffbe5f9fc4989b89412d2839239"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-front-2xl.png",
+        "type": "file",
+        "md5": "2b5af1d19f17d636a3827928f3f6fc9d"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-front-lg.png",
+        "type": "file",
+        "md5": "2b5af1d19f17d636a3827928f3f6fc9d"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-front-md.png",
+        "type": "file",
+        "md5": "2b5af1d19f17d636a3827928f3f6fc9d"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-front-sm.png",
+        "type": "file",
+        "md5": "2b5af1d19f17d636a3827928f3f6fc9d"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-front-xl.png",
+        "type": "file",
+        "md5": "2b5af1d19f17d636a3827928f3f6fc9d"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-front-xs.png",
+        "type": "file",
+        "md5": "1d7c2297d348a513756cb6ab14a9a689"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-logo2-2xl.png",
+        "type": "file",
+        "md5": "43dbbd1a1fec3eac01cda42e7370090a"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-logo2-lg.png",
+        "type": "file",
+        "md5": "43dbbd1a1fec3eac01cda42e7370090a"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-logo2-md.png",
+        "type": "file",
+        "md5": "43dbbd1a1fec3eac01cda42e7370090a"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-logo2-sm.png",
+        "type": "file",
+        "md5": "43dbbd1a1fec3eac01cda42e7370090a"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-logo2-xl.png",
+        "type": "file",
+        "md5": "43dbbd1a1fec3eac01cda42e7370090a"
+    },
+    {
+        "path": "/media/posts/5/responsive/piclearn-logo2-xs.png",
+        "type": "file",
+        "md5": "b5043d0f596b4c87a7d07a3579e5f172"
+    },
+    {
+        "path": "media/posts/6",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/6/marc-with-android.jpg",
+        "type": "file",
+        "md5": "57318252e4217458d33eecaa0f919e67"
+    },
+    {
+        "path": "media/posts/6/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/6/responsive/marc-with-android-2xl.jpg",
+        "type": "file",
+        "md5": "1be3b3d5b27584d4b877eb087ce019d3"
+    },
+    {
+        "path": "/media/posts/6/responsive/marc-with-android-lg.jpg",
+        "type": "file",
+        "md5": "cf61a8efe2b1baddb0fbbfde501617fb"
+    },
+    {
+        "path": "/media/posts/6/responsive/marc-with-android-md.jpg",
+        "type": "file",
+        "md5": "06efb7b5f54c34bc8d855b97656c40bd"
+    },
+    {
+        "path": "/media/posts/6/responsive/marc-with-android-sm.jpg",
+        "type": "file",
+        "md5": "0e83608887be250738a36789b0d07d32"
+    },
+    {
+        "path": "/media/posts/6/responsive/marc-with-android-xl.jpg",
+        "type": "file",
+        "md5": "b3336e1c50d543d1721bfa904b41b612"
+    },
+    {
+        "path": "/media/posts/6/responsive/marc-with-android-xs.jpg",
+        "type": "file",
+        "md5": "1209690517080d78def56e2610ce7921"
+    },
+    {
+        "path": "media/website",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/website/favicon.ico",
+        "type": "file",
+        "md5": "aa392c13feb886c01bb85fba6b10effc"
+    },
+    {
+        "path": "/media/website/mstogaitis.jpg",
+        "type": "file",
+        "md5": "94081a8bc17ff921d510eb10024450df"
+    },
+    {
+        "path": "media/website/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/website/responsive/mstogaitis-2xl.jpg",
+        "type": "file",
+        "md5": "6a81772bbff7c12f3a35868470a26c97"
+    },
+    {
+        "path": "/media/website/responsive/mstogaitis-lg.jpg",
+        "type": "file",
+        "md5": "6a81772bbff7c12f3a35868470a26c97"
+    },
+    {
+        "path": "/media/website/responsive/mstogaitis-md.jpg",
+        "type": "file",
+        "md5": "6a81772bbff7c12f3a35868470a26c97"
+    },
+    {
+        "path": "/media/website/responsive/mstogaitis-sm.jpg",
+        "type": "file",
+        "md5": "6a81772bbff7c12f3a35868470a26c97"
+    },
+    {
+        "path": "/media/website/responsive/mstogaitis-xl.jpg",
+        "type": "file",
+        "md5": "6a81772bbff7c12f3a35868470a26c97"
+    },
+    {
+        "path": "/media/website/responsive/mstogaitis-xs.jpg",
+        "type": "file",
+        "md5": "238c7f97ee597d270d33b29dbc90bd5c"
+    },
+    {
+        "path": "piclearn-helps-you-learn-chinese-and-french.html",
+        "type": "file",
+        "md5": "4ac189eb54675c6d7eaef5a6e1415fa2"
+    },
+    {
+        "path": "search.html",
+        "type": "file",
+        "md5": "96e748a4942d4c046abf1a5fe1f42500"
+    },
+    {
+        "path": "sitemap.xml",
+        "type": "file",
+        "md5": "eb38d2f5d9c1b8e2a7d6a243433a94a0"
+    },
+    {
+        "path": "sitemap.xsl",
+        "type": "file",
+        "md5": "51a7bcec43fa1ef0366100d5c2edbe75"
+    }
+]
