@@ -2,12 +2,12 @@
     {
         "path": "404.html",
         "type": "file",
-        "md5": "cb0dac89340bd64edd91e494767617ae"
+        "md5": "eccdb121b27f1a6a7f7e31d609fe59d5"
     },
     {
         "path": "about-marc-stogaitis.html",
         "type": "file",
-        "md5": "7f3236da90f376b568c243e726847c89"
+        "md5": "50fee3d1292a6cd8529952c4f58ec3f9"
     },
     {
         "path": "assets",
@@ -37,7 +37,7 @@
     {
         "path": "/assets/css/style.css",
         "type": "file",
-        "md5": "078d7d2a9d6b52395857f9eacf73ed79"
+        "md5": "718f49e4dcfc9e280e43350c57a39add"
     },
     {
         "path": "assets/js",
@@ -112,42 +112,42 @@
     {
         "path": "/authors/marc-stogaitis/index.html",
         "type": "file",
-        "md5": "b2d830b526448e43a5ebcaf14b8caf79"
+        "md5": "90f4adaf03404783e72e9760a3e11c32"
     },
     {
         "path": "celebrity-look-alike-for-android.html",
         "type": "file",
-        "md5": "f432acb047be91493e316e232abd670d"
+        "md5": "8fd62459af392e594629275d8bd9da02"
     },
     {
         "path": "dont-touch-face.html",
         "type": "file",
-        "md5": "4dd35e819f8aaa4d1c754499bc8a387f"
+        "md5": "d012278080e96f40cfdc105dd3b007e2"
     },
     {
         "path": "doodlecast-for-chromecast-android-app.html",
         "type": "file",
-        "md5": "2842983e9f41200e7163c06a5230ea56"
+        "md5": "0dde2df39e94065146515a4355426775"
     },
     {
         "path": "feed.json",
         "type": "file",
-        "md5": "307e2c78473d20b880b651a7adb53eab"
+        "md5": "18a3b055439415a7f98298091c18729e"
     },
     {
         "path": "feed.xml",
         "type": "file",
-        "md5": "d5b246aac5a307f2b0a003d45863255e"
+        "md5": "9b72cd7811712cf160f2a2d7d1946c7a"
     },
     {
         "path": "index.html",
         "type": "file",
-        "md5": "78d9700d76b011e84781b50c9d319050"
+        "md5": "4fa57d7b08d91a9cd41f59c4c9a1db6e"
     },
     {
         "path": "introducing-punch-corona-alpha-release.html",
         "type": "file",
-        "md5": "56f164662fc25123a72db6a1486592b9"
+        "md5": "cb75621f974683a246eb886341089ffd"
     },
     {
         "path": "media",
@@ -600,6 +600,86 @@
         "md5": "1209690517080d78def56e2610ce7921"
     },
     {
+        "path": "media/posts/7",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/7/Screenshot-from-2020-05-06-16-36-53.png",
+        "type": "file",
+        "md5": "190b97bc42ca40e205c4ef3f47ab0650"
+    },
+    {
+        "path": "/media/posts/7/onboarding-logo.png",
+        "type": "file",
+        "md5": "3608a6bb3ed85ffc74b4b5e1cafb11ba"
+    },
+    {
+        "path": "media/posts/7/responsive",
+        "type": "directory",
+        "md5": false
+    },
+    {
+        "path": "/media/posts/7/responsive/Screenshot-from-2020-05-06-16-36-53-2xl.png",
+        "type": "file",
+        "md5": "43fb0397e9f714e46431da44bcee7d13"
+    },
+    {
+        "path": "/media/posts/7/responsive/Screenshot-from-2020-05-06-16-36-53-lg.png",
+        "type": "file",
+        "md5": "511fa5efb1a9ec717adedd387655ce90"
+    },
+    {
+        "path": "/media/posts/7/responsive/Screenshot-from-2020-05-06-16-36-53-md.png",
+        "type": "file",
+        "md5": "570f294f3b324826c856d0715302718a"
+    },
+    {
+        "path": "/media/posts/7/responsive/Screenshot-from-2020-05-06-16-36-53-sm.png",
+        "type": "file",
+        "md5": "9536f84f61269eceb3cf2cc37136f511"
+    },
+    {
+        "path": "/media/posts/7/responsive/Screenshot-from-2020-05-06-16-36-53-xl.png",
+        "type": "file",
+        "md5": "a499f64d3374bb6a02b989160c1a9b8a"
+    },
+    {
+        "path": "/media/posts/7/responsive/Screenshot-from-2020-05-06-16-36-53-xs.png",
+        "type": "file",
+        "md5": "9227d922c68cd0c3b9c8db11af2077e8"
+    },
+    {
+        "path": "/media/posts/7/responsive/onboarding-logo-2xl.png",
+        "type": "file",
+        "md5": "4df2122df7263ac469dc98e182ff7ee1"
+    },
+    {
+        "path": "/media/posts/7/responsive/onboarding-logo-lg.png",
+        "type": "file",
+        "md5": "f691f48786f5c5b1a3809e65b9a04c98"
+    },
+    {
+        "path": "/media/posts/7/responsive/onboarding-logo-md.png",
+        "type": "file",
+        "md5": "b5d689872a8cce5b2eb222b1745073d8"
+    },
+    {
+        "path": "/media/posts/7/responsive/onboarding-logo-sm.png",
+        "type": "file",
+        "md5": "31075f6676cb9de7503f689febcc6f1e"
+    },
+    {
+        "path": "/media/posts/7/responsive/onboarding-logo-xl.png",
+        "type": "file",
+        "md5": "4df2122df7263ac469dc98e182ff7ee1"
+    },
+    {
+        "path": "/media/posts/7/responsive/onboarding-logo-xs.png",
+        "type": "file",
+        "md5": "b6f23ab61820f53116f71687beef8a31"
+    },
+    {
         "path": "media/website",
         "type": "directory",
         "md5": false
@@ -652,17 +732,22 @@
     {
         "path": "piclearn-helps-you-learn-chinese-and-french.html",
         "type": "file",
-        "md5": "4ac189eb54675c6d7eaef5a6e1415fa2"
+        "md5": "ade5fc624f7bde9892320ce621c33a45"
+    },
+    {
+        "path": "punch-corona-frequently-asked-questions.html",
+        "type": "file",
+        "md5": "a2191327e07a0d75009dfa9c268a811d"
     },
     {
         "path": "search.html",
         "type": "file",
-        "md5": "96e748a4942d4c046abf1a5fe1f42500"
+        "md5": "eb3bde0a9541e07e28b679bd8377ff36"
     },
     {
         "path": "sitemap.xml",
         "type": "file",
-        "md5": "eb38d2f5d9c1b8e2a7d6a243433a94a0"
+        "md5": "105dd61fc16069b2826bea105f98bd08"
     },
     {
         "path": "sitemap.xsl",
