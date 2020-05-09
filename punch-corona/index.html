@@ -28,6 +28,30 @@
             z-index: 10;
         }
 
+        #onboarding {
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+        .play-btn {
+            display: inline-block;
+            border-radius: 4px;
+            background-color: green;
+            border: none;
+            color: #FFFFFF;
+            text-align: center;
+            font-size: 28px;
+            padding: 20px;
+            width: 200px;
+            transition: all 0.5s;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+
         .footer {
             position: fixed;
             left: 0;
@@ -99,12 +123,60 @@
 
     <script src="TemplateData/UnityProgress.js"></script>
     <script src="Build/UnityLoader.js"></script>
-    <script>
-      var unityInstance = UnityLoader.instantiate("unityContainer", "Build/boxing.json", {onProgress: UnityProgress});
+
+    <script> 
+
+        function setCookie(name,value,days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+        function eraseCookie(name) {   
+            document.cookie = name+'=; Max-Age=-99999999;';  
+        }
+
+      function showOnboarding() {
+        onboardingCookie = "skiponboarding";
+        skip = getCookie(onboardingCookie);
+        if (skip) {
+            loadGame();
+        } else {
+            setCookie(onboardingCookie, true, 365 * 10)
+            onboarding = document.getElementById("onboarding");
+            onboarding.style.display = "block";
+        }
+      }
+
+      
+    
+      var unityInstance;
+      function loadGame() {
+        onboarding = document.getElementById("onboarding");
+        onboarding.style.display = "none";
+        unityInstance = UnityLoader.instantiate("unityContainer", "Build/build.json", {onProgress: UnityProgress});
+      }
+      
+    </script>
+    <!-- <script>
+      var unityInstance = UnityLoader.instantiate("unityContainer", "Build/build.json", {onProgress: UnityProgress});
       function doFunction() {
         unityInstance.SendMessage("Cube", "OnBrowserMessage", 1);
       }
-    </script>
+    </script> -->
 
 </head>
 
@@ -118,6 +190,17 @@
         </div>
         <div class="sk-spinner sk-spinner-pulse"></div>
     </div>
+
+    <div id='onboarding' style='display:none'>
+        <center>
+            <img src='images/onboarding-logo.png' style="width: 800px"  /><br />
+            
+            Your camera is needed for motion tracking. To preserve your privacy, images are never sent to a server.<br />
+            Please click 'Allow' in the top left and then click<br />
+            <Button title="Play" class='play-btn' onclick="loadGame()">Next</Button>
+        </center>
+    </div>
+    
     
     <div id='container'>
         <!--960px; height: 600px-->
@@ -133,16 +216,18 @@
         </div>
     </div>
     <div>
-    By <a href='https://www.marc.ai'>Marc Stogaitis</a> | 
-    <a href='faq.html'>FAQ</a> | 
+    By <a href='https://marc.ai'>Marc Stogaitis</a> | 
+    <a href='https://docs.google.com/document/d/e/2PACX-1vS01TqHmdt2iFWtUCkSuFzamdGYpZG54eZ9a1ypyoApm0CIL0TLsX3yPPQgz22fLwF9paZl1AXenqJo/pub'>FAQ</a> | 
     <a href='#' onClick = "document.getElementById('container').style.height = '600px'; document.getElementById('container').style.width = '800px';">Improve Performance</text>
     | <a href='#' onClick="unityInstance.SetFullscreen(1)" >Full Screen</a> 
+     
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
     <script src="demo_util.js"></script>
     <script src="camera.js"></script>
+    <script>showOnboarding();</script>
 
 </body>
 
