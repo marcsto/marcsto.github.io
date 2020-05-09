@@ -7,7 +7,7 @@
     {
         "path": "about-marc-stogaitis.html",
         "type": "file",
-        "md5": "50fee3d1292a6cd8529952c4f58ec3f9"
+        "md5": "ef97a7354bf1d7433b5b932c926b0034"
     },
     {
         "path": "assets",
@@ -132,12 +132,12 @@
     {
         "path": "feed.json",
         "type": "file",
-        "md5": "18a3b055439415a7f98298091c18729e"
+        "md5": "ba83b714dc52561b1b4fa5a5337278a8"
     },
     {
         "path": "feed.xml",
         "type": "file",
-        "md5": "9b72cd7811712cf160f2a2d7d1946c7a"
+        "md5": "de06269b4ba61d77e7aac2e6b9d0fc72"
     },
     {
         "path": "index.html",
@@ -747,7 +747,7 @@
     {
         "path": "sitemap.xml",
         "type": "file",
-        "md5": "105dd61fc16069b2826bea105f98bd08"
+        "md5": "279ca5991cdfa62c65f53f2dd590d91a"
     },
     {
         "path": "sitemap.xsl",
