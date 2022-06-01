@@ -1,0 +1,41 @@
+<html>
+  <head>
+
+  
+  <script>
+    async function fetchMovies404() {
+      url = 'https://marc.ai/pingtest.json';
+      fetch(url, {cache: "no-store"}).then((response) => {
+
+        response.ok;     // => false
+        response.status; // => 404
+        
+        var currentdate = new Date(); 
+        var datetime = new Date().toLocaleString();
+        
+        
+        document.body.innerHTML = datetime + " " +  response.ok + "<br />" + document.body.innerHTML;
+      }).catch((error) => {
+        console.log(error)
+        var currentdate = new Date(); 
+        var datetime = new Date().toLocaleString();
+        
+        
+        document.body.innerHTML = datetime + " false" + "<br />" + document.body.innerHTML;
+      });
+    }
+    // fetchMovies404().then(text => {
+    //   text;
+    //   console.log(text);
+    //   console.log('hi2');
+    //   document.body.innerHTML += text;
+    // });
+
+    setInterval(fetchMovies404, 5000)
+  </script>
+</head>
+<body>
+  
+</body>
+
+</html>
