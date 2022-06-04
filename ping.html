@@ -5,23 +5,21 @@
   <script>
     async function fetchMovies404() {
       url = 'https://marc.ai/pingtest.json';
+
+      document.body.innerHTML = " -- " +  new Date().toLocaleString() + " (fetch start)<br />" + document.body.innerHTML;
+
       fetch(url, {cache: "no-store"}).then((response) => {
 
         response.ok;     // => false
         response.status; // => 404
-        
-        var currentdate = new Date(); 
         var datetime = new Date().toLocaleString();
         
         
-        document.body.innerHTML = datetime + " " +  response.ok + "<br />" + document.body.innerHTML;
+        document.body.innerHTML = datetime + " " +  response.ok + " "  + document.body.innerHTML;
       }).catch((error) => {
         console.log(error)
-        var currentdate = new Date(); 
         var datetime = new Date().toLocaleString();
-        
-        
-        document.body.innerHTML = datetime + " false" + "<br />" + document.body.innerHTML;
+        document.body.innerHTML = datetime + " false " + document.body.innerHTML;
       });
     }
     // fetchMovies404().then(text => {
