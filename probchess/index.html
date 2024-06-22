@@ -13,7 +13,8 @@
       </script> -->
     <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/chess.js@latest/dist/chess.min.js"></script> -->
     <!-- <script type="module" src="static/chess.min.js"></script> -->
-    <script src="static/chess.min.js"></script>
+    <!-- <script src="static/chess.min.js"></script> -->
+    <script src="static/chess.js"></script>
     <!-- <script src="static/chess.js"></script> -->
     
     <script src="static/probchess.js"></script>
@@ -227,14 +228,14 @@
                 </table>
             </div>
             <div class="status" id="status">Welcome to Probabilistic Chess</div>
-            <input type="checkbox" id="aib" checked>AI Plays Black</checkbox><br />
-            <input type="checkbox" id="aiw">AI Plays White</checkbox><br /><br />
+            <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Plays Black</checkbox><br />
+            <input type="checkbox" id="aiw" onclick="requestAiMove()">AI Plays White</checkbox><br /><br />
             <b>Rules:</b><br />
             <div style="width: 300px;">
                 <ul style="list-style-position: inside; padding-left: 1.0em; text-indent: -1.4em;">
                     <li>Each square has a probability of successfully moving to it.</li>
                     <li>A happy-face dice-roll means the move was successful.</li>
-                    <li>You win by checkmate or by eating the king.</li>
+                    <li>You win by capturing the king.</li>
                 </ul>
             </div>
         </div>
@@ -261,8 +262,14 @@
         let probabilities = Array.from({ length: 8 }, () => 
             Array.from({ length: 8 }, () => Math.random())
         );
+        // Make sure the king's starting squares have at least a 10% probbility
+        probabilities[0][4] = Math.max(probabilities[0][4], 0.1);
+        probabilities[7][4] = Math.max(probabilities[7][4], 0.1);
+        
 
         let currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        //let currentFEN = "k7/8/K7/8/8/8/8/8 w - - 0 1";
+        //let currentFEN = "r3q1k1/2b2p1p/pp3npQ/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 w - - 1 19"
 
         let selectedPiece = null;
         let startRow = null;
@@ -361,6 +368,7 @@
             console.log('Piece clicked');
             console.log(event);
             if (selectedPiece) {
+                console.log('Deselecting previously selected piece');
                 selectedPiece.classList.remove('piece-selected');
                 selectedPiece = null;
                 startRow = null;
@@ -382,6 +390,7 @@
                 const endCol = event.target.closest('.square').dataset.col;
 
                 if (endRow === startRow && endCol === startCol) {
+                    console.log('Same square clicked. Ignoring move.');
                     return;
                 }
 
@@ -439,99 +448,61 @@
                     const strikeThrough = data.played === 1 ? 0 : 1;
                     addMoveToSidePanel(data.move, strikeThrough);
                 }
+
+                if (data.winner) {
+                    showWinner(data.winner);
+                    return;
+                }
+
                 if (data.turn === 'b' && document.getElementById('aib').checked
                     || data.turn === 'w' && document.getElementById('aiw').checked) {
                     requestAiMove();
                 }
-            }, 1000);
-        }
-
-        function sendMoveToServer2(startRow, startCol, endRow, endCol, fen) {
-            const move = {
-                startRow: parseInt(startRow),
-                startCol: parseInt(startCol),
-                endRow: parseInt(endRow),
-                endCol: parseInt(endCol),
-                fen: fen,
-                probabilities: probabilities
-            };
-
-            fetch('/move', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(move)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Move sent successfully:', data);
-                if (data.is_illegal) {
-                    currentFEN = data.fen;
-                    probabilities = data.probabilities;
-                    updateBoardFromFEN(currentFEN);
-                    document.getElementById('status').textContent = data.status;
-                    return;
-                }
-                rollDice(data.played, data.turn === 'black' ? 'w' : 'b');
-                setTimeout(() => {
-                    if (data.status) {
-                        document.getElementById('status').textContent = data.status;
-                    }
-                    if (data.fen && data.probabilities) {
-                        currentFEN = data.fen;
-                        probabilities = data.probabilities;
-                        updateBoardFromFEN(currentFEN);
-                    }
-                    if (data.move) {
-                        const strikeThrough = data.played === 1 ? 0 : 1;
-                        addMoveToSidePanel(data.move, strikeThrough);
-                    }
-                    if (data.turn === 'black' && document.getElementById('aib').checked
-                        || data.turn === 'white' && document.getElementById('aiw').checked) {
-                        requestAiMove();
-                    }
-                }, 1000);
-            })
-            .catch(error => {
-                console.error('Error sending move:', error);
-                document.getElementById('status').textContent = 'Error sending move';
-            });
+            }, 5);
         }
 
         function requestAiMove() {
-            get_best_move(currentFEN, function(data) {
-                console.log('AI move received:', data);
-                // Play the ai move as if the user had clicked on the start square and end square
-                clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
-                event = { target: clicked_piece };
-                handlePieceClick(event);
-                event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
-                handleSquareClick(event);
-            })
+
+            turn = currentFEN.split(' ')[1];
+            if (turn === 'w' && document.getElementById('aiw').checked
+                || turn === 'b' && document.getElementById('aib').checked) {
+                console.log('Requesting AI move');
+            
+                get_best_move(currentFEN, function(data) {
+                    console.log('AI move received:', data);
+                    if (data === null) {
+                        console.log('AI did not return a move (checkmate). Picking random move.');
+                        // Pick a random move in the following order:
+                        // 1. A move where the king captures a piece
+                        // 2. Any capture move
+                        // 3. Any move
+                        all_moves = get_all_moves(currentFEN);
+                        moves = all_moves.filter(move => move.piece.toLowerCase() === 'k' && move.captured);
+                        if (moves.length === 0) {
+                            moves = all_moves.filter(move => move.captured);
+                            if (moves.length === 0) {
+                                moves = all_moves;
+                            }
+                        }
+                        rnd_move = moves[Math.floor(Math.random() * moves.length)];
+                        rnd_move = chessMoveToIndices(rnd_move.from + rnd_move.to);
+                        data = rnd_move;
+                    }
+                    console.log('Playing AI move on board:', data);
+                    // Play the ai move as if the user had clicked on the start square and end square
+                    clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
+                    event = { target: clicked_piece };
+                    selectedPiece = null;
+                    startRow = null;
+                    startCol = null;
+                    handlePieceClick(event);
+                    event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
+                    handleSquareClick(event);
+                })
+            }
 
         }
-        function requestAiMove2() {
-            fetch('/aimove', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ fen: currentFEN })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('AI move received:', data);
-                // Play the ai move as if the user had clicked on the start square and end square
-                clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
-                event = { target: clicked_piece };
-                handlePieceClick(event);
-                event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
-                handleSquareClick(event);
-                // sendMoveToServer(data.startRow, data.startCol, data.endRow, data.endCol, currentFEN, false);
-            })
-            .catch(error => console.error('Error requesting AI move:', error));
-        }
+       
 
         function updateBoardFromFEN(fen) {
             const fenParts = fen.split(' ');

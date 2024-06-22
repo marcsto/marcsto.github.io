@@ -1775,7 +1775,7 @@ var Chess = function(fen) {
         if (typeof move === 'string') {
           move_obj = move_from_san(move, sloppy)
         } else if (typeof move === 'object') {
-          var moves = generate_moves()
+          var moves = generate_moves(options) // Marc edited this line to allow pseudo-legal moves.
   
           /* convert the pretty move object to an ugly move object */
           for (var i = 0, len = moves.length; i < len; i++) {

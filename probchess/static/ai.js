@@ -8,17 +8,16 @@ stockfish.addEventListener('message', function (e) {
     if (e.data === 'uciok') {
         stockfish.postMessage('isready');
     }
-    // if (e.data === 'readyok') {
-    //     if (bestMoveCallback) {
-    //         bestMoveCallback();
-    //     }
-    // }
+
     if (e.data.startsWith('bestmove')) {
         var bestMove = e.data.split(' ')[1];
         console.log('Best move: ' + bestMove);
         if (bestMoveCallback) {
             bestMoveCallback(bestMove);
         }
+    } else if (e.data.startsWith('info depth 0 score mate 0')) {
+        // Stockfish doesn't play when it's mate, but our game stops when you eat the king.
+        bestMoveCallback(null);
     }
 });
 
@@ -27,6 +26,10 @@ stockfish.postMessage('uci');
 
 function get_best_move(fen, callback) {
     bestMoveCallback = function(bestMove) {
+        if (!bestMove) {
+            callback(null);
+            return;
+        }
         converted_move = chessMoveToIndices(bestMove);
         callback(converted_move);
     };
@@ -34,15 +37,16 @@ function get_best_move(fen, callback) {
     stockfish.postMessage('go depth 10');
 }
 
+
+function chessNotationToIndex(pos) {
+    const column = pos.charCodeAt(0) - 'a'.charCodeAt(0);
+    const row = 8 - parseInt(pos[1]);
+    return { row: row, column: column };
+}
+
 function chessMoveToIndices(move) {
     // Convert a single position from chess notation to indices
     // e.g. e2e4 -> { startRow: 6, startCol: 4, endRow: 4, endCol: 4 } 
-    function chessNotationToIndex(pos) {
-        const column = pos.charCodeAt(0) - 'a'.charCodeAt(0);
-        const row = 8 - parseInt(pos[1]);
-        return { row: row, column: column };
-    }
-
     const startPos = move.slice(0, 2);
     const endPos = move.slice(2);
 
