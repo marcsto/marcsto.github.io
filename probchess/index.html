@@ -386,6 +386,7 @@
                 if (turn === 'w' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toLowerCase()
                     || turn === 'b' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toUpperCase()) {
                     console.log('Not your turn to play.');
+                    document.getElementById('status').textContent = 'Not your turn to play.';
                     return;
                 }
 
