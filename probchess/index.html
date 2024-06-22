@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Probabilistic Chess</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <script src="static/ai.js"></script>
+    
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
+    <!-- <script type="module">
+        import { Chess } from 'https://cdn.jsdelivr.net/npm/chess.js@latest/dist/chess.min.js'
+      </script> -->
+    <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/chess.js@latest/dist/chess.min.js"></script> -->
+    <!-- <script type="module" src="static/chess.min.js"></script> -->
+    <script src="static/chess.min.js"></script>
+    <!-- <script src="static/chess.js"></script> -->
+    
+    <script src="static/probchess.js"></script>
+    <style>
+        /* body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        } */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 150px);
+            grid-template-rows: repeat(8, 150px);
+            border: 2px solid #333;
+            margin-bottom: 20px;
+        }
+        .square {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .black {
+            background-color: #769656;
+        }
+        .white {
+            background-color: #eeeed2;
+        }
+        .piece {
+            width: 120px;
+            height: 120px;
+            cursor: pointer;
+        }
+        .probability {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            font-size: 20px;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 2px;
+            border-radius: 3px;
+        }
+        .status {
+            font-size: 15px;
+            width: 300px;
+            line-height: 40px; /* Adjust line height to match the dice height */
+        }
+
+
+        /* Dice */
+        .dice {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .face {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: #1e1e1e;
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .face:nth-child(1) { transform: rotateY(0deg) translateZ(20px); }
+        .face:nth-child(2) { transform: rotateY(90deg) translateZ(20px); }
+        .face:nth-child(3) { transform: rotateY(180deg) translateZ(20px); }
+        .face:nth-child(4) { transform: rotateY(-90deg) translateZ(20px); }
+        .face:nth-child(5) { transform: rotateX(90deg) translateZ(20px); }
+        .face:nth-child(6) { transform: rotateX(-90deg) translateZ(20px); }
+
+        @keyframes roll-happy {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            25% { transform: rotateX(90deg) rotateY(90deg); }
+            50% { transform: rotateX(180deg) rotateY(180deg); }
+            75% { transform: rotateX(270deg) rotateY(270deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        @keyframes roll-sad {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            25% { transform: rotateX(90deg) rotateY(90deg); }
+            50% { transform: rotateX(180deg) rotateY(180deg); }
+            75% { transform: rotateX(270deg) rotateY(270deg); }
+            100% { transform: rotateX(360deg) rotateY(270deg); }
+        }
+
+        .rolling-happy {
+            animation: roll-happy 1s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+        }
+
+        .rolling-sad {
+            animation: roll-sad 1s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            height: 100vh; /* Ensure the container takes full viewport height */
+            justify-content: center; /* Center horizontally */
+        }
+
+        .board-panel-container {
+            display: flex;
+            align-items: center;
+        }
+
+
+        /* Side panel */
+        .side-panel-container {
+            height: 60%;
+            margin-left: 20px;
+        }
+        .table-container {
+            width: 300px;
+            height: 90%;
+            overflow-y: auto;
+            background-color: #2b2b2b;
+            margin-bottom: 20px;
+        }
+        #chessTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #2b2b2b;
+        }
+        .highlight {
+            background-color: #0055a5;
+        }
+
+        .piece-selected {
+            border: 2px solid #0055a5;
+        }
+
+        .piece-turn-to-play {
+            /* Give a suble highlight to the color of the piece */
+            filter: drop-shadow(0 0 5px #0055a5);
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="board-panel-container">
+        <div class="chessboard" id="chessboard"></div>
+        <div class="side-panel-container">
+            <div id="moveTableDiv" class="table-container">
+                <table id="chessTable">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>White</th>
+                            <th>Black</th>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><center><div class="dice" id="dicew">
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                            </div></center></td>
+                            <td><center><div class="dice" id="diceb">
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                            </div></center></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div class="status" id="status">Welcome to Probabilistic Chess</div>
+            <input type="checkbox" id="aib" checked>AI Plays Black</checkbox><br />
+            <input type="checkbox" id="aiw">AI Plays White</checkbox><br /><br />
+            <b>Rules:</b><br />
+            <div style="width: 300px;">
+                <ul style="list-style-position: inside; padding-left: 1.0em; text-indent: -1.4em;">
+                    <li>Each square has a probability of successfully moving to it.</li>
+                    <li>A happy-face dice-roll means the move was successful.</li>
+                    <li>You win by checkmate or by eating the king.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    Marc Stogaitis & Guy Stogaitis
+
+    <script>
+        const pieces = {
+            'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+            'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+            'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+            'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+            'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+            'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+            'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+            'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+            'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+            'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+            'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+            'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
+        };
+
+        // Generate initial random probabilities for demonstration purposes
+        let probabilities = Array.from({ length: 8 }, () => 
+            Array.from({ length: 8 }, () => Math.random())
+        );
+
+        let currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+        let selectedPiece = null;
+        let startRow = null;
+        let startCol = null;
+
+        function createChessboard() {
+            const chessboard = document.getElementById('chessboard');
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    if ((row + col) % 2 === 0) {
+                        square.classList.add('white');
+                    } else {
+                        square.classList.add('black');
+                    }
+
+                    const prob = document.createElement('div');
+                    prob.className = 'probability';
+                    prob.textContent = (probabilities[row][col] * 100).toFixed(2) + '%';
+                    square.appendChild(prob);
+
+                    chessboard.appendChild(square);
+                }
+            }
+
+            updateBoardFromFEN(currentFEN);
+            addDragAndDropListeners();
+            addClickListeners();
+        }
+
+        function addDragAndDropListeners() {
+            const squares = document.querySelectorAll('.square');
+            squares.forEach(square => {
+                square.addEventListener('dragover', handleDragOver);
+                square.addEventListener('drop', handleDrop);
+            });
+
+            const pieces = document.querySelectorAll('.piece');
+            pieces.forEach(piece => {
+                piece.addEventListener('dragstart', handleDragStart);
+            });
+        }
+
+        function handleDragStart(event) {
+            event.dataTransfer.setData('text/plain', event.target.dataset.piece);
+            event.dataTransfer.setData('startRow', event.target.dataset.startRow);
+            event.dataTransfer.setData('startCol', event.target.dataset.startCol);
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+        }
+
+        function handleDrop(event) {
+            console.log('handleDrop');
+            event.preventDefault();
+            const piece = event.dataTransfer.getData('text/plain');
+            const startRow = event.dataTransfer.getData('startRow');
+            const startCol = event.dataTransfer.getData('startCol');
+            const endRow = event.target.closest('.square').dataset.row;
+            const endCol = event.target.closest('.square').dataset.col;
+
+            const pieceImg = document.querySelector(`img[data-piece='${piece}'][data-start-row='${startRow}'][data-start-col='${startCol}']`);
+            const targetSquare = document.querySelector(`.square[data-row='${endRow}'][data-col='${endCol}']`);
+
+            // Remove any existing piece in the target square
+            const existingPiece = targetSquare.querySelector('.piece');
+            if (existingPiece) {
+                existingPiece.remove();
+            }
+
+            targetSquare.appendChild(pieceImg);
+
+            pieceImg.dataset.startRow = endRow;
+            pieceImg.dataset.startCol = endCol;
+
+            sendMoveToServer(startRow, startCol, endRow, endCol, currentFEN);
+        }
+
+        function addClickListeners() {
+            const pieces = document.querySelectorAll('.piece');
+            pieces.forEach(piece => {
+                piece.addEventListener('click', handlePieceClick);
+            });
+
+            const squares = document.querySelectorAll('.square');
+            squares.forEach(square => {
+                square.addEventListener('click', handleSquareClick);
+            });
+        }
+
+        function handlePieceClick(event) {
+            console.log('Piece clicked');
+            console.log(event);
+            if (selectedPiece) {
+                selectedPiece.classList.remove('piece-selected');
+                selectedPiece = null;
+                startRow = null;
+                startCol = null;
+            } else {
+                selectedPiece = event.target;
+                selectedPiece.classList.add('piece-selected');
+                startRow = selectedPiece.dataset.startRow;
+                startCol = selectedPiece.dataset.startCol;
+            }
+            
+        }
+
+        function handleSquareClick(event) {
+            console.log('Square clicked ');
+            console.log(event);
+            if (selectedPiece) {
+                const endRow = event.target.closest('.square').dataset.row;
+                const endCol = event.target.closest('.square').dataset.col;
+
+                if (endRow === startRow && endCol === startCol) {
+                    return;
+                }
+
+                const targetSquare = document.querySelector(`.square[data-row='${endRow}'][data-col='${endCol}']`);
+
+                // Remove any existing piece in the target square
+                const existingPiece = targetSquare.querySelector('.piece');
+                if (existingPiece) {
+                    existingPiece.remove();
+                }
+
+                targetSquare.appendChild(selectedPiece);
+
+                selectedPiece.dataset.startRow = endRow;
+                selectedPiece.dataset.startCol = endCol;
+
+                sendMoveToServer(startRow, startCol, endRow, endCol, currentFEN);
+
+                selectedPiece = null;
+                startRow = null;
+                startCol = null;
+            }
+        }
+
+        function sendMoveToServer(startRow, startCol, endRow, endCol, fen) {
+            const move = {
+                startRow: parseInt(startRow),
+                startCol: parseInt(startCol),
+                endRow: parseInt(endRow),
+                endCol: parseInt(endCol),
+                fen: fen,
+                probabilities: probabilities
+            };
+            data = probMove(move);
+            
+            console.log('probMoveResult:', data);
+            if (data.is_illegal) {
+                currentFEN = data.fen;
+                probabilities = data.probabilities;
+                updateBoardFromFEN(currentFEN);
+                document.getElementById('status').textContent = data.status;
+                return;
+            }
+            rollDice(data.played, data.turn === 'b' ? 'w' : 'b');
+            setTimeout(() => {
+                if (data.status) {
+                    document.getElementById('status').textContent = data.status;
+                }
+                if (data.fen && data.probabilities) {
+                    currentFEN = data.fen;
+                    probabilities = data.probabilities;
+                    updateBoardFromFEN(currentFEN);
+                }
+                if (data.move) {
+                    const strikeThrough = data.played === 1 ? 0 : 1;
+                    addMoveToSidePanel(data.move, strikeThrough);
+                }
+                if (data.turn === 'b' && document.getElementById('aib').checked
+                    || data.turn === 'w' && document.getElementById('aiw').checked) {
+                    requestAiMove();
+                }
+            }, 1000);
+        }
+
+        function sendMoveToServer2(startRow, startCol, endRow, endCol, fen) {
+            const move = {
+                startRow: parseInt(startRow),
+                startCol: parseInt(startCol),
+                endRow: parseInt(endRow),
+                endCol: parseInt(endCol),
+                fen: fen,
+                probabilities: probabilities
+            };
+
+            fetch('/move', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(move)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Move sent successfully:', data);
+                if (data.is_illegal) {
+                    currentFEN = data.fen;
+                    probabilities = data.probabilities;
+                    updateBoardFromFEN(currentFEN);
+                    document.getElementById('status').textContent = data.status;
+                    return;
+                }
+                rollDice(data.played, data.turn === 'black' ? 'w' : 'b');
+                setTimeout(() => {
+                    if (data.status) {
+                        document.getElementById('status').textContent = data.status;
+                    }
+                    if (data.fen && data.probabilities) {
+                        currentFEN = data.fen;
+                        probabilities = data.probabilities;
+                        updateBoardFromFEN(currentFEN);
+                    }
+                    if (data.move) {
+                        const strikeThrough = data.played === 1 ? 0 : 1;
+                        addMoveToSidePanel(data.move, strikeThrough);
+                    }
+                    if (data.turn === 'black' && document.getElementById('aib').checked
+                        || data.turn === 'white' && document.getElementById('aiw').checked) {
+                        requestAiMove();
+                    }
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error sending move:', error);
+                document.getElementById('status').textContent = 'Error sending move';
+            });
+        }
+
+        function requestAiMove() {
+            get_best_move(currentFEN, function(data) {
+                console.log('AI move received:', data);
+                // Play the ai move as if the user had clicked on the start square and end square
+                clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
+                event = { target: clicked_piece };
+                handlePieceClick(event);
+                event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
+                handleSquareClick(event);
+            })
+
+        }
+        function requestAiMove2() {
+            fetch('/aimove', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fen: currentFEN })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('AI move received:', data);
+                // Play the ai move as if the user had clicked on the start square and end square
+                clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
+                event = { target: clicked_piece };
+                handlePieceClick(event);
+                event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
+                handleSquareClick(event);
+                // sendMoveToServer(data.startRow, data.startCol, data.endRow, data.endCol, currentFEN, false);
+            })
+            .catch(error => console.error('Error requesting AI move:', error));
+        }
+
+        function updateBoardFromFEN(fen) {
+            const fenParts = fen.split(' ');
+            const boardPart = fenParts[0];
+            const rows = boardPart.split('/');
+
+            const chessboard = document.getElementById('chessboard');
+            const squares = chessboard.querySelectorAll('.square');
+            squares.forEach(square => {
+                while (square.firstChild) {
+                    square.removeChild(square.firstChild);
+                }
+                const row = square.dataset.row;
+                const col = square.dataset.col;
+                const prob = document.createElement('div');
+                prob.className = 'probability';
+                prob.textContent = (probabilities[row][col] * 100).toFixed(0) + '%';
+                square.appendChild(prob);
+            });
+
+            for (let row = 0; row < 8; row++) {
+                let col = 0;
+                for (let char of rows[row]) {
+                    if (!isNaN(char)) {
+                        col += parseInt(char);
+                    } else {
+                        const pieceImg = document.createElement('img');
+                        pieceImg.src = pieces[char];
+                        pieceImg.className = 'piece';
+                        pieceImg.draggable = true;
+                        pieceImg.dataset.piece = char;
+                        pieceImg.dataset.startRow = row;
+                        pieceImg.dataset.startCol = col;
+
+                        const square = chessboard.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+                        square.appendChild(pieceImg);
+                        col++;
+                    }
+                }
+            }
+            highlightPiecesToPlay(fenParts[1] === 'b');
+            addDragAndDropListeners();
+            addClickListeners();
+        }
+
+        function rollDice(finalFaceType, turn) {
+            const dice = document.getElementById('dice' + turn);
+
+            // Remove the existing rolling classes to reset the animation
+            dice.classList.remove('rolling-happy', 'rolling-sad');
+
+            // Force reflow to reset the animation
+            void dice.offsetWidth;
+
+            // Add the appropriate rolling class based on the finalFaceType parameter
+            if (finalFaceType === 1) {
+                dice.classList.add('rolling-happy');
+            } else {
+                dice.classList.add('rolling-sad');
+            }
+        }
+
+        /**
+         * Add a move to the side panel table
+         * 
+         * @param {string} moveInput - The move to add
+         * @param {number} strikeThrough - Whether to strike through the text of the move
+         */
+        function addMoveToSidePanel(moveInput, strikeThrough) {
+            if (moveInput === '') {
+                alert('Please enter a move.');
+                return;
+            }
+            const table = document.getElementById('chessTable').getElementsByTagName('tbody')[0];
+            lastRow = null;
+            if (table.rows.length === 0) {
+                firstMove = true;
+            } else {
+                firstMove = false;
+                lastRow = table.rows[table.rows.length - 1];
+            }
+            
+            if (!firstMove && lastRow.cells[2].textContent === '') {
+                // If black move cell is empty, fill the previous row's black cell
+                lastRow.cells[2].textContent = moveInput;
+                if (strikeThrough === 1) {
+                    //lastRow.cells[2].style.textDecoration = 'line-through';
+                    lastRow.cells[2].style.color = 'red';
+                }
+            } else {
+                // Otherwise, create a new row for white move
+                const newRow = table.insertRow();
+                newRow.insertCell(0).textContent = table.rows.length;
+                newRow.insertCell(1).textContent = moveInput;
+                newRow.insertCell(2).textContent = '';
+                if (strikeThrough === 1) {
+                    // newRow.cells[1].style.textDecoration = 'line-through';
+                    newRow.cells[1].style.color = 'red';
+                }
+            }
+            moveTableDiv.scrollTop = moveTableDiv.scrollHeight;
+        }
+
+        function highlightPiecesToPlay(black_turn) {
+            const pieces = document.querySelectorAll('.piece');
+            pieces.forEach(piece => {
+                if (black_turn) {
+                    if (piece.dataset.piece === piece.dataset.piece.toLowerCase()) {
+                        piece.classList.add('piece-turn-to-play');
+                    } else {
+                        piece.classList.remove('piece-turn-to-play');
+                    }
+                } else {
+                    if (piece.dataset.piece === piece.dataset.piece.toUpperCase()) {
+                        piece.classList.add('piece-turn-to-play');
+                    } else {
+                        piece.classList.remove('piece-turn-to-play');
+                    }
+                }
+            });
+        }
+
+        function doOnload() {
+            rollDice(1, 'w');
+            rollDice(1, 'b');
+        }
+        // Optional: Automatically roll the dice when the page loads
+        window.onload = () => doOnload();
+        
+
+        createChessboard();
+
+
+    </script>
+
+    <div id="resultAnimation" class="hidden">
+        <div id="resultMessage"></div>
+    </div>
+    <script src="static/winlose.js"></script>
+</body>
+</html>
