@@ -88,6 +88,17 @@ function get_winner(fen) {
 
 }
 
+function get_turn_from_fen(fen) {
+    /* Get the current turn from the FEN string 
+    
+         Returns:
+            'w': White's turn
+            'b': Black's turn
+    */
+    var fenParts = fen.split(' ');
+    return fenParts[1];
+}
+
 
 function convertToMove(startRow, startCol, endRow, endCol) {
     /* Converts from board click indices to start square, end square 

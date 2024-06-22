@@ -178,6 +178,9 @@
         .highlight {
             background-color: #0055a5;
         }
+        .square-selected {
+            background-color: rgba(250, 250, 0, 0.5);
+        }
 
         .piece-selected {
             border: 2px solid #0055a5;
@@ -271,9 +274,7 @@
         //let currentFEN = "k7/8/K7/8/8/8/8/8 w - - 0 1";
         //let currentFEN = "r3q1k1/2b2p1p/pp3npQ/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 w - - 1 19"
 
-        let selectedPiece = null;
-        let startRow = null;
-        let startCol = null;
+        let lastClickedSquare = null;
 
         function createChessboard() {
             const chessboard = document.getElementById('chessboard');
@@ -367,51 +368,63 @@
         function handlePieceClick(event) {
             console.log('Piece clicked');
             console.log(event);
-            if (selectedPiece) {
-                console.log('Deselecting previously selected piece');
-                selectedPiece.classList.remove('piece-selected');
-                selectedPiece = null;
-                startRow = null;
-                startCol = null;
-            } else {
-                selectedPiece = event.target;
-                selectedPiece.classList.add('piece-selected');
-                startRow = selectedPiece.dataset.startRow;
-                startCol = selectedPiece.dataset.startCol;
-            }
-            
+            //handleSquareClick(event);
         }
 
         function handleSquareClick(event) {
             console.log('Square clicked ');
             console.log(event);
-            if (selectedPiece) {
-                const endRow = event.target.closest('.square').dataset.row;
-                const endCol = event.target.closest('.square').dataset.col;
 
-                if (endRow === startRow && endCol === startCol) {
-                    console.log('Same square clicked. Ignoring move.');
+            let clickedSquare = event.target.closest('.square');
+            let clickedPiece = clickedSquare.querySelector('.piece');
+            
+            console.log("clicked_square", clickedSquare);
+
+            if (lastClickedSquare == null) {
+                console.log('Selecting a piece to move.');
+                turn = currentFEN.split(' ')[1];
+                if (turn === 'w' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toLowerCase()
+                    || turn === 'b' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toUpperCase()) {
+                    console.log('Not your turn to play.');
                     return;
                 }
 
-                const targetSquare = document.querySelector(`.square[data-row='${endRow}'][data-col='${endCol}']`);
+                lastClickedSquare = clickedSquare;
+                if (!clickedPiece) {
+                    console.log('No piece in the selected square. Ignoring move.');
+                    lastClickedSquare = null;
+                    return;
+                }
+                clickedPiece.classList.add('piece-selected');
+            } else if (lastClickedSquare == clickedSquare) {
+                console.log('Deselecting previously selected piece');
+                let lastClickedPiece = lastClickedSquare.querySelector('.piece');
+                lastClickedPiece.classList.remove('piece-selected');
+                lastClickedSquare = null;
+            } else {
+                console.log('Moving piece to selected square.');
+                const startRow = lastClickedSquare.dataset.row;
+                const startCol = lastClickedSquare.dataset.col;
+                const endRow = clickedSquare.dataset.row;
+                const endCol = clickedSquare.dataset.col;
+
+                //const targetSquare = document.querySelector(`.square[data-row='${endRow}'][data-col='${endCol}']`);
 
                 // Remove any existing piece in the target square
-                const existingPiece = targetSquare.querySelector('.piece');
+                const existingPiece = clickedSquare.querySelector('.piece');
                 if (existingPiece) {
                     existingPiece.remove();
                 }
+                lastClickedPiece = lastClickedSquare.querySelector('.piece');
+                clickedSquare.appendChild(lastClickedPiece);
 
-                targetSquare.appendChild(selectedPiece);
+                lastClickedPiece.dataset.startRow = endRow;
+                lastClickedPiece.dataset.startCol = endCol;
 
-                selectedPiece.dataset.startRow = endRow;
-                selectedPiece.dataset.startCol = endCol;
-
+                // clicked_square.classList.add('square-selected');
+                lastClickedSquare = null;
                 sendMoveToServer(startRow, startCol, endRow, endCol, currentFEN);
-
-                selectedPiece = null;
-                startRow = null;
-                startCol = null;
+                
             }
         }
 
@@ -458,7 +471,7 @@
                     || data.turn === 'w' && document.getElementById('aiw').checked) {
                     requestAiMove();
                 }
-            }, 5);
+            }, 1000);
         }
 
         function requestAiMove() {
@@ -491,11 +504,9 @@
                     console.log('Playing AI move on board:', data);
                     // Play the ai move as if the user had clicked on the start square and end square
                     clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
+                    lastClickedSquare = null;
                     event = { target: clicked_piece };
-                    selectedPiece = null;
-                    startRow = null;
-                    startCol = null;
-                    handlePieceClick(event);
+                    handleSquareClick(event);
                     event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
                     handleSquareClick(event);
                 })
@@ -512,6 +523,7 @@
             const chessboard = document.getElementById('chessboard');
             const squares = chessboard.querySelectorAll('.square');
             squares.forEach(square => {
+                square.classList.remove('square-selected');
                 while (square.firstChild) {
                     square.removeChild(square.firstChild);
                 }
