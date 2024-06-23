@@ -182,3 +182,4 @@ class StockfishEvaluator {
 
 // Stockfish crash: r3kb1r/ppp1ppp1/7p/8/4pn2/8/PPPP1P2/RNB2Kq1 b kq - 1 16
 // 3rk1nr/pp1qbpNp/1npp4/4p2Q/4P3/2PP4/PP3PPP/RNB1KB1R b KQk - 0 17
+// 3r4/r1p2ppk/1nR1p2p/3pPP2/PR1Pb1P1/6BP/P1PQ3K/8 b - - 0 32
