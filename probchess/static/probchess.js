@@ -21,7 +21,7 @@ function probMove(data) {
     var board = new Chess(fen);
 
     // Convert the move to UCI format
-    var move = convertToMove(startRow, startCol, endRow, endCol);
+    var move = convertToChessJsMove(startRow, startCol, endRow, endCol, board);
     var moveHuman = board.move(move, {'legal':false, verbose: true});
 
     var statusText = "";
@@ -124,7 +124,7 @@ function generateFensForAllMoves(fen) {
     return [fens, all_moves];
 }
 
-function convertToMove(startRow, startCol, endRow, endCol) {
+function convertToChessJsMove(startRow, startCol, endRow, endCol, board) {
     /* Converts from board click indices to start square, end square 
     
        ex: 6 4 5 4 -> { from: 'e2', to: 'e3'}
@@ -135,9 +135,16 @@ function convertToMove(startRow, startCol, endRow, endCol) {
 
     var startSquare = String.fromCharCode(97 + startCol) + (startRow + 1);
     var endSquare = String.fromCharCode(97 + endCol) + (endRow + 1);
-    console.log('Converted to ' + startSquare + '  ' + endSquare);
+    
+    result = { from: startSquare, to: endSquare };
+    // Handle promotion by adding promotion: 'q' if the move is a promotion
+    // TODO: Handle promotions to other pieces.
+    if (board.get(startSquare).type === 'p' && (endRow === 0 || endRow === 7)) {
+        result['promotion'] = 'q';
+    }
 
-    return { from: startSquare, to: endSquare };
+    console.log('Converted to ' + result);
+    return result;
 }
 
 function is_pseudo_legal(move, board) {
@@ -181,3 +188,4 @@ function removeEnPassant(fen) {
 // Pre-Checkmate: r3q1k1/2b2p1p/pp3npQ/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 w - - 1 19
 // Eat queen easy: k6q/8/7Q/8/8/8/8/K7 w - - 0 1
 // Test: r3k1nr/p1p1Rpp1/7p/3P4/8/3b4/PPP2PPP/R1B3K1 b kq - 0 15
+// Promotion: '3qkb1r/1QP1nppp/2p1p3/6N1/N2PP3/3B4/1P3PPP/2B2RK1 w k - 0 11'
