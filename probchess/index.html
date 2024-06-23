@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Probabilistic Chess</title>
     <link rel="stylesheet" href="static/styles.css">
-    <script src="static/ai.js"></script>
+    <script src="static/ai2.js"></script>
     
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
     <!-- <script type="module">
@@ -232,7 +232,16 @@
             </div>
             <div class="status" id="status">Welcome to Probabilistic Chess</div>
             <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Plays Black</checkbox><br />
-            <input type="checkbox" id="aiw" onclick="requestAiMove()">AI Plays White</checkbox><br /><br />
+            <input type="checkbox" id="aiw" onclick="requestAiMove()">AI Plays White</checkbox><br />
+            <!-- Add an AI strength drop down with Moderate, Moderate, Hard, Extreme -->
+            <label for="difficulty">AI Difficulty:</label>
+            <select id="ai-strength" name="ai-strength">
+                <option value="moderate">Moderate</option>
+                <option value="hard" selected>Hard</option>
+                <option value="veryhard">Very Hard</option>
+                <option value="extreme">Extreme</option>
+            </select>
+            <br /><br />
             <b>Rules:</b><br />
             <div style="width: 300px;">
                 <ul style="list-style-position: inside; padding-left: 1.0em; text-indent: -1.4em;">
@@ -271,6 +280,7 @@
         
 
         let currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        // let currentFEN = "r3kb1r/ppp1ppp1/7p/8/4pn2/8/PPPP1P1q/RNB1K1R1 b Qkq - 0 15"
         //let currentFEN = "k7/8/K7/8/8/8/8/8 w - - 0 1";
         //let currentFEN = "r3q1k1/2b2p1p/pp3npQ/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 w - - 1 19"
 
@@ -472,47 +482,70 @@
                     || data.turn === 'w' && document.getElementById('aiw').checked) {
                     requestAiMove();
                 }
-            }, 1000);
+            }, 1);
         }
 
+        let stockfish = null;
+        
+        // stockfish.getBestMoveEm('k6q/8/7Q/8/8/8/8/K7 w - - 0 1', probabilities, function(data) {
+        //     console.log('AI move received:', data);
+        // })
         function requestAiMove() {
-
+            if (stockfish == null) {
+                stockfish = new StockfishEvaluator()
+            }
             turn = currentFEN.split(' ')[1];
             if (turn === 'w' && document.getElementById('aiw').checked
                 || turn === 'b' && document.getElementById('aib').checked) {
                 console.log('Requesting AI move');
-            
-                get_best_move(currentFEN, function(data) {
-                    console.log('AI move received:', data);
-                    if (data === null) {
-                        console.log('AI did not return a move (checkmate). Picking random move.');
-                        // Pick a random move in the following order:
-                        // 1. A move where the king captures a piece
-                        // 2. Any capture move
-                        // 3. Any move
-                        all_moves = get_all_moves(currentFEN);
-                        moves = all_moves.filter(move => move.piece.toLowerCase() === 'k' && move.captured);
-                        if (moves.length === 0) {
-                            moves = all_moves.filter(move => move.captured);
-                            if (moves.length === 0) {
-                                moves = all_moves;
-                            }
-                        }
-                        rnd_move = moves[Math.floor(Math.random() * moves.length)];
-                        rnd_move = chessMoveToIndices(rnd_move.from + rnd_move.to);
-                        data = rnd_move;
-                    }
-                    console.log('Playing AI move on board:', data);
-                    // Play the ai move as if the user had clicked on the start square and end square
-                    clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
-                    lastClickedSquare = null;
-                    event = { target: clicked_piece };
-                    handleSquareClick(event);
-                    event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
-                    handleSquareClick(event);
-                })
+                
+                var difficulty = document.getElementById("ai-strength").value;
+                if (turn === 'w') {
+                    // TEMP HACK
+                    stockfish.getBestMove(currentFEN, onAiMove);
+                }
+                else if (difficulty === "moderate") {
+                    stockfish.getBestMove(currentFEN, onAiMove);
+                } else if (difficulty === "hard") {
+                    stockfish.getBestMoveEm(currentFEN, probabilities, onAiMove, depth=10);
+                } else if (difficulty === "veryhard") {
+                    stockfish.getBestMoveEm(currentFEN, probabilities, onAiMove, depth=15);
+                } else if (difficulty === "extreme") {
+                    stockfish.getBestMoveEm(currentFEN, probabilities, onAiMove, depth=20);
+                }
+                
             }
 
+        }
+
+        function onAiMove(data) {
+            console.log('AI move received:', data);
+            if (data === null) {
+                console.log('AI did not return a move (checkmate). Picking random move.');
+                // Pick a random move in the following order:
+                // 1. A move where the king captures a piece
+                // 2. Any capture move
+                // 3. Any move
+                all_moves = get_all_moves(currentFEN);
+                moves = all_moves.filter(move => move.piece.toLowerCase() === 'k' && move.captured);
+                if (moves.length === 0) {
+                    moves = all_moves.filter(move => move.captured);
+                    if (moves.length === 0) {
+                        moves = all_moves;
+                    }
+                }
+                rnd_move = moves[Math.floor(Math.random() * moves.length)];
+                rnd_move = chessMoveToIndices(rnd_move.from + rnd_move.to);
+                data = rnd_move;
+            }
+            console.log('Playing AI move on board:', data);
+            // Play the ai move as if the user had clicked on the start square and end square
+            clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
+            lastClickedSquare = null;
+            event = { target: clicked_piece };
+            handleSquareClick(event);
+            event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
+            handleSquareClick(event);
         }
        
 

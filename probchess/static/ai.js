@@ -37,6 +37,10 @@ function get_best_move(fen, callback) {
     stockfish.postMessage('go depth 10');
 }
 
+function get_best_move_expected_value(fen, callback, probabilities) {
+
+}
+
 
 function chessNotationToIndex(pos) {
     const column = pos.charCodeAt(0) - 'a'.charCodeAt(0);
