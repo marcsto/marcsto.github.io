@@ -74,6 +74,20 @@ class StockfishEvaluator {
 
     evaluateFen(fen) {
         console.log("Sending go command for fen: ", fen);
+        
+        let moves = get_all_moves(fen);
+        for (let i = 0; i < moves.length; i++) {
+            let move = moves[i];
+            // If a move eats the king, pick that move and give it a high score. Don't do the stockfish
+            // analysis as it will crash.
+            if (move.captured === 'k' || move.captured === 'K') {
+                this.scores[this.fenIndex] = 10000;
+                // TODO: It would be better to pass this into the message queue callback like stockfish does.
+                this.processBestMove("bestmove " + move.from + move.to);
+                return;
+            }
+        }
+
         this.stockfish.postMessage('position fen ' + fen);
         this.stockfish.postMessage('go depth ' + this.depth);
         //this.stockfish.postMessage('go movetime 500');

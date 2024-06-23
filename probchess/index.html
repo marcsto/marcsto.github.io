@@ -243,12 +243,12 @@
             <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Plays Black</checkbox><br />
             <input type="checkbox" id="aiw" onclick="requestAiMove()">AI Plays White</checkbox><br />
             <!-- Add an AI strength drop down with Moderate, Moderate, Hard, Extreme -->
-            <label for="difficulty">AI Difficulty:</label>
+            <label for="difficulty">AI Difficulty (black):</label>
             <select id="ai-strength" name="ai-strength">
-                <option value="moderate">Moderate</option>
-                <option value="hard" selected>Hard</option>
-                <option value="veryhard">Very Hard</option>
-                <option value="extreme">Extreme</option>
+                <option value="moderate" selected>Moderate (depth 10)</option>
+                <option value="hard">Hard (em depth 10)</option>
+                <option value="veryhard">Very Hard (em depth 15)</option>
+                <option value="extreme">Extreme (em depth 20)</option>
             </select>
             <br /><br />
             <b>Rules:</b><br />
@@ -512,8 +512,7 @@
                 if (turn === 'w') {
                     // TEMP HACK
                     stockfish.getBestMove(currentFEN, onAiMove);
-                }
-                else if (difficulty === "moderate") {
+                } else if (difficulty === "moderate") {
                     stockfish.getBestMove(currentFEN, onAiMove);
                 } else if (difficulty === "hard") {
                     stockfish.getBestMoveEm(currentFEN, probabilities, onAiMove, depth=10);
