@@ -173,6 +173,24 @@
         tr:nth-child(even) {
             background-color: #2b2b2b;
         }
+
+        thead tr {
+            background-color: #444; /* Ensure the sticky header has a background color */
+        }
+
+        thead tr:nth-child(1) th, 
+        thead tr:nth-child(2) th, 
+        thead tr:nth-child(2) td {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        thead tr:nth-child(2) th, 
+        thead tr:nth-child(2) td {
+            top: 32px; /* Adjust this value based on the height of your first row */
+        }
+
         .highlight {
             background-color: #0055a5;
         }
@@ -212,27 +230,27 @@
                     <thead>
                         <tr>
                             <th></th>
-                            <th>White</th>
-                            <th>Black</th>
+                            <th><center><div class="dice" id="dicew">
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                            </div></center></th>
+                            <th><center><div class="dice" id="diceb">
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                                <div class="face happy">😊</div>
+                                <div class="face sad">😢</div>
+                            </div></center></th>
                         </tr>
                         <tr>
-                            <td></td>
-                            <td><center><div class="dice" id="dicew">
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                            </div></center></td>
-                            <td><center><div class="dice" id="diceb">
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                            </div></center></td>
+                            <th></th>
+                            <th>White</th>
+                            <th>Black</th>
                         </tr>
                     </thead>
                     <tbody>
