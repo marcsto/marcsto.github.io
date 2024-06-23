@@ -264,6 +264,7 @@
     Marc Stogaitis & Guy Stogaitis
 
     <script>
+        const diceAnimationTime = 1000;
         const pieces = {
             'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
             'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
@@ -472,16 +473,19 @@
                 if (data.status) {
                     document.getElementById('status').textContent = data.status;
                 }
+                
                 if (data.fen && data.probabilities) {
                     currentFEN = data.fen;
                     probabilities = data.probabilities;
                     updateBoardFromFEN(currentFEN);
                 }
+
                 if (data.move) {
                     const strikeThrough = data.played === 1 ? 0 : 1;
-                    addMoveToSidePanel(data.move, strikeThrough);
+                    const turn_opposite = data.turn === 'b' ? 'w' : 'b';
+                    addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN);
                 }
-
+                
                 if (data.winner) {
                     showWinner(data.winner);
                     return;
@@ -491,7 +495,7 @@
                     || data.turn === 'w' && document.getElementById('aiw').checked) {
                     requestAiMove();
                 }
-            }, 1);
+            }, diceAnimationTime);
         }
 
         let stockfish = null;
@@ -622,11 +626,11 @@
         /**
          * Add a move to the side panel table
          * 
-         * @param {string} moveInput - The move to add
+         * @param {string} humanReadableMove - The move to add
          * @param {number} strikeThrough - Whether to strike through the text of the move
          */
-        function addMoveToSidePanel(moveInput, strikeThrough) {
-            if (moveInput === '') {
+        function addMoveToSidePanel(humanReadableMove, moveTurn, strikeThrough, fen) {
+            if (humanReadableMove === '') {
                 alert('Please enter a move.');
                 return;
             }
@@ -639,23 +643,30 @@
                 lastRow = table.rows[table.rows.length - 1];
             }
             
-            if (!firstMove && lastRow.cells[2].textContent === '') {
+            let cell = null;
+            if (!firstMove && lastRow.cells[2].textContent === '' && moveTurn === 'b') {
                 // If black move cell is empty, fill the previous row's black cell
-                lastRow.cells[2].textContent = moveInput;
-                if (strikeThrough === 1) {
-                    //lastRow.cells[2].style.textDecoration = 'line-through';
-                    lastRow.cells[2].style.color = 'red';
-                }
+                cell = lastRow.cells[2];
             } else {
                 // Otherwise, create a new row for white move
                 const newRow = table.insertRow();
                 newRow.insertCell(0).textContent = table.rows.length;
-                newRow.insertCell(1).textContent = moveInput;
+                newRow.insertCell(1).textContent = '';
                 newRow.insertCell(2).textContent = '';
-                if (strikeThrough === 1) {
-                    // newRow.cells[1].style.textDecoration = 'line-through';
-                    newRow.cells[1].style.color = 'red';
+                if (moveTurn === 'w') {
+                    cell = newRow.cells[1];
+                } else {
+                    cell = newRow.cells[2];
                 }
+            }
+
+            cell.textContent = humanReadableMove;
+            cell.dataset.fen = fen;
+            cell.classList.add('move');
+            cell.addEventListener('click', handleHistoricalMoveClick)
+            if (strikeThrough === 1) {
+                //lastRow.cells[2].style.textDecoration = 'line-through';
+                cell.style.color = 'red';
             }
             moveTableDiv.scrollTop = moveTableDiv.scrollHeight;
         }
@@ -677,6 +688,17 @@
                     }
                 }
             });
+        }
+
+        function handleHistoricalMoveClick(event) {
+            const move = event.target.textContent;
+            const fen = event.target.dataset.fen;
+            if (move === '') {
+                return;
+            }
+            console.log('Historical move clicked:', move, fen);
+            currentFEN = fen;
+            updateBoardFromFEN(fen);
         }
 
         function doOnload() {
