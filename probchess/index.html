@@ -283,7 +283,9 @@
             </div>
         </div>
     </div>
-    Marc Stogaitis & Guy Stogaitis
+    <!-- Make a link to marc.ai with white text and underline -->
+    
+    <div>Marc Stogaitis & Guy Stogaitis | <a href="https://marc.ai" style="color: white; text-decoration: underline;">marc.ai</a></div>
 
     <script>
         const diceAnimationTime = 1000;
@@ -334,7 +336,7 @@
 
                     const prob = document.createElement('div');
                     prob.className = 'probability';
-                    prob.textContent = (probabilities[row][col] * 100).toFixed(2) + '%';
+                    prob.textContent = (probabilities[row][col] * 100).toFixed(0) + '%';
                     square.appendChild(prob);
 
                     chessboard.appendChild(square);
@@ -582,48 +584,62 @@
             handleSquareClick(event);
         }
        
-
         function updateBoardFromFEN(fen) {
-            const fenParts = fen.split(' ');
-            const boardPart = fenParts[0];
-            const rows = boardPart.split('/');
-
+            
             const chessboard = document.getElementById('chessboard');
             const squares = chessboard.querySelectorAll('.square');
+            const board = new Chess(fen);
+            
+            const rows = ['8', '7', '6', '5', '4', '3', '2', '1'];
+            const cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
             squares.forEach(square => {
                 square.classList.remove('square-selected');
-                while (square.firstChild) {
-                    square.removeChild(square.firstChild);
-                }
                 const row = square.dataset.row;
                 const col = square.dataset.col;
-                const prob = document.createElement('div');
-                prob.className = 'probability';
-                prob.textContent = (probabilities[row][col] * 100).toFixed(0) + '%';
-                square.appendChild(prob);
-            });
+                // Convert from our row col to chess.js row col.
+                const squareName = cols[col] + rows[row];
+                console.log('squareName:', squareName);
+                // The format of desired piece is {type: 'r', color: 'b'}
+                let desiredPiece = board.get(squareName);
+                const existingPiece = square.querySelector('.piece');
+                // Remove piece-selected class from all pieces
+                if (existingPiece) {
+                    existingPiece.classList.remove('piece-selected');
+                }
+                if (desiredPiece == null) {
+                    // Remove any existing piece in the square
+                    if (existingPiece) {
+                        existingPiece.remove();
+                    }
+                } else {
+                    side = desiredPiece.color
+                    desiredPiece = desiredPiece.type
+                    if (side === 'w') {
+                        desiredPiece = desiredPiece.toUpperCase();
+                    }
 
-            for (let row = 0; row < 8; row++) {
-                let col = 0;
-                for (let char of rows[row]) {
-                    if (!isNaN(char)) {
-                        col += parseInt(char);
+                    if (existingPiece) {
+                        if (existingPiece.dataset.piece !== desiredPiece) {
+                            // Replace the existing piece with the desired piece
+                            existingPiece.src = pieces[desiredPiece];
+                            existingPiece.dataset.piece = desiredPiece;
+                        }
                     } else {
+                        // Add the desired piece to the square
                         const pieceImg = document.createElement('img');
-                        pieceImg.src = pieces[char];
+                        pieceImg.src = pieces[desiredPiece];
                         pieceImg.className = 'piece';
                         pieceImg.draggable = true;
-                        pieceImg.dataset.piece = char;
+                        pieceImg.dataset.piece = desiredPiece;
                         pieceImg.dataset.startRow = row;
                         pieceImg.dataset.startCol = col;
-
-                        const square = chessboard.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
                         square.appendChild(pieceImg);
-                        col++;
                     }
-                }
-            }
-            highlightPiecesToPlay(fenParts[1] === 'b');
+                }                
+            });
+
+            highlightPiecesToPlay(board.turn() === 'b');
             addDragAndDropListeners();
             addClickListeners();
         }
@@ -687,7 +703,6 @@
             cell.classList.add('move');
             cell.addEventListener('click', handleHistoricalMoveClick)
             if (strikeThrough === 1) {
-                //lastRow.cells[2].style.textDecoration = 'line-through';
                 cell.style.color = 'red';
             }
             moveTableDiv.scrollTop = moveTableDiv.scrollHeight;
