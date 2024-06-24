@@ -40,7 +40,7 @@ class MonteCarloAi {
         
     }
 
-    async runSimulations(move, fen, probabilities, depth, simDepth=5, simCount=10) {
+    async runSimulations(move, fen, probabilities, depth, simDepth=10, simCount=20) {
         let scoreSum = 0;
         for (let i = 0; i < simCount; i++) {
             let score = await this.runOneSimulation(move, fen, probabilities, depth, simDepth);
@@ -112,7 +112,7 @@ class MonteCarloAi {
 
 
     getBestMoveEm(fen, probabilities, callback, depth=5, initialDepth=10) {
-        depth = 5; // TODO: Hardcoded for now.
+        depth = 10; // TODO: Hardcoded for now.
         this.runMonteCarlo(fen, probabilities, depth, initialDepth).then((result) => {
             callback(result);
         });

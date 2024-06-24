@@ -72,7 +72,7 @@ class SynchronousStockfish {
 
     handleMessage(event) {
         const message = event.data;
-        // console.log("ucimsg: ", message);
+        console.log("      ucimsg: ", message);
 
         if (message === 'uciok') {
             this.stockfish.postMessage('isready');
@@ -123,12 +123,21 @@ class SynchronousStockfish {
     processBestMove(message) {    
         const bestMove = message.split(' ')[1];
         if (this.resolveBestMove) {
-            let moves = null;
+            let moves = [];
             try {
-                moves = this.lines.map((line) => line.split(' ')[0]);
+                for (let i = 0; i < this.lines.length; i++) {
+                    let line = this.lines[i];
+                    if (line == null) {
+                        moves.push(bestMove);
+                    }  else {
+                        moves.push(line.split(' ')[0]);
+                    }
+                
+                }
             } catch (e) {
                 console.log("Error parsing moves: ", e);
                 console.log("message", message);
+                console.log("lines", this.lines);
                 throw e;
             }
             this.sendBestMoveToCaller(bestMove, this.scores, moves, this.lines);

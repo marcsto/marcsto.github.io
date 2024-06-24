@@ -1,7 +1,7 @@
 function showWinner(result) {
     const resultAnimation = document.getElementById('resultAnimation');
     const resultMessage = document.getElementById('resultMessage');
-    const status = document.getElementById('status');
+    const status = document.getElementById('winner');
 
     resultAnimation.classList.remove('hidden', 'white-wins', 'black-wins', 'draw');
 
