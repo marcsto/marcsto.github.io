@@ -98,7 +98,7 @@ class StockfishEvaluator {
         if (!bestMove) {
             return null;
         }
-        return this.chessMoveToIndices(bestMove);
+        return chessMoveToIndices(bestMove);
     }
 
     determineBestMoveFromScores() {
@@ -113,7 +113,7 @@ class StockfishEvaluator {
             let score = -this.scores[i];
             let move = this.moves[i];
             // Determine the column and row of the move destination
-            let moveIndices = this.chessMoveToIndices(move.from + move.to);
+            let moveIndices = chessMoveToIndices(move.from + move.to);
             let prob = this.probabilities[moveIndices.endRow][moveIndices.endCol];
 
             let expectedValue = prob * score + (1 - prob) * noPlayScore;
@@ -126,31 +126,7 @@ class StockfishEvaluator {
         }
         console.log("Best move: ", this.moves[bestIndex], " with ev: ", bestScore, "and score: ", -this.scores[bestIndex]);
         let bestMove = this.moves[bestIndex];
-        return this.chessMoveToIndices(bestMove.from + bestMove.to);
-    }
-
-    chessNotationToIndex(pos) {
-        const column = pos.charCodeAt(0) - 'a'.charCodeAt(0);
-        const row = 8 - parseInt(pos[1]);
-        return { row: row, column: column };
-    }
-    
-     chessMoveToIndices(move) {
-        // Convert a single position from chess notation to indices
-        // e.g. e2e4 -> { startRow: 6, startCol: 4, endRow: 4, endCol: 4 } 
-
-        // Check if move is a string
-        if (typeof move !== 'string') {
-            move = move.from + move.to;
-        }
-
-        const startPos = move.slice(0, 2);
-        const endPos = move.slice(2);
-    
-        const start = this.chessNotationToIndex(startPos);
-        const end = this.chessNotationToIndex(endPos);
-    
-        return { startRow: start.row, startCol: start.column, endRow: end.row, endCol: end.column };
+        return chessMoveToIndices(bestMove.from + bestMove.to);
     }
 
     getBestMoveEm(fen, probabilities, callback, depth=10) {
@@ -161,7 +137,7 @@ class StockfishEvaluator {
         // If a move eats the king, return that move.
         for (let i = 0; i < moves.length; i++) {
             if (moves[i].captured === 'k' || moves[i].captured === 'K'){
-                callback(this.chessMoveToIndices(moves[i]));
+                callback(chessMoveToIndices(moves[i]));
                 return;
             }
         }

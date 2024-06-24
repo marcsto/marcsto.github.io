@@ -42,16 +42,8 @@ function probMove(data) {
         } else {
             statusText = 'Unlucky. Move ' + moveHuman.san + ' failed. Skipping turn.';
             board.undo();
-            
             newFen = board.fen();
-            const currentTurn = board.turn();
-            if (currentTurn === 'w') {
-                newFen = newFen.replace(' w ', ' b ');
-            } else {
-                newFen = newFen.replace(' b ', ' w ');
-            }
-            // Remove en-passant since the game engine won't think we have legal moves with it.
-            newFen = removeEnPassant(newFen);
+            newFen = changeTurnFen(fen);
         }
     } else {
         statusText = 'Move is illegal! Try again.';
@@ -186,6 +178,8 @@ function removeEnPassant(fen) {
 // Promotion: k7/7P/8/8/8/8/8/7K w - - 0 1
 // Checkmate: r3q1k1/2b2pQp/pp3np1/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 b - - 2 19
 // Pre-Checkmate: r3q1k1/2b2p1p/pp3npQ/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 w - - 1 19
-// Eat queen easy: k6q/8/7Q/8/8/8/8/K7 w - - 0 1
+// Eat queen easy: k6q/8/7Q/8/8/8/8/7K w - - 0 1
 // Test: r3k1nr/p1p1Rpp1/7p/3P4/8/3b4/PPP2PPP/R1B3K1 b kq - 0 15
 // Promotion: '3qkb1r/1QP1nppp/2p1p3/6N1/N2PP3/3B4/1P3PPP/2B2RK1 w k - 0 11'
+// Checkmate in 1 (5 options): k7/6QR/8/8/8/8/8/7K w - - 0 1
+// Promotion simple: k7/7P/8/8/8/8/8/7K w - - 0 1

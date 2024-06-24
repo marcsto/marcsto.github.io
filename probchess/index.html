@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Probabilistic Chess</title>
     <link rel="stylesheet" href="static/styles.css">
-    <script src="static/ai2.js"></script>
+    <script src="static/chessutils.js"></script>
+    <script src="static/chess.js"></script>
+    <script src="static/probchess.js"></script>
+    <script src="static/aisync.js"></script>
+    <script src="static/ai3.js"></script>
     
+
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
     <!-- <script type="module">
         import { Chess } from 'https://cdn.jsdelivr.net/npm/chess.js@latest/dist/chess.min.js'
@@ -14,10 +19,10 @@
     <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/chess.js@latest/dist/chess.min.js"></script> -->
     <!-- <script type="module" src="static/chess.min.js"></script> -->
     <!-- <script src="static/chess.min.js"></script> -->
-    <script src="static/chess.js"></script>
+    
     <!-- <script src="static/chess.js"></script> -->
     
-    <script src="static/probchess.js"></script>
+    
     <style>
         /* body {
             display: flex;
@@ -188,7 +193,7 @@
 
         thead tr:nth-child(2) th, 
         thead tr:nth-child(2) td {
-            top: 32px; /* Adjust this value based on the height of your first row */
+            top: 40px; /* Adjust this value based on the height of your first row */
         }
 
         .move {
@@ -267,10 +272,10 @@
             <!-- Add an AI strength drop down with Moderate, Moderate, Hard, Extreme -->
             <label for="difficulty">AI Difficulty (black):</label>
             <select id="ai-strength" name="ai-strength">
-                <option value="moderate" selected>Moderate (depth 10)</option>
-                <option value="hard">Hard (em depth 10)</option>
-                <option value="veryhard">Very Hard (em depth 15)</option>
-                <option value="extreme">Extreme (em depth 20)</option>
+                <option value="moderate">Moderate (depth 10)</option>
+                <option value="hard" selected>Hard Monte Carlo</option>
+                <!-- <option value="veryhard">Very Hard (em depth 15)</option>
+                <option value="extreme">Extreme (em depth 20)</option> -->
             </select>
             <br /><br />
             <b>Rules:</b><br />
@@ -288,7 +293,7 @@
     <div>Marc Stogaitis & Guy Stogaitis | <a href="https://marc.ai" style="color: white; text-decoration: underline;">marc.ai</a></div>
 
     <script>
-        const diceAnimationTime = 1000;
+        let diceAnimationTime = 1000;
         const pieces = {
             'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
             'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
@@ -412,22 +417,14 @@
         }
 
         function handlePieceClick(event) {
-            console.log('Piece clicked');
-            console.log(event);
             //handleSquareClick(event);
         }
 
         function handleSquareClick(event) {
-            console.log('Square clicked ');
-            console.log(event);
-
             let clickedSquare = event.target.closest('.square');
             let clickedPiece = clickedSquare.querySelector('.piece');
-            
-            console.log("clicked_square", clickedSquare);
 
             if (lastClickedSquare == null) {
-                console.log('Selecting a piece to move.');
                 turn = currentFEN.split(' ')[1];
                 if (turn === 'w' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toLowerCase()
                     || turn === 'b' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toUpperCase()) {
@@ -449,7 +446,6 @@
                 lastClickedPiece.classList.remove('piece-selected');
                 lastClickedSquare = null;
             } else {
-                console.log('Moving piece to selected square.');
                 const startRow = lastClickedSquare.dataset.row;
                 const startCol = lastClickedSquare.dataset.col;
                 const endRow = clickedSquare.dataset.row;
@@ -531,12 +527,17 @@
         // })
         function requestAiMove() {
             if (stockfish == null) {
-                stockfish = new StockfishEvaluator()
+                stockfish = new MonteCarloAi();
             }
             turn = currentFEN.split(' ')[1];
             if (turn === 'w' && document.getElementById('aiw').checked
                 || turn === 'b' && document.getElementById('aib').checked) {
                 console.log('Requesting AI move');
+                
+                if (document.getElementById('aiw').checked && document.getElementById('aib').checked) {
+                    // Ai vs Ai. Play fast.
+                    diceAnimationTime = 0;
+                }
                 
                 var difficulty = document.getElementById("ai-strength").value;
                 if (turn === 'w') {
@@ -756,5 +757,13 @@
         <div id="resultMessage"></div>
     </div>
     <script src="static/winlose.js"></script>
+    <script>
+        // If the URL has a parameter called autoplay, enable the AI Plays White checkbox.
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('autoplay')) {
+            document.getElementById('aiw').checked = true;
+            requestAiMove();
+        }
+    </script>
 </body>
 </html>

@@ -1326,6 +1326,10 @@ var Chess = function(fen) {
       in_check: function() {
         return in_check()
       },
+
+      king_attacked: function(color) {
+        return king_attacked(color)
+      },
   
       in_checkmate: function() {
         return in_checkmate()

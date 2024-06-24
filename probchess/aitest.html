@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+    <script src="static/chessutils.js"></script>
+    <script src="static/chess.js"></script>
+    <script src="static/aisync.js"></script>
+    <script src="static/ai3.js"></script>
+    <script>
+        var ai = new MonteCarloAi();
+        let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+        let probabilities = Array.from({ length: 8 }, () => 
+            Array.from({ length: 8 }, () => Math.random())
+        );
+        ai.getBestMove(fen, probabilities, function(result) {
+            console.log(result);
+        });
+    </script>
+</body>
+</html>
