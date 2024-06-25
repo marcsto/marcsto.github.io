@@ -9,7 +9,7 @@ class MonteCarloAi {
         this.stockfish = new SynchronousStockfish();
     }
 
-    async runMonteCarlo(fen, probabilities, depth, initialDepth, multiPV=3) {
+    async runMonteCarlo(fen, probabilities, depth, initialDepth, simDepth, simCount, multiPV=3) {
         let board = new Chess(fen);
         const { bestMove, scores, moves, lines } = await this.stockfish.getBestMove(fen, initialDepth, multiPV, board);
         console.log("Got result: ", { bestMove, scores, moves, lines });
@@ -19,7 +19,7 @@ class MonteCarloAi {
         let bestMoveIndex = -1;
         for (let i = 0; i < moves.length; i++) {
             console.log("*Move: ", moves[i], " initialScore: ", scores[i]);
-            let simScore = await this.runSimulations(moves[i], fen, probabilities, depth);
+            let simScore = await this.runSimulations(moves[i], fen, probabilities, depth, simDepth, simCount);
             console.log("    Sim score: ", simScore);
             simScores.push(simScore);
             // Take the highest score. Note that when the scores are very high, the engine stops giving meaningful differences
@@ -40,7 +40,7 @@ class MonteCarloAi {
         
     }
 
-    async runSimulations(move, fen, probabilities, depth, simDepth=10, simCount=20) {
+    async runSimulations(move, fen, probabilities, depth, simDepth, simCount) {
         let scoreSum = 0;
         for (let i = 0; i < simCount; i++) {
             let score = await this.runOneSimulation(move, fen, probabilities, depth, simDepth);
@@ -113,7 +113,10 @@ class MonteCarloAi {
 
     getBestMoveEm(fen, probabilities, callback, depth=5, initialDepth=10) {
         depth = 10; // TODO: Hardcoded for now.
-        this.runMonteCarlo(fen, probabilities, depth, initialDepth).then((result) => {
+        initialDepth = 10;
+        let simDepth=5
+        let simCount=50
+        this.runMonteCarlo(fen, probabilities, depth, initialDepth, simDepth, simCount).then((result) => {
             callback(result);
         });
     }

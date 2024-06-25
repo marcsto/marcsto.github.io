@@ -72,7 +72,7 @@ class SynchronousStockfish {
 
     handleMessage(event) {
         const message = event.data;
-        console.log("      ucimsg: ", message);
+        // console.log("      ucimsg: ", message);
 
         if (message === 'uciok') {
             this.stockfish.postMessage('isready');
