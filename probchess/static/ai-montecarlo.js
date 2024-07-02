@@ -111,7 +111,7 @@ class MonteCarloAi {
     }
 
 
-    getBestMoveEm(fen, probabilities, callback, depth=5, initialDepth=10) {
+    getBestMove(fen, probabilities, callback, depth=5, initialDepth=10) {
         depth = 10; // TODO: Hardcoded for now.
         initialDepth = 10;
         let simDepth=5
@@ -119,14 +119,6 @@ class MonteCarloAi {
         this.runMonteCarlo(fen, probabilities, depth, initialDepth, simDepth, simCount).then((result) => {
             callback(result);
         });
-    }
-
-    getBestMove(fen, callback, depth=10) {
-        this.stockfish.getBestMove(fen, depth).then((result) => {
-            let bestMove = chessMoveToIndices(result.bestMove);
-            callback(bestMove);
-        });
-        
     }
 }
 

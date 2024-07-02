@@ -1,4 +1,4 @@
-
+const WIN_SCORE = 10000;
 function stockfishMoveToJsChessMove(move) {
     // Convert a single position from stockfish notation to chess.js notation
     // e.g. e2e4 -> { from: 'e2', to: 'e4' } 
@@ -30,16 +30,55 @@ function chessMoveToIndices(move) {
 
     if (typeof move !== 'string') {
         // If the move was passed as an object, convert it.
-        move = move.from + move.to;
+        let movestr = move.from + move.to;
+        if (move.promotion) {
+            movestr += move.promotion;
+        }
+        move = movestr;
     }
 
     const startPos = move.slice(0, 2);
-    const endPos = move.slice(2);
+    const endPos = move.slice(2, 4);
 
     const start = _chessNotationToIndex(startPos);
     const end = _chessNotationToIndex(endPos);
 
+    // Handle promption
+    if (move.length === 5) {
+        return { startRow: start.row, startCol: start.column, endRow: end.row, endCol: end.column, promotion: move[4] };
+    }
+
     return { startRow: start.row, startCol: start.column, endRow: end.row, endCol: end.column };
+}
+
+/**
+ * Convert chess indices (used on the board UI) to a move string in long algebraic notation (e.g. e2e4) used in chess programs.
+ * 
+ * @param {} move Dictiary with the form {startRow: 6, startCol: 4, endRow: 4, endCol: 4}, or a string in the form 'e2e4', or a chess.js move object.
+ * @returns string move in the form 'e2e4'
+ */
+function toAlgebraic(move) {
+    // For when it's already in the format 'e2e4'
+    if (typeof move === 'string') {
+        return move;
+    }
+    // For the chess.js format of 'from: 'h1', to: 'h8'...)
+    if ('from' in move) {
+        if (move.promotion) {
+            return move.from + move.to + move.promotion;
+        }
+        return move.from + move.to;
+    }
+
+    // For the format {startRow: 6, startCol: 4, endRow: 4, endCol: 4}
+    const start = String.fromCharCode('a'.charCodeAt(0) + move.startCol) + (8 - move.startRow);
+    const end = String.fromCharCode('a'.charCodeAt(0) + move.endCol) + (8 - move.endRow);
+    // Handle promotion
+    if (move.promotion) {
+        return start + end + move.promotion;
+    }
+
+    return start + end;
 }
 
 function swapColor(c) {
@@ -48,15 +87,21 @@ function swapColor(c) {
 
 function kingCaptureMoves(board) {
     // TODO: Maybe see if there's a king on the board.
-    let moves = board.moves({'legal':false, 'verbose': true});
-    let kingCaptureMoves = [];
-    for (let i = 0; i < moves.length; i++) {
-        let move = moves[i];
-        if (move.captured === 'k' || move.captured === 'K') {
-            kingCaptureMoves.push(move);
+    try {
+        let moves = board.moves({'legal':false, 'verbose': true});
+        let kingCaptureMoves = [];
+        for (let i = 0; i < moves.length; i++) {
+            let move = moves[i];
+            if (move.captured === 'k' || move.captured === 'K') {
+                kingCaptureMoves.push(move);
+            }
         }
+        return kingCaptureMoves;
+    } catch (e) {
+        console.log("Error getting king capture moves: ", e);
+        console.log("Board: ", board.fen());
+        throw e;
     }
-    return kingCaptureMoves;
 }
 
 function getWinnerFen(fen) {
@@ -101,4 +146,41 @@ function _chessNotationToIndex(pos) {
     const column = pos.charCodeAt(0) - 'a'.charCodeAt(0);
     const row = 8 - parseInt(pos[1]);
     return { row: row, column: column };
+}
+
+/**
+ * 
+ * @returns The probability of successfully moving to to the desination square in the move
+ */
+function getProbability(move, probabilities) {
+    const moveIndices = chessMoveToIndices(move);
+    // console.log("moveIndices: ", moveIndices, move, probabilities)
+    return probabilities[moveIndices.endRow][moveIndices.endCol];
+}
+
+function deepEqual(obj1, obj2) {
+    // Check if both objects are the same reference
+    if (obj1 === obj2) return true;
+
+    // Check if both are not objects or either one is null
+    if (typeof obj1 !== 'object' || obj1 === null ||
+        typeof obj2 !== 'object' || obj2 === null) {
+        return false;
+    }
+
+    // Get the keys of both objects
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    // Check if they have the same number of keys
+    if (keys1.length !== keys2.length) return false;
+
+    // Check if all keys and values are equal
+    for (let key of keys1) {
+        if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+            return false;
+        }
+    }
+
+    return true;
 }

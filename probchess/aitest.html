@@ -2,19 +2,152 @@
 <html>
 <head></head>
 <body>
+    <script src="static/seedrandom.min.js"></script>
+    <script>
+        var seededRandom = new Math.seedrandom('2');
+        
+        let probabilities = Array.from({ length: 8 }, () => 
+                Array.from({ length: 8 }, () => seededRandom())
+            );
+
+        probabilities = [
+    [
+        0.5352498096835105,
+        0.19485635460963513,
+        0.8584636911402881,
+        0.8726707944905645,
+        0.8465283941860338,
+        0.19084479987663183,
+        0.268588742560373,
+        0.3872059690890737
+    ],
+    [
+        0.45294467553668594,
+        0.9523128136662333,
+        0.29801592810769373,
+        0.42234084923774273,
+        0.9915957290457249,
+        0.31322595565947076,
+        0.4464680998303934,
+        0.257235096647618
+    ],
+    [
+        0.6557120775345704,
+        0.956632980558445,
+        0.2847681175333079,
+        0.7226119064692968,
+        0.5292666514396056,
+        0.38417856295295194,
+        0.5166095948797398,
+        0.41431075895018155
+    ],
+    [
+        0.8887218301314515,
+        0.06330628397620863,
+        0.0008076371214333911,
+        0.7779321480315777,
+        0.7517292533945434,
+        0.46824770445673525,
+        0.35965596685937085,
+        0.2284151398125891
+    ],
+    [
+        0.2910059895738084,
+        0.7579432362956384,
+        0.1532196622846158,
+        0.027682528903308468,
+        0.31068008377040934,
+        0.18040673746429214,
+        0.541855802324158,
+        0.07162352968148933
+    ],
+    [
+        0.017171217376002357,
+        0.6804221533249135,
+        0.7422274445848087,
+        0.14794256814118256,
+        0.9134598309279003,
+        0.4701563959740571,
+        0.8557269920494246,
+        0.9494477884210595
+    ],
+    [
+        0.3411141034680083,
+        0.23358245173607872,
+        0.565219758160797,
+        0.778757860947362,
+        0.7726836884978905,
+        0.48480504683921644,
+        0.9750230611716095,
+        0.9254740967529522
+    ],
+    [
+        0.299932402428726,
+        0.04909869129627409,
+        0.005634218994567064,
+        0.16999425291622128,
+        0.8403117647016973,
+        0.7816475874285915,
+        0.28794817193251654,
+        0.584215054353366
+    ]
+]
+    </script>
+
+
+    <link rel="stylesheet" href="static/probboard.css">
+    <script src="static/probboard.js"></script>
+    
     <script src="static/chessutils.js"></script>
     <script src="static/chess.js"></script>
+    <script src="static/probchess.js"></script>
     <script src="static/aisync.js"></script>
-    <script src="static/ai3.js"></script>
+    <script src="static/ai-alphabeta.js"></script>
+    <!-- <script src="static/ai3.js"></script> -->
+    <div class="chessboard" id="chessboard"></div>
     <script>
-        var ai = new MonteCarloAi();
-        let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-        let probabilities = Array.from({ length: 8 }, () => 
-            Array.from({ length: 8 }, () => Math.random())
-        );
-        ai.getBestMove(fen, probabilities, function(result) {
-            console.log(result);
-        });
+        createChessboard();
+        // Run the following after a 1 second delay
+        setTimeout(function() {
+            var ai = new AlphaBetaEmAi();
+
+            let test_positions = [
+                //['k6q/8/7Q/8/8/8/8/7K w - - 0 1', 'h6h8', 'eat queen easy'],
+                ['k6q/8/7Q/8/8/8/8/7K b - - 0 1', 'h8h6', 'eat queen easy black'],
+                // ['k7/8/R7/8/8/8/8/7K w - - 0 1', 'a6a8', 'eat king'],
+                // ['k7/8/8/8/8/7r/8/7K b - - 0 1', 'h3h1', 'eat king black'],
+                // ['k7/7P/8/8/8/8/8/7K w - - 0 1', 'h7h8q', 'promotion easy'],
+                // ['B4K2/8/8/8/8/8/1q4k1/8 b - - 0 1', 'g2g3', 'avoid check dont block'],
+                // ['rn1k1bnr/ppp1qppp/8/3P4/4P3/2N1P3/PP1P1P1P/R1B1KB1R b KQ - 2 13', 'na', 'dont eat e4'],
+                //['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'e2e4', 'startpos'],
+            ]
+            //['B4K2/8/8/8/8/8/1q4k1/8 w - - 0 1', 'a8g2 or f8g8?', 'eat king low prob'],
+            next_position(ai, test_positions, 0);
+        }, 1000);
+
+        function next_position(ai, test_positions, i){
+            let fen = test_positions[i][0];
+            updateBoardFromFEN(fen);
+            let move = test_positions[i][1];
+            let description = test_positions[i][2];
+            console.log('testing', fen);
+            console.log('probabilities', probabilities)
+            ai.getBestMove(fen, probabilities, 3, function(result) {
+                console.log("result  Raw", result);
+                console.log("expectedRaw", move);
+                console.log(description);
+                move = toAlgebraic(move)
+                result = toAlgebraic(result)
+                console.log('Expected:', move, 'Got:', result);
+                console.log(deepEqual(result, move));
+                console.log('-------------------');
+                if (i < test_positions.length - 1) {
+                    next_position(ai, test_positions, i + 1);
+                }
+            });
+        }
+     
+        
     </script>
 </body>
 </html>
