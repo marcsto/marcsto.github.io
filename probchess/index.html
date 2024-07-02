@@ -228,9 +228,11 @@
                         <input type="checkbox" id="aiw" onclick="requestAiMove()">AI Plays White</checkbox>
                     </td><td>
                         <select id="ai-strength-w" name="ai-strength-w">
-                            <option value="moderate">Moderate</option>
-                            <option value="hard" selected>Hard Monte Carlo</option>
-                            <option value="veryhard">Hard AlphaBetaEm</option>
+                            <option value="moderate" selected>Moderate (fast)</option>
+                            <option value="hard">Hard Monte Carlo (slow)</option>
+                            <option value="veryhard">Hard AlphaBetaEm (fast)</option>
+                            <option value="expert">Expert AlphaBetaEm (slow)</option>
+
                         </select>
                     </td>
                 </tr><tr>
@@ -238,9 +240,10 @@
                         <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Plays Black</checkbox>
                     </td><td>
                         <select id="ai-strength-b" name="ai-strength-b">
-                            <option value="moderate">Moderate</option>
-                            <option value="hard">Hard Monte Carlo</option>
-                            <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                            <option value="moderate">Moderate (fast)</option>
+                            <option value="hard">Hard Monte Carlo (slow)</option>
+                            <option value="veryhard" selected>Hard AlphaBetaEm (fast)</option>
+                            <option value="expert">Expert AlphaBetaEm (slow)</option>
                         </select>
                     </td>
                 </tr>
@@ -335,11 +338,13 @@
                     aiMonteCarlo = new MonteCarloAi();
                 }
                 aiMonteCarlo.getBestMove(currentFEN, probabilities, onAiMove, depth=10);
-            } else if (difficulty === "veryhard") {
+            } else if (difficulty === "veryhard" || difficulty === "expert") {
                 if (aiAlphaBetaEm === null) {
                     aiAlphaBetaEm = new AlphaBetaEmAi();
                 }
-                aiAlphaBetaEm.getBestMove(currentFEN, probabilities, onAiMove, depth=3);    
+                let depth = difficulty === "veryhard" ? 2 : 3;
+                aiAlphaBetaEm.getBestMove(currentFEN, probabilities, onAiMove, depth=depth);    
+            
             } else {
                 console.error('Unknown difficulty:', difficulty);
                 throw new Error('Unknown difficulty');
