@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RE2RS4QYKM"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-RE2RS4QYKM');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Probabilistic Chess</title>
@@ -240,9 +248,9 @@
                         <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Plays Black</checkbox>
                     </td><td>
                         <select id="ai-strength-b" name="ai-strength-b">
-                            <option value="moderate">Moderate (fast)</option>
+                            <option value="moderate" selected>Moderate (fast)</option>
                             <option value="hard">Hard Monte Carlo (slow)</option>
-                            <option value="veryhard" selected>Hard AlphaBetaEm (fast)</option>
+                            <option value="veryhard">Hard AlphaBetaEm (fast)</option>
                             <option value="expert">Expert AlphaBetaEm (slow)</option>
                         </select>
                     </td>
@@ -262,7 +270,11 @@
     </div>
     <!-- Make a link to marc.ai with white text and underline -->
     
-    <div>Marc Stogaitis & Guy Stogaitis | <a href="https://marc.ai" style="color: white; text-decoration: underline;">marc.ai</a></div>
+    <div calss="bottom-div">Marc Stogaitis & Guy Stogaitis 
+        | <a href="https://marc.ai" style="color: white; text-decoration: underline;">marc.ai</a> 
+        | version alpha 1.0 
+        | <a href="https://twitter.com/marcsto" aria-label="Twitter" class="white-link">Contact <svg id="twitter"><use xlink:href="static/svg-map.svg#twitter"></use></svg> </a></div>
+        
     
     <script>
         let diceAnimationTime = 1000;

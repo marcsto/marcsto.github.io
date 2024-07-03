@@ -44,3 +44,23 @@ body {
     0% { transform: rotate(0deg); opacity: 0; }
     100% { transform: rotate(360deg); opacity: 1; }
 }
+
+#twitter {
+    fill: #1DA1F2; /* Twitter blue color */
+    fill-opacity: 1;
+    width: 15px; /* Adjust size */
+    height: 15px; /* Adjust size */
+    transition: transform 0.3s ease; /* Smooth hover effect */
+}
+  
+a:hover #twitter {
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.white-link {
+    color: #fff;
+}
+
+#bottom-div {
+    margin-bottom: 5px;
+}
