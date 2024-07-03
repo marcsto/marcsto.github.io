@@ -9,21 +9,17 @@ function showWinner(result) {
         case 'w':
             resultMessage.textContent = 'White Wins!';
             resultAnimation.classList.add('white-wins');
-            status.textContent = 'White wins!';
-            status.style.color = 'green';
-
+            status.textContent = 'White Wins!';
             break;
         case 'b':
             resultMessage.textContent = 'Black Wins!';
             resultAnimation.classList.add('black-wins');
-            status.textContent = 'Black wins!';
-            status.style.color = 'green';
+            status.textContent = 'Black Wins!';
             break;
         case 'draw':
             resultMessage.textContent = 'Draw!';
             resultAnimation.classList.add('draw');
             status.textContent = 'Draw!';
-            status.style.color = 'green';
             break;
     }
 
