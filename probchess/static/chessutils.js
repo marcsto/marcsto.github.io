@@ -24,8 +24,13 @@ function stockfishMoveToJsChessMove(move) {
     return { from: startPos, to: endPos };
 }
 
+/**
+ * Converts a chess.js move object to UI board move indices.
+ * 
+ * @param {*} move  The move to convert. The format is either 'e2e4' or an object {from: 'e2', to: 'e4'}
+ * @returns Indices suitable to play on a UI board e.g. { startRow: 6, startCol: 4, endRow: 4, endCol: 4 } 
+ */
 function chessMoveToIndices(move) {
-    // Convert a single position from chess notation to indices
     // e.g. e2e4 -> { startRow: 6, startCol: 4, endRow: 4, endCol: 4 } 
 
     if (typeof move !== 'string') {
@@ -146,16 +151,6 @@ function _chessNotationToIndex(pos) {
     const column = pos.charCodeAt(0) - 'a'.charCodeAt(0);
     const row = 8 - parseInt(pos[1]);
     return { row: row, column: column };
-}
-
-/**
- * 
- * @returns The probability of successfully moving to to the desination square in the move
- */
-function getProbability(move, probabilities) {
-    const moveIndices = chessMoveToIndices(move);
-    // console.log("moveIndices: ", moveIndices, move, probabilities)
-    return probabilities[moveIndices.endRow][moveIndices.endCol];
 }
 
 function deepEqual(obj1, obj2) {

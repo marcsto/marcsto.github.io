@@ -141,7 +141,7 @@ class AlphaBetaEmAi {
         successScore = -successScore;
         board.undo(move);
         
-        let successProbability = getProbability(move, probabilities);
+        let successProbability = probabilities.getProb(move);
         let expectedScore = successProbability * successScore + (1 - successProbability) * failScore;
         if (this.debug) {
             let indent = "  ".repeat(this.initialDepth - depth);

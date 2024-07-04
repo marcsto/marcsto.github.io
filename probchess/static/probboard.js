@@ -39,7 +39,7 @@ function createChessboard() {
 
             const prob = document.createElement('div');
             prob.className = 'probability';
-            prob.textContent = (probabilities[row][col] * 100).toFixed(0) + '%';
+            prob.textContent = (probabilities.probabilities[row][col] * 100).toFixed(0) + '%';
             square.appendChild(prob);
 
             chessboard.appendChild(square);

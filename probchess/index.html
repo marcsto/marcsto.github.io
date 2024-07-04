@@ -235,31 +235,31 @@
             <table>
                 <tr>
                     <td>
-                        <input type="checkbox" id="aiw" onclick="requestAiMove()">AI Plays White</checkbox>
+                        <input type="checkbox" id="aiw" onclick="requestAiMove()">AI White</checkbox>
                     </td><td>
-                        <select id="ai-strength-w" name="ai-strength-w">
-                            <option value="moderate" selected>Moderate (fast)</option>
+                        <select id="ai-strength-w" name="ai-strength-w" class="dropdown">
+                            <option value="moderate">Moderate (fast)</option>
                             <option value="hard">Hard Monte Carlo (slow)</option>
-                            <option value="veryhard">Hard AlphaBetaEm (fast)</option>
+                            <option value="veryhard" selected>Hard AlphaBetaEm</option>
                             <option value="expert">Expert AlphaBetaEm (slow)</option>
 
                         </select>
                     </td>
                 </tr><tr>
                     <td>
-                        <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Plays Black</checkbox>
+                        <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Black</checkbox>
                     </td><td>
-                        <select id="ai-strength-b" name="ai-strength-b">
-                            <option value="moderate" selected>Moderate (fast)</option>
+                        <select id="ai-strength-b" name="ai-strength-b" class="dropdown">
+                            <option value="moderate">Moderate (fast)</option>
                             <option value="hard">Hard Monte Carlo (slow)</option>
-                            <option value="veryhard">Hard AlphaBetaEm (fast)</option>
+                            <option value="veryhard" selected>Hard AlphaBetaEm</option>
                             <option value="expert">Expert AlphaBetaEm (slow)</option>
                         </select>
                     </td>
                 </tr>
             </table>
             
-            <br /><br />
+            <br />
             <b>Rules:</b><br />
             <div style="width: 300px;">
                 <ul style="list-style-position: inside; padding-left: 1.0em; text-indent: -1.4em;">
@@ -268,12 +268,22 @@
                     <li>You win by capturing the king.</li>
                 </ul>
             </div>
+            <hr />
+            <b>Variants</b><br />
+
+            <select id="king-success-variants" name="king-success-variants" class="dropdown variant-dropdown" onchange="onKingSuccessChange()">
+                <option value="king-none" selected class="dropdown-title">Select King Move Variant</option>
+                <option value="king-always">King Moves Always Succeed</option>
+                <option value="king-ninety">King Moves 90% Success Rate</option>
+                <option value="king-double">King Moves Double Success Rate</option>
+            </select>
+            <div id="king-variant-explanation"></div>
         </div>
     </div>
     
     <div calss="bottom-div">Marc Stogaitis & Guy Stogaitis 
+        | version alpha 1.0
         | <a href="https://marc.ai" style="color: white; text-decoration: underline;">marc.ai</a> 
-        | version alpha 1.0 
         | <a href="https://twitter.com/marcsto" aria-label="Twitter" class="white-link">Contact</a>
         | <a href="https://twitter.com/intent/tweet?text=Check%20out%20Probabilistic%20Chess!&url=https://marc.ai/probchess" target="_blank" class="white-link">Please Share</a>
     </div>
@@ -282,12 +292,7 @@
     <script>
         let diceAnimationTime = 1000;
         // Generate initial random probabilities for demonstration purposes
-        let probabilities = Array.from({ length: 8 }, () => 
-            Array.from({ length: 8 }, () => Math.random())
-        );
-        // Make sure the king's starting squares have at least a 10% probbility
-        probabilities[0][4] = Math.max(probabilities[0][4], 0.1);
-        probabilities[7][4] = Math.max(probabilities[7][4], 0.1);
+        let probabilities = new Probabilities();
 
         function sendMoveToServer(startRow, startCol, endRow, endCol, fen) {
             const move = {
@@ -508,6 +513,33 @@
     </div>
     <script src="static/winlose.js"></script>
     <script>
+       function onKingSuccessChange() {
+            console.log('King success variant changed');
+            const selectElement = document.getElementById('king-success-variants');
+            const selectedValue = selectElement.value;
+            const explanationDiv = document.getElementById('king-variant-explanation');
+            // Defaults
+            probabilities.setKingMoveProb(null);
+            probabilities.setKingMoveProbDoubles(false);
+            explanationDiv.innerText = "";
+            switch (selectedValue) {
+                case 'king-always':
+                    probabilities.setKingMoveProb(1.0); // 100% success rate
+                    explanationDiv.innerText = "King moves always succeed.";
+                    break;
+                case 'king-ninety':
+                    probabilities.setKingMoveProb(0.9); // 90% success rate
+                    explanationDiv.innerText = "King moves have a 90% success rate.";
+                    break;
+                case 'king-double':
+                    probabilities.setKingMoveProbDoubles(true); // Double success rate
+                    explanationDiv.innerText = "King moves have double the success rate of what's written on the destination square.";
+                    break;
+                default:
+                    // Defaults already set
+                    break;
+            }
+        }
         // If the URL has a parameter called autoplay, enable the AI Plays White checkbox.
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('autoplay')) {

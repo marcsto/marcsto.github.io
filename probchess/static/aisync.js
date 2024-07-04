@@ -61,7 +61,7 @@ class SynchronousStockfish {
                 resolve({ bestMove: null, scores: [sideToPlay === winner ? WIN_SCORE : -WIN_SCORE], moves: [null], lines: [null]});
             });
         }
-        
+
         if (board.king_attacked(swapColor(board.turn()))) {
             // Attacking the opponent's king (we should eat it).
             //console.log("King is attacked. Stockfish may crash. Picking move that eats the king.");
@@ -146,7 +146,7 @@ class SynchronousStockfish {
                         if (moves[i].piece == 'k') {
                             let moveProb = 0;
                             if (this.probabilities) {
-                                moveProb = getProbability(moves[i], this.probabilities);    
+                                moveProb = probabilities.getProb(moves[i]);
                             }
                             if (moveProb > maxProb) {
                                 move = moves[i];

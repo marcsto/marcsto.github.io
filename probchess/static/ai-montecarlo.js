@@ -75,8 +75,8 @@ class MonteCarloAi {
                 bestMove = result.bestMove;
             }
             
-            const moveIndices = chessMoveToIndices(bestMove);
-            var destProb = probabilities[moveIndices.endRow][moveIndices.endCol];
+            
+            var destProb = probabilities.getProbFromStrMove(bestMove, board)//[moveIndices.endRow][moveIndices.endCol];
             if (Math.random() < destProb) {
                 // Play the move.
                 let success = board.move(bestMove, {'legal':false});

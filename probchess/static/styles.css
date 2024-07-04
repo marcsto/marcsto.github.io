@@ -72,6 +72,22 @@ a:hover #twitter {
     margin: auto;
     text-align: center;
     padding-top: 20px;
-    
+}
 
+.dropdown {
+    background-color: #444; /* Dark background for the dropdown */
+    color: #fff; /* Light text for the dropdown */
+    border: 1px solid #555;
+    padding: 5px;
+    border-radius: 5px;
+    
+}
+
+.dropdown-title {
+    color: #aaa; /* Light grey text for the title option */
+}
+
+.variant-dropdown {
+    margin-top: 10px;
+    margin-bottom: 5px;
 }

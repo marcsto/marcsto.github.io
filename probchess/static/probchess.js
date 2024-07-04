@@ -22,25 +22,25 @@ function probMove(data) {
 
     // Convert the move to UCI format
     var move = convertToChessJsMove(startRow, startCol, endRow, endCol, board);
-    var moveHuman = board.move(move, {'legal':false, verbose: true});
+    var moveObj = board.move(move, {'legal':false, verbose: true});
 
     var statusText = "";
     var isIllegal = false;
     var played = 0;
     var newFen = fen;
     var nextTurn = board.turn();
-    if (moveHuman) {
+    if (moveObj) {
         // Get the probability of the destination square
-        var destProb = probabilities[endRow][endCol];
+        var destProb = probabilities.getProb(moveObj) //probabilities[endRow][endCol];
         console.log('Destination probability: ' + destProb);
 
         // Play the move if a random number is less than the destination square's probability
         if (Math.random() < destProb) {
-            statusText = 'Move ' + moveHuman.san + ' succeeded! :)';
+            statusText = 'Move ' + moveObj.san + ' succeeded! :)';
             played = 1;
             newFen = board.fen();
         } else {
-            statusText = 'Unlucky. Move ' + moveHuman.san + ' failed. Skipping turn.';
+            statusText = 'Unlucky. Move ' + moveObj.san + ' failed. Skipping turn.';
             board.undo();
             newFen = board.fen();
             newFen = changeTurnFen(fen);
@@ -56,7 +56,7 @@ function probMove(data) {
         'probabilities': probabilities,
         'played': played,
         'status': statusText,
-        'move': moveHuman ? moveHuman.san : null,
+        'move': moveObj ? moveObj.san : null,
         'is_illegal': isIllegal,
         'turn': nextTurn,
         'winner': get_winner(newFen)
@@ -169,6 +169,77 @@ function removeEnPassant(fen) {
     let fenParts = fen.split(' ');
     fenParts[3] = '-';
     return fenParts.join(' ');
+}
+
+/**
+ * A class that represents a probability board. This is a board where each square has a probability of being moved to.
+ * 
+ * @param {Array} probabilities A 2D array of probabilities. The first index is the row and the 
+ * second index is the column. If null, the probabilities are randomly initialized.
+ * @param {Number} kingMoveProb The probability of moving the king. If null, the king's probability is randomly initialized.
+ * Allows for a variant of prob chess where king moves always succeed.
+ */
+class Probabilities {
+    constructor(probabilities = null, kingMoveProb = null) {
+        if (probabilities == null) {
+            this.initializeProbabilities();
+        } else {
+            this.probabilities = probabilities;
+        }
+        this.kingMoveProb = kingMoveProb;
+        this.doubleKingMoveProb = false;
+    }
+
+    initializeProbabilities() {
+        this.probabilities = Array.from({ length: 8 }, () => 
+            Array.from({ length: 8 }, () => Math.random())
+        );
+        // Make sure the king's starting squares have at least a 10% probbility
+        this.probabilities[0][4] = Math.max(this.probabilities[0][4], 0.1);
+        this.probabilities[7][4] = Math.max(this.probabilities[7][4], 0.1);
+    }
+
+    /**
+     * Sets the king's move probability. Allows for a variant of prob chess where king moves always succeed.
+     * When set, we use this probability when a king moves and ignore the board's probabilities.
+     * 
+     * @param {number} newProb the king's move probability, or null if you want to use the board's probabilities.
+     */
+    setKingMoveProb(newProb) { 
+        this.kingMoveProb = newProb;
+    }
+
+    setKingMoveProbDoubles(enable) {
+        this.doubleKingMoveProb = enable;
+        if (enable) {
+            this.setKingMoveProb(null);
+        }
+    }
+
+    /**
+     * Get the probability of successfully moving to the destination square.
+     * 
+     * @param {Object} move The move to get the probability of. The format is a verbose move from chess.js i.e. {from: 'e2', to: 'e4', piece: 'p' ...}
+     * @returns The probability of successfully moving to to the desination square in the move
+     */
+    getProb(move) {
+        if (this.kingMoveProb != null && (move.piece === 'k')) {
+            return this.kingMoveProb;
+        }
+        const moveIndices = chessMoveToIndices(move);
+        let prob = this.probabilities[moveIndices.endRow][moveIndices.endCol];
+        if (this.doubleKingMoveProb && move.piece === 'k') {
+            prob = Math.min(prob * 2, 1);
+        }
+        return prob;
+    }
+
+    getProbFromStrMove(move, board) {
+        let moveObj = stockfishMoveToJsChessMove(move);
+        moveObj['piece'] = board.get(moveObj.from).type;
+        return this.getProb(moveObj);
+    }
+
 }
 
 // Test Positions
