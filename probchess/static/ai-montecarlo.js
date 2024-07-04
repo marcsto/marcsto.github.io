@@ -36,7 +36,7 @@ class MonteCarloAi {
             console.log("*Move: ", moves[i], " simScore: ", simScores[i]);
         }
         console.log("Best move: ", moves[bestMoveIndex], " with score: ", bestScore);
-        return chessMoveToIndices(moves[bestMoveIndex]);
+        return {"move" : chessMoveToIndices(moves[bestMoveIndex]), "score": bestScore};
         
     }
 

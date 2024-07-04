@@ -16,6 +16,7 @@
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="stylesheet" href="static/probboard.css">
+    <link rel="stylesheet" href="static/threedots.css">
     <script src="static/chessutils.js"></script>
     <script src="static/chess.js"></script>
     <script src="static/probchess.js"></script>
@@ -191,6 +192,10 @@
             .side-panel-container {
                 margin-left: 0;
             }
+
+            .chessboard {
+                margin-bottom: 8px;
+            }
             
         }
     </style>
@@ -260,6 +265,14 @@
                     </select>
                 </div>
             </div>
+            <div id="aithinking" class="center hidden">
+                AI is thinking 
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
             <hr />
             <b>Rules:</b><br />
             <div style="width: 300px;">
@@ -295,7 +308,7 @@
         // Generate initial random probabilities for demonstration purposes
         let probabilities = new Probabilities();
 
-        function sendMoveToServer(startRow, startCol, endRow, endCol, fen) {
+        function sendMoveToServer(startRow, startCol, endRow, endCol, fen, score=null) {
             const move = {
                 startRow: parseInt(startRow),
                 startCol: parseInt(startCol),
@@ -329,7 +342,7 @@
                 if (data.move) {
                     const strikeThrough = data.played === 1 ? 0 : 1;
                     const turn_opposite = data.turn === 'b' ? 'w' : 'b';
-                    addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN);
+                    addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN, score);
                 }
                 
                 if (data.winner) {
@@ -349,6 +362,7 @@
         let aiAlphaBetaEm = null;
         
         function playAiMove(difficulty) {
+            document.getElementById('aithinking').classList.remove('hidden');
             if (difficulty === "moderate") {
                 if (aiStockfish === null) {
                     aiStockfish = new StockfishAi();
@@ -379,10 +393,11 @@
             if (turn === 'w' && document.getElementById('aiw').checked
                 || turn === 'b' && document.getElementById('aib').checked) {
                 console.log('Requesting AI move');
-                
                 if (document.getElementById('aiw').checked && document.getElementById('aib').checked) {
                     // Ai vs Ai. Play fast.
                     diceAnimationTime = 0;
+                } else {
+                    diceAnimationTime = 1000;
                 }
                 
                 var difficulty = document.getElementById("ai-strength-" + turn).value;
@@ -393,7 +408,18 @@
 
         function onAiMove(data) {
             console.log('AI move received:', data);
-            if (data === null) {
+            document.getElementById('aithinking').classList.add('hidden');
+
+            let move = null;
+            let score = '';
+            if (data && data.move) {
+                move = data.move;
+            }
+            if (data && data.score) {
+                score = data.score;
+            }
+
+            if (move === null || !move.move) {
                 console.log('AI did not return a move (checkmate). Picking random move.');
                 // Pick a random move in the following order:
                 // 1. A move where the king captures a piece
@@ -409,15 +435,15 @@
                 }
                 rnd_move = moves[Math.floor(Math.random() * moves.length)];
                 rnd_move = chessMoveToIndices(rnd_move.from + rnd_move.to);
-                data = rnd_move;
+                move = rnd_move;
             }
-            console.log('Playing AI move on board:', data);
+            console.log('Playing AI move on board:', move);
             // Play the ai move as if the user had clicked on the start square and end square
-            clicked_piece = document.querySelector(`img[data-start-row='${data.startRow}'][data-start-col='${data.startCol}']`);
+            clicked_piece = document.querySelector(`img[data-start-row='${move.startRow}'][data-start-col='${move.startCol}']`);
             lastClickedSquare = null;
             event = { target: clicked_piece };
             handleSquareClick(event);
-            event = { target: document.querySelector(`.square[data-row='${data.endRow}'][data-col='${data.endCol}']`) };
+            event = { target: document.querySelector(`.square[data-row='${move.endRow}'][data-col='${move.endCol}']`), 'score': score};
             handleSquareClick(event);
         }
 
@@ -444,7 +470,7 @@
          * @param {string} humanReadableMove - The move to add
          * @param {number} strikeThrough - Whether to strike through the text of the move
          */
-        function addMoveToSidePanel(humanReadableMove, moveTurn, strikeThrough, fen) {
+        function addMoveToSidePanel(humanReadableMove, moveTurn, strikeThrough, fen, score) {
             if (humanReadableMove === '') {
                 alert('Please enter a move.');
                 return;
@@ -476,6 +502,11 @@
             }
 
             cell.textContent = humanReadableMove;
+            if (score && score !== '') {
+                score = score / 100;
+                score = score.toFixed(2);
+                cell.textContent += ' (' + score + ')';
+            }
             cell.dataset.fen = fen;
             cell.classList.add('move');
             cell.addEventListener('click', handleHistoricalMoveClick)

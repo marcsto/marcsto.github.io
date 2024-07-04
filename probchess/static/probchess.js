@@ -192,7 +192,7 @@ class Probabilities {
 
     initializeProbabilities() {
         this.probabilities = Array.from({ length: 8 }, () => 
-            Array.from({ length: 8 }, () => Math.random())
+            Array.from({ length: 8 }, () => Math.max(Math.random(), 0.02))
         );
         // Make sure the king's starting squares have at least a 10% probbility
         this.probabilities[0][4] = Math.max(this.probabilities[0][4], 0.1);

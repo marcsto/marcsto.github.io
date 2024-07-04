@@ -10,7 +10,7 @@ class StockfishAi {
     getBestMove(fen, callback, depth=10) {
         this.stockfish.getBestMove(fen, depth).then((result) => {
             let bestMove = chessMoveToIndices(result.bestMove);
-            callback(bestMove);
+            callback({"move":bestMove, "score":result.scores[0]});
         });
     }
 }

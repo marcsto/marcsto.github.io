@@ -174,7 +174,11 @@ function handleSquareClick(event) {
 
         // clicked_square.classList.add('square-selected');
         lastClickedSquare = null;
-        sendMoveToServer(startRow, startCol, endRow, endCol, currentFEN);
+        let score = null;
+        if (event.score) {
+            score = event.score;
+        }
+        sendMoveToServer(startRow, startCol, endRow, endCol, currentFEN, score);
         
     }
 }

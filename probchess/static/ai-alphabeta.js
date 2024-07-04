@@ -170,7 +170,7 @@ class AlphaBetaEmAi {
         let board = new Chess(fen);
         this.alphaBeta(board, depth, -Infinity, Infinity, false, probabilities).then((result) => {
             console.log("Best move: ", result.bestMove, " with score: ", result.score);
-            callback(chessMoveToIndices(result.bestMove));
+            callback({"move":chessMoveToIndices(result.bestMove), "score":result.score});
         });
     }
 }
