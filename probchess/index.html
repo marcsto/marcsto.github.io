@@ -419,7 +419,8 @@
                 score = data.score;
             }
 
-            if (move === null || !move.move) {
+            if (move === null || !move) {
+                alert('AI did not return a move. Picking random move');
                 console.log('AI did not return a move (checkmate). Picking random move.');
                 // Pick a random move in the following order:
                 // 1. A move where the king captures a piece
