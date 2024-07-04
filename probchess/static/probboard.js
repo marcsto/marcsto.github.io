@@ -41,8 +41,20 @@ function createChessboard() {
             prob.className = 'probability';
             prob.textContent = (probabilities.probabilities[row][col] * 100).toFixed(0) + '%';
             square.appendChild(prob);
-
             chessboard.appendChild(square);
+
+            if (col == 0) {
+                const rowLabel = document.createElement('div');
+                rowLabel.className = 'row-label';
+                rowLabel.textContent = 8 - row;
+                square.appendChild(rowLabel);
+            }
+            if (row == 0) {
+                const colLabel = document.createElement('div');
+                colLabel.className = 'col-label';
+                colLabel.textContent = String.fromCharCode(97 + col);
+                square.appendChild(colLabel);
+            }
         }
     }
 

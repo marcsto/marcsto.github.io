@@ -89,5 +89,23 @@ a:hover #twitter {
 
 .variant-dropdown {
     margin-top: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+#king-variant-explanation {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.side-by-side-wrapper {
+    display: flex;
+}
+.side-by-side {
+    flex: 1;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.ai-dropdown {
+    max-width: 150px;
 }

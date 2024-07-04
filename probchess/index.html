@@ -132,6 +132,7 @@
         .side-panel-container {
             height: 60%;
             margin-left: 20px;
+            max-width: 310px;
         }
         .table-container {
             width: 300px;
@@ -232,34 +233,34 @@
                 </table>
             </div>
             <div class="status" id="status">Welcome to Probabilistic Chess</div>
-            <table>
-                <tr>
-                    <td>
-                        <input type="checkbox" id="aiw" onclick="requestAiMove()">AI White</checkbox>
-                    </td><td>
-                        <select id="ai-strength-w" name="ai-strength-w" class="dropdown">
-                            <option value="moderate">Moderate (fast)</option>
-                            <option value="hard">Hard Monte Carlo (slow)</option>
-                            <option value="veryhard" selected>Hard AlphaBetaEm</option>
-                            <option value="expert">Expert AlphaBetaEm (slow)</option>
-
-                        </select>
-                    </td>
-                </tr><tr>
-                    <td>
-                        <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Black</checkbox>
-                    </td><td>
-                        <select id="ai-strength-b" name="ai-strength-b" class="dropdown">
-                            <option value="moderate">Moderate (fast)</option>
-                            <option value="hard">Hard Monte Carlo (slow)</option>
-                            <option value="veryhard" selected>Hard AlphaBetaEm</option>
-                            <option value="expert">Expert AlphaBetaEm (slow)</option>
-                        </select>
-                    </td>
-                </tr>
-            </table>
-            
-            <br />
+            <hr />
+            <div class="side-by-side-wrapper">
+                <div class="side-by-side">
+                    <input type="checkbox" id="aiw" onclick="requestAiMove()">AI White</checkbox>
+                </div>
+                <div class="side-by-side">
+                    <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown">
+                        <option value="moderate">Moderate (fast)</option>
+                        <option value="hard">Hard Monte Carlo (slow)</option>
+                        <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                        <option value="expert">Expert AlphaBetaEm (slow)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="side-by-side-wrapper">
+                <div class="side-by-side">
+                    <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Black</checkbox>
+                </div>
+                <div class="side-by-side">
+                    <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown">
+                        <option value="moderate">Moderate (fast)</option>
+                        <option value="hard">Hard Monte Carlo (slow)</option>
+                        <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                        <option value="expert">Expert AlphaBetaEm</option>
+                    </select>
+                </div>
+            </div>
+            <hr />
             <b>Rules:</b><br />
             <div style="width: 300px;">
                 <ul style="list-style-position: inside; padding-left: 1.0em; text-indent: -1.4em;">
@@ -525,7 +526,6 @@
             switch (selectedValue) {
                 case 'king-always':
                     probabilities.setKingMoveProb(1.0); // 100% success rate
-                    explanationDiv.innerText = "King moves always succeed.";
                     break;
                 case 'king-ninety':
                     probabilities.setKingMoveProb(0.9); // 90% success rate
