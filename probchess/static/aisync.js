@@ -19,6 +19,7 @@ class SynchronousStockfish {
     initWorker() {
         console.log("Initializing stockfish worker...");
         var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+        console.log("Wasm supported: ", wasmSupported);
         this.stockfish = new Worker(wasmSupported ? 'static/stockfish.wasm.js' : 'static/stockfish.js');        
         this.stockfish.addEventListener('message', (e) => this.handleMessage(e));
         this.stockfish.onerror = (e) => this.onerror(e);
@@ -159,7 +160,7 @@ class SynchronousStockfish {
                 if (!move) {
                     move = moves[Math.floor(Math.random() * moves.length)];
                 }
-                let score = -WIN_SCORE;
+                let score = -MATE_SCORE;
                 this.sendBestMoveToCaller(move, [score], [move], [move]);
                 return;
             }
@@ -172,7 +173,7 @@ class SynchronousStockfish {
             this.scores[pvIndex] = score;
         } else if (message.includes('score mate')) {
             const score = parseInt(message.split('score mate ')[1].split(' ')[0]);
-            this.scores[pvIndex] = score > 0 ? WIN_SCORE : -WIN_SCORE;
+            this.scores[pvIndex] = score > 0 ? MATE_SCORE - score : -MATE_SCORE - score;
         }
     }
 

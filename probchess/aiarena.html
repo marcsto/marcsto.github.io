@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+
+    <script src="static/chessutils.js"></script>
+    <script src="static/chess.js"></script>
+    <script src="static/probchess.js"></script>
+    <script src="static/aisync.js"></script>
+    <script src="static/ai-stockfish.js"></script>
+    <script src="static/ai-alphabeta.js"></script>
+    <script src="static/ai-minmax.js"></script>
+    
+    <script>
+
+        function onAiMove(move) {
+            
+        }
+
+        function playOneGame(aiW, aiB) {
+            let fen = "";
+            let probabilities = new Probabilities();
+            let probChess = new ProbChess(probabilities);
+
+            for (let i = 0; i < 200; i++) {
+                let aiMoveResult = ai1.getBestMove()
+                let move = aiMoveResult.move;
+                let data = playMove(move.startRow, move.startCol, move.endRow, move.endCol, fen);
+                fen = data.fen;
+                if (data.winner) {
+                    return data.winner;
+                }
+            }
+            return "draw";
+            
+        }
+
+        function playMove(startRow, startCol, endRow, endCol, fen) {
+            const move = {
+                startRow: parseInt(startRow),
+                startCol: parseInt(startCol),
+                endRow: parseInt(endRow),
+                endCol: parseInt(endCol),
+                fen: fen,
+                probabilities: probabilities
+            };
+            data = probMove(move);
+            console.log('probMoveResult:', data);
+            return data;
+        }
+            
+     
+        
+    </script>
+</body>
+</html>

@@ -1,4 +1,6 @@
 const WIN_SCORE = 10000;
+const MATE_SCORE = 9000; // Not as good since you still need to capture the king.
+
 function stockfishMoveToJsChessMove(move) {
     // Convert a single position from stockfish notation to chess.js notation
     // e.g. e2e4 -> { from: 'e2', to: 'e4' } 

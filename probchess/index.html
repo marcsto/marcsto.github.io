@@ -13,7 +13,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Probabilistic Chess</title>
-    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
     <link rel="stylesheet" href="static/styles.css">
     <link rel="stylesheet" href="static/probboard.css">
     <link rel="stylesheet" href="static/threedots.css">
@@ -248,7 +248,7 @@
                         <option value="moderate">Moderate (fast)</option>
                         <option value="hard">Hard Monte Carlo (slow)</option>
                         <option value="veryhard" selected>Hard AlphaBetaEm</option>
-                        <option value="expert">Expert AlphaBetaEm (slow)</option>
+                        <option value="expert" >Expert AlphaBetaEm (slow)</option>
                     </select>
                 </div>
             </div>
@@ -258,20 +258,21 @@
                 </div>
                 <div class="side-by-side">
                     <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown">
-                        <option value="moderate">Moderate (fast)</option>
+                        <option value="moderate" >Moderate (fast)</option>
                         <option value="hard">Hard Monte Carlo (slow)</option>
                         <option value="veryhard" selected>Hard AlphaBetaEm</option>
-                        <option value="expert">Expert AlphaBetaEm</option>
+                        <option value="expert" >Expert AlphaBetaEm</option>
                     </select>
                 </div>
             </div>
             <div id="aithinking" class="center hidden">
-                AI is thinking 
+                AI is thinking <span id="timer">0s</span>
                 <div class="dots">
                     <div class="dot"></div>
                     <div class="dot"></div>
                     <div class="dot"></div>
                 </div>
+                
             </div>
             <hr />
             <b>Rules:</b><br />
@@ -286,8 +287,8 @@
             <b>Variants</b><br />
 
             <select id="king-success-variants" name="king-success-variants" class="dropdown variant-dropdown" onchange="onKingSuccessChange()">
-                <option value="king-none" selected class="dropdown-title">Select King Move Variant</option>
-                <option value="king-always">King Moves Always Succeed</option>
+                <option value="king-none" class="dropdown-title">Select King Move Variant</option>
+                <option value="king-always" selected>King Moves Always Succeed</option>
                 <option value="king-ninety">King Moves 90% Success Rate</option>
                 <option value="king-double">King Moves Double Success Rate</option>
             </select>
@@ -363,6 +364,7 @@
         
         function playAiMove(difficulty) {
             document.getElementById('aithinking').classList.remove('hidden');
+            startTimer();
             if (difficulty === "moderate") {
                 if (aiStockfish === null) {
                     aiStockfish = new StockfishAi();
@@ -372,13 +374,20 @@
                 if (aiMonteCarlo === null) {
                     aiMonteCarlo = new MonteCarloAi();
                 }
-                aiMonteCarlo.getBestMove(currentFEN, probabilities, onAiMove, depth=10);
+                config = {'probabilities': probabilities};
+                aiMonteCarlo.getBestMove(currentFEN, onAiMove, config);
             } else if (difficulty === "veryhard" || difficulty === "expert") {
                 if (aiAlphaBetaEm === null) {
                     aiAlphaBetaEm = new AlphaBetaEmAi();
                 }
-                let depth = difficulty === "veryhard" ? 2 : 3;
-                aiAlphaBetaEm.getBestMove(currentFEN, probabilities, onAiMove, depth=depth);    
+                config = {'probabilities': probabilities};
+                config.depth = 2;
+                config.evalDepth = 3;
+                if (difficulty === "expert") {
+                    config.depth = 4;
+                    config.evalDepth = 2;
+                }
+                aiAlphaBetaEm.getBestMove(currentFEN, onAiMove, config);    
             
             } else {
                 console.error('Unknown difficulty:', difficulty);
@@ -408,7 +417,8 @@
 
         function onAiMove(data) {
             console.log('AI move received:', data);
-            document.getElementById('aithinking').classList.add('hidden');
+            //document.getElementById('aithinking').classList.add('hidden');
+            stopTimer();
 
             let move = null;
             let score = '';
@@ -446,6 +456,21 @@
             handleSquareClick(event);
             event = { target: document.querySelector(`.square[data-row='${move.endRow}'][data-col='${move.endCol}']`), 'score': score};
             handleSquareClick(event);
+        }
+
+        let timerInterval;
+        function startTimer() {
+            let timerElement = document.getElementById('timer');
+            let seconds = 0;
+            timerInterval = setInterval(() => {
+                seconds++;
+                timerElement.textContent = `${seconds}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            //document.getElementById('timer').textContent = '0s'; // Reset timer
         }
 
         function rollDice(finalFaceType, turn) {
@@ -547,7 +572,7 @@
     <script src="static/winlose.js"></script>
     <script>
        function onKingSuccessChange() {
-            console.log('King success variant changed');
+            
             const selectElement = document.getElementById('king-success-variants');
             const selectedValue = selectElement.value;
             const explanationDiv = document.getElementById('king-variant-explanation');
@@ -555,6 +580,7 @@
             probabilities.setKingMoveProb(null);
             probabilities.setKingMoveProbDoubles(false);
             explanationDiv.innerText = "";
+            console.log('King success variant:', selectedValue);
             switch (selectedValue) {
                 case 'king-always':
                     probabilities.setKingMoveProb(1.0); // 100% success rate
@@ -572,6 +598,7 @@
                     break;
             }
         }
+        onKingSuccessChange();
         // If the URL has a parameter called autoplay, enable the AI Plays White checkbox.
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('autoplay')) {

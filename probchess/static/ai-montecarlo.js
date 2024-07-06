@@ -111,12 +111,12 @@ class MonteCarloAi {
     }
 
 
-    getBestMove(fen, probabilities, callback, depth=5, initialDepth=10) {
-        depth = 10; // TODO: Hardcoded for now.
-        initialDepth = 10;
+    getBestMove(fen, callback, config) {
+        let depth = 10; // TODO: Hardcoded for now.
+        let initialDepth = 10;
         let simDepth=5
         let simCount=50
-        this.runMonteCarlo(fen, probabilities, depth, initialDepth, simDepth, simCount).then((result) => {
+        this.runMonteCarlo(fen, config.probabilities, depth, initialDepth, simDepth, simCount).then((result) => {
             callback(result);
         });
     }

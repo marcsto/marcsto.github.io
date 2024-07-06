@@ -5,14 +5,10 @@
     <script src="static/seedrandom.min.js"></script>
     <script>
         var seededRandom = new Math.seedrandom('2');
-        
         let probabilities = Array.from({ length: 8 }, () => 
                 Array.from({ length: 8 }, () => seededRandom())
             );
-        probabilities = new probabilities(probabilities);
-        
     </script>
-
 
     <link rel="stylesheet" href="static/probboard.css">
     <script src="static/probboard.js"></script>
@@ -22,48 +18,74 @@
     <script src="static/probchess.js"></script>
     <script src="static/aisync.js"></script>
     <script src="static/ai-alphabeta.js"></script>
+    <script src="static/ai-minmax.js"></script>
+    <script src="static/ai-stockfish.js"></script>
+    <script src="static/ai-montecarlo.js"></script>
     <!-- <script src="static/ai3.js"></script> -->
     <div class="chessboard" id="chessboard"></div>
+
+    
+
     <script>
+        probabilities = new Probabilities(probabilities);
+        probabilities.setKingMoveProb(1.0);
         createChessboard();
         // Run the following after a 1 second delay
         setTimeout(function() {
             var ai = new AlphaBetaEmAi();
+            //var ai = new StockfishAi();
+            //var ai = new MonteCarloAi();
+            config = {'probabilities': probabilities, 'depth': 3, 'evalDepth': 2}
+            //var ai = new MinMaxEmAi();
 
             let test_positions = [
-                //['k6q/8/7Q/8/8/8/8/7K w - - 0 1', 'h6h8', 'eat queen easy'],
-                ['k6q/8/7Q/8/8/8/8/7K b - - 0 1', 'h8h6', 'eat queen easy black'],
+                ['2K3k1/8/8/p7/P7/8/8/8 w - - 0 1', 'na', 'go to pawn'],
+                // ['k6q/8/7Q/8/8/8/8/7K w - - 0 1', 'h6h8', 'eat queen easy'],
+                // ['k6q/8/7Q/8/8/8/8/7K b - - 0 1', 'h8h6', 'eat queen easy black'],
                 // ['k7/8/R7/8/8/8/8/7K w - - 0 1', 'a6a8', 'eat king'],
                 // ['k7/8/8/8/8/7r/8/7K b - - 0 1', 'h3h1', 'eat king black'],
-                // ['k7/7P/8/8/8/8/8/7K w - - 0 1', 'h7h8q', 'promotion easy'],
-                // ['B4K2/8/8/8/8/8/1q4k1/8 b - - 0 1', 'g2g3', 'avoid check dont block'],
-                // ['rn1k1bnr/ppp1qppp/8/3P4/4P3/2N1P3/PP1P1P1P/R1B1KB1R b KQ - 2 13', 'na', 'dont eat e4'],
-                //['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'e2e4', 'startpos'],
+                // ['5k2/7P/8/8/8/8/8/7K w - - 0 1', 'h7h8q', 'promotion easy'],
+                // ['B4K2/8/8/8/8/8/1q4k1/8 b - - 0 1', '!b2b7', 'avoid check dont block'],
+                // ['rn1k1bnr/ppp1qppp/8/3P4/4P3/2N1P3/PP1P1P1P/R1B1KB1R b KQ - 2 13', '!e7e4', 'dont eat e4'],
+                // ['K7/2k5/8/7p/8/8/6r1/6r1 b - - 0 1', 'g1a1', 'two rooks easy win'],
+                // ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'e2e4', 'startpos'],
             ]
             //['B4K2/8/8/8/8/8/1q4k1/8 w - - 0 1', 'a8g2 or f8g8?', 'eat king low prob'],
-            next_position(ai, test_positions, 0);
+            next_position(ai, config, test_positions, 0);
         }, 1000);
 
-        function next_position(ai, test_positions, i){
+        function next_position(ai, config, test_positions, i){
             let fen = test_positions[i][0];
             updateBoardFromFEN(fen);
-            let move = test_positions[i][1];
+            let expected = test_positions[i][1];
+            let negated = false;
+            if (expected[0] == '!') {
+                expected = expected.slice(1);
+                negated = true;
+            }
             let description = test_positions[i][2];
             console.log('testing', fen);
             console.log('probabilities', probabilities)
-            ai.getBestMove(fen, probabilities, 3, function(result) {
+            ai.getBestMove(fen, function(result) {
                 console.log("result  Raw", result);
-                console.log("expectedRaw", move);
+                console.log("expectedRaw", expected);
                 console.log(description);
-                move = toAlgebraic(move)
-                result = toAlgebraic(result)
-                console.log('Expected:', move, 'Got:', result);
-                console.log(deepEqual(result, move));
+                expected = toAlgebraic(expected)
+                result = toAlgebraic(result.move)
+                console.log('Expected:', expected, 'Got:', result);
+
+                let expectedMatchesActual = deepEqual(result, expected)
+                if (negated) {
+                    expectedMatchesActual = !expectedMatchesActual;
+                }
+                console.log(expectedMatchesActual, 'ExpectedMatchesActual', description, 'Expected:', expected, 'Got:', result);
+                
+                
                 console.log('-------------------');
                 if (i < test_positions.length - 1) {
-                    next_position(ai, test_positions, i + 1);
+                    next_position(ai, config, test_positions, i + 1);
                 }
-            });
+            }, config);
         }
      
         

@@ -1,10 +1,10 @@
 
 /**
- * A chess AI that runs a probability-aware alpha beta search to determine the best move.
+ * A chess AI that runs a probability-aware min-max search to determine the best move.
  * It uses expected value maximization to determine the best move.
  * It uses the Stockfish engine to evaluate the board state.
  */
-class AlphaBetaEmAi {
+class MinMaxEmAi {
 
     constructor() {
         this.stockfish = new SynchronousStockfish();
@@ -18,13 +18,14 @@ class AlphaBetaEmAi {
         this.debugLines = [];
     }
 
-    async alphaBeta(board, depth, alpha, beta, isNoMoveBranch, probabilities, isMaximizingPlayer) {
+    async alphaBeta(board, depth, alpha, beta, isNoMoveBranch, probabilities) {
         // Evaluate
         if (depth === 0) {
             let score = await this.evaluateBoard(board, probabilities);
-            if (!isMaximizingPlayer) {
-                return { score: -score, bestMove: null };
-            }
+            // if (this.debug) {
+            //     console.log("Score: ", score, "Depth: ", depth, "FEN: ", board.fen());
+            // }
+            
             return { score: score, bestMove: null };
         }
 
@@ -34,36 +35,32 @@ class AlphaBetaEmAi {
         let winner = getWinnerFen(fen);
         if (winner !== null) {
             let side = turnFen(fen);
-            let score = null;
             if (winner === side) {
-                score = WIN_SCORE;
+                return { score: WIN_SCORE, bestMove: null };
             } else {
-                score = -WIN_SCORE;
+                return { score: -WIN_SCORE, bestMove: null };
             }
-            if (!isMaximizingPlayer) {
-                return { score: -score, bestMove: null };
-            }
-            return { score: score, bestMove: null };
         }
     
         let moves = get_all_moves(fen);
     
         // Score if the move fails to play due to probabilities
         let failBoard = new Chess(changeTurnFen(fen));
-        let failResult = await this.alphaBeta(failBoard, depth - 1, alpha, beta, true, probabilities, !isMaximizingPlayer);
-        let failScore = failResult.score;
+        
+        //let failResult = { score: 0};
+        let failResult = await this.alphaBeta(failBoard, depth - 1, alpha, beta, true, probabilities); // TODO: Don't do -1 depth?
+         let failScore = -failResult.score;
+
+        // let failResult = await this.evaluateBoard(failBoard, probabilities);
+        // let failScore = -failResult;
 
         if (depth == this.initialDepth) {
             console.log("Fail score: ", failScore);
         }
 
-        
-        let bestEval = isMaximizingPlayer ? -Infinity : Infinity;
+        let maxScore = -Infinity;
         let bestMove = null;
         let movesWithScores = [];
-        if (moves.length == 0) {
-            throw "No moves available " + fen;
-        }
         for (let move of moves) {
             // if (toAlgebraic(move) === 'h6h5' && depth == this.initialDepth) {
             //     this.debug = true;
@@ -80,40 +77,29 @@ class AlphaBetaEmAi {
                 }
                 currentLine.push([toAlgebraic(move), null, [], failScore, null, null]);
             }
-            let result = await this.processMove(board, move, depth, alpha, beta, isNoMoveBranch, probabilities, failScore, isMaximizingPlayer);
+            let result = await this.processMove(board, move, depth, alpha, beta, isNoMoveBranch, probabilities, failScore);
             let score = result.score;
             
             if (depth == this.initialDepth) {
                 // console.log("  ** Score:", score, "Move:", toAlgebraic(move));
                 movesWithScores.push({move: toAlgebraic(move), score: score});
             }
-            
-            if (isMaximizingPlayer) {
-                if (score > bestEval) {
-                    bestEval = score;
-                    bestMove = move;
-                }
-                alpha = Math.max(alpha, score);
-            } else {
-                if (score < bestEval) {
-                    bestEval = score;
-                    bestMove = move;
-                }
-                beta = Math.min(beta, score);
+            if (score > maxScore) {
+                maxScore = score;
+                bestMove = move;
             }
-            
-            if (beta <= alpha) {
-                break; // Alpha-beta cut-off
+            /*if (score >= beta) {
+                return { score: beta, bestMove: null }; // fail hard beta-cutoff
             }
+            if (score > alpha) {
+                alpha = score;
+                bestMove = move;
+            }*/
             
         }
-
-        if (movesWithScores.length > 0) {
-            movesWithScores.sort((a, b) => b.score - a.score);
-        }
-
         if (this.debug && movesWithScores.length > 0) {
             // Sort moves by score
+            movesWithScores.sort((a, b) => b.score - a.score);
             for (let moveWithScore of movesWithScores) {
                 console.log("  ** Score: ", moveWithScore.score, "Move: ", moveWithScore.move); 
             }
@@ -122,38 +108,10 @@ class AlphaBetaEmAi {
         if (this.debug && depth == this.initialDepth) {
             // Sort all the lines in debugLines
             this.sortDebugLine(this.debugLines);
-            console.log("Lines format: [Move, ExpectedScore, [Children], Fail score, SuccessScore, Prob]")
             console.log("Debug lines: ", this.debugLines);
             
         }
-
-        if (movesWithScores.length > 0) {
-            // See if there are several top moves with the same score.
-            let topScore = movesWithScores[0].score;
-            let topMoves = [];
-            for (let moveWithScore of movesWithScores) {
-                if (moveWithScore.score == topScore) {
-                    topMoves.push(moveWithScore.move);
-                } else {
-                    break;
-                }
-            }
-            if (topMoves.length > 1) {
-                // Use stockfish to pick the best move.
-                let result = await this.stockfish.getBestMove(board.fen(), 8, 1, board, probabilities);
-                let moves = result.moves;
-                for (let move of moves) {
-                    move = toAlgebraic(move);
-                    if (topMoves.includes(move)) {
-                        console.log("Many equal moves. Used stockfish to pick: ", move);
-                        bestMove = move;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return { score: bestEval, bestMove: bestMove };
+        return { score: maxScore, bestMove: bestMove };
         
     }
 
@@ -166,7 +124,7 @@ class AlphaBetaEmAi {
         }
     }
 
-    async processMove(board, move, depth, alpha, beta, isNoMoveBranch, probabilities, failScore, isMaximizingPlayer) {
+    async processMove(board, move, depth, alpha, beta, isNoMoveBranch, probabilities, failScore) {
         if (this.debug) {
             let indent = "  ".repeat(this.initialDepth - depth);
             // console.log(indent, depth, "  ** startProcessMove: ", toAlgebraic(move));
@@ -177,9 +135,9 @@ class AlphaBetaEmAi {
             console.log("Illegal move: ", bestMove);
             throw "Illegal move: " + bestMove;
         }
-        successScore = await this.alphaBeta(board, depth - 1, alpha, beta, isNoMoveBranch, probabilities, !isMaximizingPlayer);
+        successScore = await this.alphaBeta(board, depth - 1, -beta, -alpha, isNoMoveBranch, probabilities);
         successScore = successScore.score;
-        //successScore = -successScore;
+        successScore = -successScore;
         board.undo(move);
         
         let successProbability = probabilities.getProb(move);
@@ -207,18 +165,13 @@ class AlphaBetaEmAi {
     }
 
     getBestMove(fen, callback, config) {
-        // Config: probabilities, depth, evalDepth
-        console.log("getBestMove", fen, config);
         this.initialDepth = config.depth
         this.evalDepth = config.evalDepth;
         let board = new Chess(fen);
-        this.alphaBeta(board, config.depth, -Infinity, Infinity, false, config.probabilities, true).then((result) => {
+        this.alphaBeta(board, depth, -Infinity, Infinity, false, config.probabilities).then((result) => {
             console.log("Best move: ", result.bestMove, " with score: ", result.score);
             callback({"move":chessMoveToIndices(result.bestMove), "score":result.score});
         });
     }
-    // ~50 sec for 3 depth starting pos, 3 eval depth (minmax)
-    // ~14 sec for 3 depth starting pos, 3 eval depth (alpha-beta) [might have had bugs]
-    // ~20 sec for 3 depth starting pos, 3 eval depth (alpha-beta)
-    // ~10 sec for 4 depth starting pos, 2 eval depth (alpha-beta)
+    // ~50 sec for 3 depth starting pos, 3 eval depth
 }

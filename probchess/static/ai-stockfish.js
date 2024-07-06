@@ -7,8 +7,12 @@ class StockfishAi {
         this.stockfish = new SynchronousStockfish();
     }
 
-    getBestMove(fen, callback, depth=10) {
-        this.stockfish.getBestMove(fen, depth).then((result) => {
+    getBestMove(fen, callback, config={}) {
+        let default_config = {
+            depth: 10
+        }
+        config = Object.assign(default_config, config);
+        this.stockfish.getBestMove(fen, config.depth, 3).then((result) => {
             let bestMove = chessMoveToIndices(result.bestMove);
             callback({"move":bestMove, "score":result.scores[0]});
         });
