@@ -248,6 +248,7 @@
                     <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown">
                         <option value="moderate">Moderate (fast)</option>
                         <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                        <option value="advanced">Advanced AlphaBetaEm</option>
                         <option value="expert" >Expert AlphaBetaEm (slow)</option>
                     </select>
                 </div>
@@ -260,6 +261,7 @@
                     <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown">
                         <option value="moderate" >Moderate (fast)</option>
                         <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                        <option value="advanced">Advanced AlphaBetaEm</option>
                         <option value="expert" >Expert AlphaBetaEm</option>
                     </select>
                 </div>
@@ -282,7 +284,7 @@
                     <li>You win by capturing the king.</li>
                 </ul>
             </div>
-            Learn More in <a href='https://marc.ai/probabilistic-chess.html' class="white-link">This Blog Post</a>
+            Learn More in <a href='https://marc.ai/probabilistic-chess.html' class="white-link">this Blog Post</a>
             <hr />
             <b>Variants</b><br />
 
@@ -375,14 +377,17 @@
                 }
                 config = {'probabilities': probabilities};
                 aiMonteCarlo.getBestMove(currentFEN, onAiMove, config);
-            } else if (difficulty === "veryhard" || difficulty === "expert") {
+            } else if (difficulty === "veryhard" || difficulty === "advanced" || difficulty === "expert") {
                 if (aiAlphaBetaEm === null) {
                     aiAlphaBetaEm = new AlphaBetaEmAi();
                 }
                 config = {'probabilities': probabilities};
                 config.depth = 2;
-                config.evalDepth = 3;
-                if (difficulty === "expert") {
+                config.evalDepth = 2;
+                if (difficulty === "advanced") {
+                    config.depth = 3;
+                    config.evalDepth = 2;
+                }else if (difficulty === "expert") {
                     config.depth = 4;
                     config.evalDepth = 2;
                 }

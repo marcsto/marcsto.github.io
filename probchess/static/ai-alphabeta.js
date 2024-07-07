@@ -16,7 +16,6 @@ class AlphaBetaEmAi {
         //         [['e7e5',0.6],['d7d5',0.4]]],
         //     ['d2d4',0.5,
         //         [['e7e5',0.6],['d7d5',0.4]]]]
-        this.debugLines = [];
     }
 
     async alphaBeta(board, depth, alpha, beta, isNoMoveBranch, probabilities, isMaximizingPlayer) {
@@ -210,6 +209,7 @@ class AlphaBetaEmAi {
     getBestMove(fen, callback, config) {
         // Config: probabilities, depth, evalDepth
         console.log("getBestMove", fen, config);
+        this.debugLines = [];
         this.initialDepth = config.depth
         this.evalDepth = config.evalDepth;
         let board = new Chess(fen);
