@@ -1,3 +1,5 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
+
 function showWinner(result) {
     const resultAnimation = document.getElementById('resultAnimation');
     const resultMessage = document.getElementById('resultMessage');

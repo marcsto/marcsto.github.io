@@ -1,3 +1,5 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
+
 /**
  * A simple AI that runs asks stockfish for the best move. This doesn't look at probabilities at all.
  */

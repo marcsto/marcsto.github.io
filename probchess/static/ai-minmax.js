@@ -1,4 +1,6 @@
 
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
+
 /**
  * A chess AI that runs a probability-aware min-max search to determine the best move.
  * It uses expected value maximization to determine the best move.

@@ -1,3 +1,4 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
 
 /**
  * A chess AI that runs a montecarlo simulation to determine the best move.

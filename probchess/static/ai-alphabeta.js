@@ -1,3 +1,4 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
 
 /**
  * A chess AI that runs a probability-aware alpha beta search to determine the best move.

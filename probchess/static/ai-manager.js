@@ -1,3 +1,5 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
+
 let aiStockfish = null;
 let aiMonteCarlo = null;
 let aiAlphaBetaEm = null;

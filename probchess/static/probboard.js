@@ -1,3 +1,4 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
 
 const pieces = {
     'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',

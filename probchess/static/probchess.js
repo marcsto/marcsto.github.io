@@ -1,4 +1,14 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
 
+/**
+ * Probabilistic chess.
+ * https://marc.ai/probchess
+ */
+
+/**
+ * Play a probabilistic move.
+ * 
+ */
 function probMove(data) {
     var fen = data.fen;
     var startRow = data.startRow;

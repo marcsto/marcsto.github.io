@@ -1,3 +1,4 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
 
 /**
  * Syncronous Stockfish class. Encapsulates the Stockfish worker to provide a synchronous interface so 

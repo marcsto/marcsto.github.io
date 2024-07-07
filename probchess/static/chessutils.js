@@ -1,3 +1,5 @@
+// Copyright Marc Stogaitis 2024. All Rights Reserved.
+
 const WIN_SCORE = 10000;
 const MATE_SCORE = 9000; // Not as good since you still need to capture the king.
 
