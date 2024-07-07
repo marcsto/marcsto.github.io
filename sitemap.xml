@@ -16,7 +16,7 @@
 <loc>https://marc.ai/dont-touch-face.html</loc>
 <lastmod>2020-05-06T19:51:56-07:00</lastmod>
 <image:image>
-<image:loc>https://marc.ai/media/posts/2/appicon.png</image:loc>
+<image:loc>https://marc.ai/media\posts\2/appicon.png</image:loc>
 <image:title><![CDATA[]]></image:title>
 </image:image>
 </url>
@@ -24,7 +24,7 @@
 <loc>https://marc.ai/doodlecast-for-chromecast-android-app.html</loc>
 <lastmod>2020-05-06T21:22:51-07:00</lastmod>
 <image:image>
-<image:loc>https://marc.ai/media/posts/4/doodlecast-bird.png</image:loc>
+<image:loc>https://marc.ai/media\posts\4/doodlecast-bird.png</image:loc>
 <image:title><![CDATA[]]></image:title>
 </image:image>
 </url>
@@ -36,7 +36,7 @@
 <loc>https://marc.ai/introducing-punch-corona-alpha-release.html</loc>
 <lastmod>2020-05-06T17:36:34-07:00</lastmod>
 <image:image>
-<image:loc>https://marc.ai/media/posts/1/punch-corona-1.png</image:loc>
+<image:loc>https://marc.ai/media\posts\1/punch-corona-1.png</image:loc>
 <image:title><![CDATA[]]></image:title>
 </image:image>
 </url>
@@ -44,15 +44,27 @@
 <loc>https://marc.ai/piclearn-helps-you-learn-chinese-and-french.html</loc>
 <lastmod>2020-05-06T21:22:19-07:00</lastmod>
 <image:image>
-<image:loc>https://marc.ai/media/posts/5/piclearn-audio-recognition.png</image:loc>
+<image:loc>https://marc.ai/media\posts\5/piclearn-audio-recognition.png</image:loc>
 <image:title><![CDATA[]]></image:title>
+</image:image>
+</url>
+<url>
+<loc>https://marc.ai/probabilistic-chess.html</loc>
+<lastmod>2024-07-06T18:51:57-07:00</lastmod>
+<image:image>
+<image:loc>https://marc.ai/media\posts\10/android-chrome-192x192.png</image:loc>
+<image:title><![CDATA[Probabilistic Chess]]></image:title>
+</image:image>
+<image:image>
+<image:loc>https://marc.ai/media\posts\10/probabilistic-chess-screenshot.PNG</image:loc>
+<image:title><![CDATA[Probabilistic Chess Screenshot]]></image:title>
 </image:image>
 </url>
 <url>
 <loc>https://marc.ai/punch-corona-frequently-asked-questions.html</loc>
 <lastmod>2020-05-09T12:46:41-07:00</lastmod>
 <image:image>
-<image:loc>https://marc.ai/media/posts/7/Screenshot-from-2020-05-06-16-36-53.png</image:loc>
+<image:loc>https://marc.ai/media\posts\7/Screenshot-from-2020-05-06-16-36-53.png</image:loc>
 <image:title><![CDATA[]]></image:title>
 </image:image>
 </url>
