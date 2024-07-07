@@ -247,8 +247,8 @@
                     <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown">
                         <option value="moderate">Moderate (fast)</option>
                         <option value="hard">Hard Monte Carlo (slow)</option>
-                        <option value="veryhard" selected>Hard AlphaBetaEm</option>
-                        <option value="expert" >Expert AlphaBetaEm (slow)</option>
+                        <option value="veryhard" >Hard AlphaBetaEm</option>
+                        <option value="expert" selected>Expert AlphaBetaEm (slow)</option>
                     </select>
                 </div>
             </div>
@@ -287,9 +287,8 @@
             <b>Variants</b><br />
 
             <select id="king-success-variants" name="king-success-variants" class="dropdown variant-dropdown" onchange="onKingSuccessChange()">
-                <option value="king-none" class="dropdown-title">Select King Move Variant</option>
-                <option value="king-always" selected>King Moves Always Succeed</option>
-                <option value="king-ninety">King Moves 90% Success Rate</option>
+                <option value="king-none" class="dropdown-title" selected>Select King Move Variant</option>
+                <option value="king-always">King Moves Always Succeed</option>
                 <option value="king-double">King Moves Double Success Rate</option>
             </select>
             <div id="king-variant-explanation"></div>
@@ -417,7 +416,7 @@
 
         function onAiMove(data) {
             console.log('AI move received:', data);
-            //document.getElementById('aithinking').classList.add('hidden');
+            document.getElementById('aithinking').classList.add('hidden');
             stopTimer();
 
             let move = null;
