@@ -3,7 +3,7 @@
     <title>Marc.ai</title>
     <link href="https://marc.ai/feed.xml" rel="self" />
     <link href="https://marc.ai" />
-    <updated>2024-07-06T18:51:57-07:00</updated>
+    <updated>2024-07-07T08:27:53-07:00</updated>
     <author>
         <name>Marc Stogaitis</name>
     </author>
@@ -18,18 +18,18 @@
         <id>https://marc.ai/probabilistic-chess.html</id>
         <media:content url="https://marc.ai/media/posts/10/android-chrome-192x192.png" medium="image" />
 
-        <updated>2024-07-06T18:51:57-07:00</updated>
+        <updated>2024-07-07T08:27:53-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/10/android-chrome-192x192.png" alt="Probabilistic Chess" />
-                    Introducing Probabilistic Chess An exciting new variant of chess that you can play at marc.ai/probchess. For example, if you attempt to move a pawn from e2 to e4 and e4 has a 60% success probability, you will see a dice roll animation. The dice will&hellip;
+                    Introducing Probabilistic Chess An exciting new variant of chess that you can play at marc.ai/probchess. By adding success probabilities to each move, the game becomes a blend of strategy and excitement, making every decision critical and unpredictable. For example, if you attempt to move a&hellip;
                 ]]>
             </summary>
         <content type="html">
             <![CDATA[
                     <p><img src="https://marc.ai/media/posts/10/android-chrome-192x192.png" class="type:primaryImage" alt="Probabilistic Chess" /></p>
                 <h3>Introducing Probabilistic Chess</h3>
-<p>An exciting new variant of chess that you can play at <a rel="noreferrer" target="_new" href="https://marc.ai/probchess"></a><a href="https://marc.ai/probchess" target="_new">marc.ai/probchess</a>.</p>
+<p>An exciting new variant of chess that you can play at <a rel="noreferrer" target="_new" href="https://marc.ai/probchess"></a><a href="https://marc.ai/probchess" target="_new">marc.ai/probchess</a>.  By adding success probabilities to each move, the game becomes a blend of strategy and excitement, making every decision critical and unpredictable.</p>
 <h3>The Rules:</h3>
 <ul>
 <li><strong>Movement Probability</strong>: Each square on the board has a probability of successfully moving to it.</li>
@@ -53,8 +53,8 @@
 <h3>All Games End in a Win</h3>
 <p>Due to the probabilistic nature of the board, traditional draw scenarios do not apply. Stalemates are impossible because the king can always attempt to escape, and the opponent might fail to capture it. Even with only two kings left, they can capture each other by moving to low probability squares. If one king tries to capture and fails, the other can succeed.</p>
 <p>This rule change is similar to modifications in professional sports to eliminate draws, like hockey's overtime and shootouts or the NBA's continual overtimes until a winner is declared.</p>
-<p>Always having a game end in a win is enjoyable. However, it may need adjustment if players can prolong the game indefinitely, such as with two kings avoiding each other. A potential solution could be a "shrinking board" algorithm where the board gradually gets smaller, forcing the kings toward each other.</p>
-<p>Feedback on handling these scenarios or reintroducing draws is welcome.</p>
+<p>Always having a game end in a win is really enjoyable, eliminates the frustration of stalemates and perpetual checks and ensures a thrilling conclusion every time. It also means that victory is always within reach: even if you fall behind, the a lucky roll of the dice means you always have a chance to come back.</p>
+<p>In case players decide to prolong the game indefinitely (e.g. with two kings avoiding each other instead of doing the honorable thing of thing of trying to capture each other in a final showdown), I'm considering adding a "shrinking board" variation where the board gradually gets smaller, forcing the kings toward each other. Feedback on handling these scenarios is welcome.</p>
 <h3>Variants</h3>
 <p>While I like the simplicity of the default rules, we're testing out different variants of the game based on our experience playing it. You can try these out in the 'Variants' drop-down section of the site.</p>
 <ul>
@@ -66,17 +66,17 @@
 <h4>Board Probabilities Setup</h4>
 <ul>
 <li><strong>Random Initialization</strong>: Probabilities are randomly set at the start of each game.</li>
-<li><strong>King Square</strong>: Starts with a probability of at least 10%. This lowers the chances of having the king start on an almost uncapturable square.</li>
-<li><strong>Minimum Probability</strong>: 2% for any square.</li>
+<li><strong>King Square</strong>: Starts with a probability of at least 20%. This lowers the chances of having the king start on an almost uncapturable square.</li>
+<li><strong>Minimum Probability</strong>: 5% for any square.</li>
 <li><strong>Maximum Probability</strong>: 99% for any square.</li>
 </ul>
 <p><em>Note: These rules may change as the game evolves.</em></p>
 <h4>Client-Side Implementation</h4>
 <p>The game is implemented purely in HTML, CSS, and JavaScript to run without a server. This approach ensures fast loading times and low server costs but poses challenges for creating a performant chess AI.</p>
-<h3>Chess AI</h3>
-<p>Creating a chess AI for Probabilistic Chess is a fun project. The AI combines chess.js and stockfish.js.</p>
+<h3>Chess AI Opponent</h3>
+<p>Creating a chess AI for Probabilistic Chess is a fun project. It needs to both understand chess and think probabilistically. The AI combines chess.js and stockfish.js.</p>
 <h4>Stockfish AI (Moderate)</h4>
-<p>This AI uses Stockfish to determine the best move. While Stockfish is a strong chess program, it does not account for probabilities, resulting in occasional poor decisions, like repeatedly attempting moves to low probability squares.</p>
+<p>This simple AI uses Stockfish to determine the best move. While Stockfish is a strong chess program, it does not account for probabilities, resulting in occasional poor decisions, like repeatedly attempting moves to low probability squares.</p>
 <h4>Alpha-Beta with Expectation-Maximization (Hard and Expert)</h4>
 <p>This is the primary AI for the game, incorporating an alpha-beta search algorithm and the expectation-maximization algorithm to consider board probabilities. It calculates:</p>
 <ul>
@@ -95,6 +95,8 @@
 </ul>
 <h4>Monte Carlo Simulation</h4>
 <p>This earlier algorithm ran several simulations using Stockfish's top moves to determine the best move based on average scores. It worked decently but was slow and is no longer actively developed.</p>
+<h3>Status</h3>
+<p>This is an experimental 'alpha' version of the game. Please expect changes along the way and feedback is welcome.</p>
 <h3>Conclusion</h3>
 <p>Developing Probabilistic Chess has been a lot of fun. My dad and I have spent over 30 years working on programming projects together and a big part of that was focused on ML and applying it to chess so building a new variant of chess together has been great.</p>
 <h3>Credits</h3>
