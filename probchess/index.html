@@ -183,6 +183,37 @@
         .highlight {
             background-color: #0055a5;
         }
+
+        .autoretry {
+            position: fixed;
+            top: 5px; /* Position it at the top of the viewport */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999; /* High z-index to ensure it's on top */
+            background-color: black; /* Black background for the text */
+            color: white; /* White text color */
+            padding: 3px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Optional: adds a shadow for better visibility */
+            border: none;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            font-size: calc(2px + 1vmin); /* Scalable font size */
+        }
+        .button {
+            background-color: #007bff; /* Button-like background color */
+            color: white; /* Text color */
+            padding: 6px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer; /* Makes the div look clickable */
+            text-align: center; /* Center the text inside the div */
+            transition: background-color 0.3s; /* Smooth transition for hover effect */
+            margin-right: 10px; /* Space between button and text */
+        }
+        .button:hover {
+            background-color: #0056b3; /* Darker color on hover */
+        }
         
         /* Use media query to make the side panel under the chessboard on smaller screens */
         @media (max-width: calc(92vmin + 350px)) {
@@ -203,6 +234,13 @@
 </head>
 <body>
     <div class="status" id="winner"></div>
+    <div class="hidden autoretry">
+        <div class="button" onclick="enableAutoRetry()">
+            Enable Auto Retry?
+        </div>
+        <span id="autoretry-description"></span>
+    </div>
+    
     <div class="board-panel-container">
         <div class="chessboard" id="chessboard"></div>
         <div class="side-panel-container">
@@ -298,7 +336,7 @@
     </div>
     
     <div calss="bottom-div">Marc Stogaitis & Guy Stogaitis 
-        | version alpha 1.1
+        | version alpha 1.2
         | <a href="https://marc.ai" style="color: white; text-decoration: underline;">marc.ai</a> 
         | <a href="https://twitter.com/marcsto" aria-label="Twitter" class="white-link">Contact</a>
         | <a href="https://twitter.com/intent/tweet?text=Check%20out%20Probabilistic%20Chess!%20@marcsto&url=https://marc.ai/probchess" target="_blank" class="white-link">Please Share</a>
@@ -309,8 +347,21 @@
         let diceAnimationTime = 1000;
         // Generate initial random probabilities for demonstration purposes
         let probabilities = new Probabilities();
+        let failedInARow = 0;
+        let autoRetryMoveWhite = null;
+        let autoRetryMoveBlack = null;
+        
+        let moveAttemptHistory = [];
+        
 
         function sendMoveToServer(startRow, startCol, endRow, endCol, fen, score=null) {
+            document.querySelector('.autoretry').classList.add('hidden');
+            const boardMove = {
+                startRow: startRow,
+                startCol: startCol,
+                endRow: endRow,
+                endCol: endCol,
+            };
             const move = {
                 startRow: parseInt(startRow),
                 startCol: parseInt(startCol),
@@ -320,7 +371,6 @@
                 probabilities: probabilities
             };
             data = probMove(move);
-            
             console.log('probMoveResult:', data);
             if (data.is_illegal) {
                 currentFEN = data.fen;
@@ -329,6 +379,18 @@
                 document.getElementById('status').textContent = data.status;
                 return;
             }
+
+            moveAttemptHistory.push({boardMove: boardMove, humanMove: data.move});
+
+            if (data.played) {
+                failedInARow = 0;
+                document.querySelector('.autoretry').classList.add('hidden');
+                autoRetryMoveBlack = null;
+                autoRetryMoveWhite = null;
+            } else {
+                failedInARow += 1;
+            }
+
             rollDice(data.played, data.turn === 'b' ? 'w' : 'b');
             setTimeout(() => {
                 if (data.status) {
@@ -355,8 +417,41 @@
                 if (data.turn === 'b' && document.getElementById('aib').checked
                     || data.turn === 'w' && document.getElementById('aiw').checked) {
                     requestAiMove();
+                } else if (autoRetryMoveBlack && data.turn === 'b') {
+                    playMoveOnBoard(autoRetryMoveBlack);
+                } else if (autoRetryMoveWhite && data.turn === 'w') {
+                    playMoveOnBoard(autoRetryMoveWhite);
+                } else if (failedInARow >= 2) {
+                    offerAutoRetry();
                 }
             }, diceAnimationTime);
+        }
+
+        /**
+         * Since both sides tried to play a move and failed, offer to automatically retry
+         * the human's move until one player's move succeeds.
+         */
+        function offerAutoRetry(move) {
+            // Get the last move that was attempted by this player (2 moves back)
+            if (moveAttemptHistory.length < 2) {
+                return;
+            }
+            const lastMove = moveAttemptHistory[moveAttemptHistory.length - 2].humanMove;
+            document.getElementById('autoretry-description').textContent = "We'll retry " + lastMove + " until a move succeeds.";
+            document.querySelector('.autoretry').classList.remove('hidden');
+        }
+
+        function enableAutoRetry() {
+            if (moveAttemptHistory.length < 2) {
+                return;
+            }
+            const lastMove = moveAttemptHistory[moveAttemptHistory.length - 2].boardMove;
+            if (currentFEN.split(' ')[1] === 'w') {
+                autoRetryMoveWhite = lastMove;
+            } else {
+                autoRetryMoveBlack = lastMove;
+            }
+            playMoveOnBoard(lastMove);
         }
 
         let aiStockfish = null;
@@ -454,11 +549,18 @@
             }
             console.log('Playing AI move on board:', move);
             // Play the ai move as if the user had clicked on the start square and end square
+            playMoveOnBoard(move, score);
+        }
+
+        function playMoveOnBoard(move, score=null) {
             clicked_piece = document.querySelector(`img[data-start-row='${move.startRow}'][data-start-col='${move.startCol}']`);
             lastClickedSquare = null;
             event = { target: clicked_piece };
             handleSquareClick(event);
-            event = { target: document.querySelector(`.square[data-row='${move.endRow}'][data-col='${move.endCol}']`), 'score': score};
+            event = { target: document.querySelector(`.square[data-row='${move.endRow}'][data-col='${move.endCol}']`)};
+            if (score) {
+                event.score = score;
+            }
             handleSquareClick(event);
         }
 
