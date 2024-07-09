@@ -204,9 +204,21 @@ class Probabilities {
         this.probabilities = Array.from({ length: 8 }, () => 
             Array.from({ length: 8 }, () => Math.min(Math.max(Math.random(), 0.25), 0.99))
         );
+        this.makeSymmetric();
         // Make sure the king's starting squares have at least a 10% probbility
         this.probabilities[0][4] = Math.max(this.probabilities[0][4], 0.2);
         this.probabilities[7][4] = Math.max(this.probabilities[7][4], 0.2);
+    }
+
+    /**
+     * Initializes the probabilities symmetrically. The top half of the board is mirrored to the bottom half.
+     */
+    makeSymmetric() {
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 8; j++) {
+                this.probabilities[7 - i][j] = this.probabilities[i][j];
+            }
+        }
     }
 
     /**
