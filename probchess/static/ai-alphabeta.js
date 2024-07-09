@@ -11,6 +11,8 @@ class AlphaBetaEmAi {
         this.stockfish = new SynchronousStockfish();
         this.initialDepth = null;
         this.debug = true;
+        this.lastGetBestMoveParams = {'fen':null, 'depth':-1, 'evalDepth':-1 };
+        this.lastGetBestMoveReturnValue = null;
         // Debug chess lines (moves and score). It contains the moves and scores, and recursively the moves and scores below it.
         // Ex: [['e2e4',0.5,
         //         [['e7e5',0.6],['d7d5',0.4]]],
@@ -209,13 +211,22 @@ class AlphaBetaEmAi {
     getBestMove(fen, callback, config) {
         // Config: probabilities, depth, evalDepth
         console.log("getBestMove", fen, config);
+        if (this.lastGetBestMoveParams.fen == fen && this.lastGetBestMoveParams.depth == config.depth && this.lastGetBestMoveParams.evalDepth == config.evalDepth) {
+            console.log("Returning cached value");
+            callback(this.lastGetBestMoveReturnValue);
+            return;
+        }
+        
         this.debugLines = [];
         this.initialDepth = config.depth
         this.evalDepth = config.evalDepth;
         let board = new Chess(fen);
         this.alphaBeta(board, config.depth, -Infinity, Infinity, false, config.probabilities, true).then((result) => {
             console.log("Best move: ", result.bestMove, " with score: ", result.score);
-            callback({"move":chessMoveToIndices(result.bestMove), "score":result.score});
+            let returnValue = {"move":chessMoveToIndices(result.bestMove), "score":result.score};
+            this.lastGetBestMoveParams = {'fen':fen, 'depth':config.depth, 'evalDepth':config.evalDepth };
+            this.lastGetBestMoveReturnValue = returnValue;
+            callback(returnValue);
         });
     }
     // ~50 sec for 3 depth starting pos, 3 eval depth (minmax)
