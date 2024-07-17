@@ -1,18 +1,18 @@
 // Copyright Marc Stogaitis 2024. All Rights Reserved.
 
 const pieces = {
-    'r': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
-    'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
-    'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-    'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
-    'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
-    'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
-    'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-    'N': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
-    'B': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-    'Q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
-    'K': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
-    'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg'
+    'r': 'static/images/pieces/Chess_rdt45.svg',
+    'n': 'static/images/pieces/Chess_ndt45.svg',
+    'b': 'static/images/pieces/Chess_bdt45.svg',
+    'q': 'static/images/pieces/Chess_qdt45.svg',
+    'k': 'static/images/pieces/Chess_kdt45.svg',
+    'p': 'static/images/pieces/Chess_pdt45.svg',
+    'R': 'static/images/pieces/Chess_rlt45.svg',
+    'N': 'static/images/pieces/Chess_nlt45.svg',
+    'B': 'static/images/pieces/Chess_blt45.svg',
+    'Q': 'static/images/pieces/Chess_qlt45.svg',
+    'K': 'static/images/pieces/Chess_klt45.svg',
+    'P': 'static/images/pieces/Chess_plt45.svg'
 };
 
 let currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -21,11 +21,12 @@ let currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 // let currentFEN = "r3kb1r/ppp1ppp1/7p/8/4pn2/8/PPPP1P1q/RNB1K1R1 b Qkq - 0 15"
 //let currentFEN = "k7/8/K7/8/8/8/8/8 w - - 0 1";
 //let currentFEN = "r3q1k1/2b2p1p/pp3npQ/2p2N2/3pP3/3P1NP1/PP3P2/R1B2RK1 w - - 1 19"
+// let currentFEN = "k6Q/8/K7/8/8/8/8/8 w - - 0 1"; // Capture king
 
 let lastClickedSquare = null;
 
-function createChessboard() {
-    const chessboard = document.getElementById('chessboard');
+function createChessboard(boardId, small=false) {
+    const chessboard = document.getElementById(boardId);
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
             const square = document.createElement('div');
@@ -39,7 +40,12 @@ function createChessboard() {
             }
 
             const prob = document.createElement('div');
-            prob.className = 'probability';
+            if (small) {
+                prob.className = 'probability probability-small';
+            } else {
+                prob.className = 'probability';
+            }
+            
             prob.textContent = (probabilities.probabilities[row][col] * 100).toFixed(0) + '%';
             square.appendChild(prob);
             chessboard.appendChild(square);
@@ -184,9 +190,9 @@ function handleSquareClick(event) {
     }
 }
 
-function updateBoardFromFEN(fen) {
+function updateBoardFromFEN(fen, boardId='chessboard') {
             
-    const chessboard = document.getElementById('chessboard');
+    const chessboard = document.getElementById(boardId);
     const squares = chessboard.querySelectorAll('.square');
     const board = new Chess(fen);
     
@@ -260,4 +266,43 @@ function highlightPiecesToPlay(black_turn) {
             }
         }
     });
+}
+
+function createDice(containerId, big=false) {
+    const faces = [
+        { class: 'happy', emoji: '😊' },
+        { class: 'sad', emoji: '😢' },
+    ];
+
+    const container = document.getElementById(containerId);
+
+    for (let i = 0; i < 6; i++) {
+        const face = faces[i % faces.length];
+        const div = document.createElement('div');
+        if (big) {
+            div.className = `face-big ${face.class}`;
+        } else {
+            div.className = `face ${face.class}`;
+        }
+        
+        div.textContent = face.emoji;
+        container.appendChild(div);
+    }
+}
+
+function rollDice(finalFaceType, diceId) {
+    const dice = document.getElementById(diceId);
+
+    // Remove the existing rolling classes to reset the animation
+    dice.classList.remove('rolling-happy', 'rolling-sad');
+
+    // Force reflow to reset the animation
+    void dice.offsetWidth;
+
+    // Add the appropriate rolling class based on the finalFaceType parameter
+    if (finalFaceType === 1) {
+        dice.classList.add('rolling-happy');
+    } else {
+        dice.classList.add('rolling-sad');
+    }
 }

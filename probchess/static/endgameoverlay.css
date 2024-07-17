@@ -1,0 +1,94 @@
+
+  
+  #overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    /* align-items: center; */
+    z-index: 1000;  
+    color: #121212;
+  }
+  
+  #replay-container {
+    position: relative;
+    background-color: rgb(255, 255, 255);
+    padding: 2vmin;
+    border-radius: 10px;
+    text-align: center;
+    margin: 20px auto auto auto;
+    box-sizing: border-box;
+    word-wrap: break-word;
+  }
+  
+  #replay-boards {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .replay-board {
+    /* width: 250px;
+    height: 250px; */
+
+    display: grid;
+    grid-template-columns: repeat(8, 9vmin);
+    grid-template-rows: repeat(8, 9vmin);
+    border: 2px solid #333;
+  }
+  
+  /* The div contains a chess board and the dice. Make the dice appear over the chess board, centered and on top of everything 
+     Also make the dice bigger
+  */
+  .replay-dice {
+    
+    width: 80px;
+    height: 80px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2001;
+    transform-style: preserve-3d;
+  }
+  
+  .replay-bot-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 8px;
+    font-size: 2vmin;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  #replay-title {
+    font-size: 3vmin;
+    padding: 2vmin;
+  }
+
+.bottom-right-text {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 10px;
+    font-size: 1.5vmin;
+}
+
+.top-right-text {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 10px;
+  font-size: 1.5vmin;
+}
+
+#replay-share-content {
+  position: relative;
+}

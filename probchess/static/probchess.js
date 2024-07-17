@@ -49,6 +49,9 @@ function probMove(data) {
             statusText = 'Move ' + moveObj.san + ' succeeded! :)';
             played = 1;
             newFen = board.fen();
+            if (get_winner(newFen)) {
+                statusText = statusText + ' Game Over!';
+            }
         } else {
             statusText = 'Unlucky. Move ' + moveObj.san + ' failed. Skipping turn.';
             board.undo();
@@ -132,6 +135,13 @@ function convertToChessJsMove(startRow, startCol, endRow, endCol, board) {
        ex: 6 4 5 4 -> { from: 'e2', to: 'e3'}
     */
     console.log('Converting ' + startRow + ':' + startCol + '  ' + endRow + ':' + endCol);
+
+    // Make sure all the parameters are ints
+    startRow = parseInt(startRow);
+    startCol = parseInt(startCol);
+    endRow = parseInt(endRow);
+    endCol = parseInt(endCol);
+
     startRow = 7 - startRow;
     endRow = 7 - endRow;
 

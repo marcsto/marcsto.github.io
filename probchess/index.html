@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="static/styles.css">
     <link rel="stylesheet" href="static/probboard.css">
     <link rel="stylesheet" href="static/threedots.css">
+    <link rel="stylesheet" href="static/happydice.css">
+    <link rel="stylesheet" href="static/endgameoverlay.css">
     <script src="static/chessutils.js"></script>
     <script src="static/chess.js"></script>
     <script src="static/probchess.js"></script>
@@ -26,6 +28,12 @@
     <script src="static/ai-montecarlo.js"></script>
     <script src="static/ai-alphabeta.js"></script>
     <script src="static/probboard.js"></script>
+    <script src="static/html2canvas.min.js"></script>
+    <script src="static/gif.js"></script>
+    
+    <script src="static/FileSaver.min.js"></script>
+    <script src="static/gifmaker.js"></script>
+    <script src="static/endgameoverlay.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
     <!-- <script type="module">
@@ -65,58 +73,6 @@
             line-height: 40px; /* Adjust line height to match the dice height */
         }
 
-        /* Dice */
-        .dice {
-            width: 40px;
-            height: 40px;
-            position: relative;
-            transform-style: preserve-3d;
-        }
-
-        .face {
-            width: 40px;
-            height: 40px;
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            background: #1e1e1e;
-            border: 2px solid #333;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .face:nth-child(1) { transform: rotateY(0deg) translateZ(20px); }
-        .face:nth-child(2) { transform: rotateY(90deg) translateZ(20px); }
-        .face:nth-child(3) { transform: rotateY(180deg) translateZ(20px); }
-        .face:nth-child(4) { transform: rotateY(-90deg) translateZ(20px); }
-        .face:nth-child(5) { transform: rotateX(90deg) translateZ(20px); }
-        .face:nth-child(6) { transform: rotateX(-90deg) translateZ(20px); }
-
-        @keyframes roll-happy {
-            0% { transform: rotateX(0deg) rotateY(0deg); }
-            25% { transform: rotateX(90deg) rotateY(90deg); }
-            50% { transform: rotateX(180deg) rotateY(180deg); }
-            75% { transform: rotateX(270deg) rotateY(270deg); }
-            100% { transform: rotateX(360deg) rotateY(360deg); }
-        }
-
-        @keyframes roll-sad {
-            0% { transform: rotateX(0deg) rotateY(0deg); }
-            25% { transform: rotateX(90deg) rotateY(90deg); }
-            50% { transform: rotateX(180deg) rotateY(180deg); }
-            75% { transform: rotateX(270deg) rotateY(270deg); }
-            100% { transform: rotateX(360deg) rotateY(270deg); }
-        }
-
-        .rolling-happy {
-            animation: roll-happy 1s cubic-bezier(0.33, 1, 0.68, 1) forwards;
-        }
-
-        .rolling-sad {
-            animation: roll-sad 1s cubic-bezier(0.33, 1, 0.68, 1) forwards;
-        }
-
         .status-container {
             display: flex;
             align-items: center;
@@ -128,7 +84,6 @@
             display: flex;
             margin-top: 20px;
         }
-
 
         /* Side panel */
         .side-panel-container {
@@ -220,6 +175,7 @@
             .board-panel-container {
                 flex-direction: column;
                 align-items: center;
+                margin-top: 20px;
             }
             .side-panel-container {
                 margin-left: 0;
@@ -227,8 +183,13 @@
 
             .chessboard {
                 margin-bottom: 8px;
+                grid-template-columns: repeat(8, 12vmin);
+                grid-template-rows: repeat(8, 12vmin);
             }
-            
+
+            .col-label {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -250,20 +211,8 @@
                         <tr>
                             <th></th>
                             <th><center><div class="dice" id="dicew">
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
                             </div></center></th>
                             <th><center><div class="dice" id="diceb">
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
-                                <div class="face happy">😊</div>
-                                <div class="face sad">😢</div>
                             </div></center></th>
                         </tr>
                         <tr>
@@ -284,8 +233,8 @@
                 </div>
                 <div class="side-by-side">
                     <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown">
-                        <option value="moderate">Moderate (fast)</option>
-                        <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                        <option value="moderate" selected>Moderate (fast)</option>
+                        <option value="veryhard">Hard AlphaBetaEm</option>
                         <option value="advanced">Advanced AlphaBetaEm</option>
                         <option value="expert" >Expert AlphaBetaEm (slow)</option>
                     </select>
@@ -297,8 +246,8 @@
                 </div>
                 <div class="side-by-side">
                     <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown">
-                        <option value="moderate" >Moderate (fast)</option>
-                        <option value="veryhard" selected>Hard AlphaBetaEm</option>
+                        <option value="moderate" selected>Moderate (fast)</option>
+                        <option value="veryhard">Hard AlphaBetaEm</option>
                         <option value="advanced">Advanced AlphaBetaEm</option>
                         <option value="expert" >Expert AlphaBetaEm</option>
                     </select>
@@ -327,9 +276,9 @@
             <b>Variants</b><br />
 
             <select id="king-success-variants" name="king-success-variants" class="dropdown variant-dropdown" onchange="onKingSuccessChange()">
-                <option value="king-none" class="dropdown-title" selected>Select King Move Variant</option>
-                <option value="king-always">King Moves Always Succeed</option>
-                <option value="king-double">King Moves Double Success Rate</option>
+                <option value="king-none" class="dropdown-title">Select King Move Variant</option>
+                <option value="king-always" >King Moves Always Succeed</option>
+                <option value="king-double" selected>King Moves Double Success Rate</option>
             </select>
             <div id="king-variant-explanation"></div>
         </div>
@@ -351,7 +300,11 @@
         let autoRetryMoveWhite = null;
         let autoRetryMoveBlack = null;
         
-        let moveAttemptHistory = [];
+        /* Format for each entry:
+            {boardMove: boardMove, humanMove: data.move, 
+            fen: data.fen, played: data.played, status: data.status, score: score}
+        */
+        let gameHistory = [];
         
 
         function sendMoveToServer(startRow, startCol, endRow, endCol, fen, score=null) {
@@ -380,7 +333,8 @@
                 return;
             }
 
-            moveAttemptHistory.push({boardMove: boardMove, humanMove: data.move});
+            gameHistory.push({boardMove: boardMove, humanMove: data.move, 
+                fenBefore: fen, fenAfter: data.fen, played: data.played, status: data.status, score: score});
 
             if (data.played) {
                 failedInARow = 0;
@@ -391,7 +345,7 @@
                 failedInARow += 1;
             }
 
-            rollDice(data.played, data.turn === 'b' ? 'w' : 'b');
+            rollDiceForSide(data.played, data.turn === 'b' ? 'w' : 'b');
             setTimeout(() => {
                 if (data.status) {
                     document.getElementById('status').textContent = data.status;
@@ -433,19 +387,19 @@
          */
         function offerAutoRetry(move) {
             // Get the last move that was attempted by this player (2 moves back)
-            if (moveAttemptHistory.length < 2) {
+            if (gameHistory.length < 2) {
                 return;
             }
-            const lastMove = moveAttemptHistory[moveAttemptHistory.length - 2].humanMove;
+            const lastMove = gameHistory[gameHistory.length - 2].humanMove;
             document.getElementById('autoretry-description').textContent = "We'll retry " + lastMove + " until a move succeeds.";
             document.querySelector('.autoretry').classList.remove('hidden');
         }
 
         function enableAutoRetry() {
-            if (moveAttemptHistory.length < 2) {
+            if (gameHistory.length < 2) {
                 return;
             }
-            const lastMove = moveAttemptHistory[moveAttemptHistory.length - 2].boardMove;
+            const lastMove = gameHistory[gameHistory.length - 2].boardMove;
             if (currentFEN.split(' ')[1] === 'w') {
                 autoRetryMoveWhite = lastMove;
             } else {
@@ -579,21 +533,8 @@
             //document.getElementById('timer').textContent = '0s'; // Reset timer
         }
 
-        function rollDice(finalFaceType, turn) {
-            const dice = document.getElementById('dice' + turn);
-
-            // Remove the existing rolling classes to reset the animation
-            dice.classList.remove('rolling-happy', 'rolling-sad');
-
-            // Force reflow to reset the animation
-            void dice.offsetWidth;
-
-            // Add the appropriate rolling class based on the finalFaceType parameter
-            if (finalFaceType === 1) {
-                dice.classList.add('rolling-happy');
-            } else {
-                dice.classList.add('rolling-sad');
-            }
+        function rollDiceForSide(finalFaceType, turn) {
+            rollDice(finalFaceType, 'dice' + turn);
         }
 
         /**
@@ -660,14 +601,16 @@
         }
 
         function doOnload() {
-            rollDice(1, 'w');
-            rollDice(1, 'b');
+            createDice('dicew');
+            createDice('diceb');
+            rollDiceForSide(1, 'w');
+            rollDiceForSide(1, 'b');
         }
         // Optional: Automatically roll the dice when the page loads
         window.onload = () => doOnload();
         
 
-        createChessboard();
+        createChessboard('chessboard');
 
 
     </script>
@@ -712,5 +655,38 @@
             requestAiMove();
         }
     </script>
+
+
+
+
+    <div id="overlay" class="hidden">
+        <div class="top-right-text share-button" onclick="document.getElementById('overlay').classList.add('hidden')">Close</div>
+        <div id="replay-container">
+            <div id="replay-share-content">
+                <div id="replay-title">
+                    Congratulations, You Beat Stockfish at Probabilistic Chess!
+                </div>
+                <div id="replay-boards"></div>
+                <div class="bottom-right-text">marc.ai/probchess</div>
+            </div>
+            <div class="center-container">
+                <button id="sharebtn" class="share-button hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 30 30" fill="white">
+                        <path d="M 23 3 A 4 4 0 0 0 19 7 A 4 4 0 0 0 19.09375 7.8359375 L 10.011719 12.376953 A 4 4 0 0 0 7 11 A 4 4 0 0 0 3 15 A 4 4 0 0 0 7 19 A 4 4 0 0 0 10.013672 17.625 L 19.089844 22.164062 A 4 4 0 0 0 19 23 A 4 4 0 0 0 23 27 A 4 4 0 0 0 27 23 A 4 4 0 0 0 23 19 A 4 4 0 0 0 19.986328 20.375 L 10.910156 15.835938 A 4 4 0 0 0 11 15 A 4 4 0 0 0 10.90625 14.166016 L 19.988281 9.625 A 4 4 0 0 0 23 11 A 4 4 0 0 0 27 7 A 4 4 0 0 0 23 3 z"></path>
+                        </svg>
+                    Share
+                </button>
+                <button id="downloadgifbtn" class="share-button hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 30 30" fill="white">
+                        <path d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        <polyline data-name="Right" fill="none" id="Right-2" points="7.9 12.3 12 16.3 16.1 12.3" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        <line fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" x2="12" y1="2.7" y2="14.2"/>
+                    </svg>
+                    Download GIF</button>
+            </div>
+        </div>
+    </div>
+
+
 </body>
 </html>

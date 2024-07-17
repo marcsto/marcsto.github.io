@@ -18,7 +18,7 @@ body {
     border: 2px solid #000;
     border-radius: 10px;
     background-color: #fff;
-    z-index: 1000;
+    z-index: 3000;
     font-size: clamp(3rem, 2vw + 4rem, 8rem);
 }
 
@@ -114,4 +114,36 @@ a:hover #twitter {
 
 .center {
     text-align: center;
+}
+
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.share-button {
+    display: flex;
+    align-items: center;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    z-index: 3000;
+    margin: 10px;
+}
+
+.share-button svg {
+    margin-right: 8px;
+    color: white;
+}
+
+.share-button:hover {
+    background-color: #0056b3;
 }
