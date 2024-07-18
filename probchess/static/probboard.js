@@ -46,8 +46,11 @@ function createChessboard(boardId, small=false) {
                 prob.className = 'probability';
             }
             
-            prob.textContent = (probabilities.probabilities[row][col] * 100).toFixed(0) + '%';
+            const originalProb = (probabilities.probabilities[row][col] * 100).toFixed(0);
+            prob.textContent = originalProb + '%';
+            prob.dataset.originalProb = originalProb; // Add this line
             square.appendChild(prob);
+
             chessboard.appendChild(square);
 
             if (col == 0) {
@@ -305,4 +308,70 @@ function rollDice(finalFaceType, diceId) {
     } else {
         dice.classList.add('rolling-sad');
     }
+}
+
+// For the pribabilistic chips variant.
+function createChips(containerId, isWhite) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const chips = probabilities.getProbabilityChips(isWhite);
+    if (!chips) {
+        return;
+    }
+    chips.forEach(chip => {
+        for (let i = 0; i < chip.count; i++) {
+            const chipElement = document.createElement('div');
+            chipElement.className = `chip ${isWhite ? 'white-chip' : 'black-chip'}`;
+            chipElement.textContent = `+${chip.probability}%`;
+            chipElement.onclick = () => {
+                const side = get_turn_from_fen(currentFEN);
+                if (side === 'w' && !isWhite || side === 'b' && isWhite) {
+                    console.log('Not your turn to play.');
+                    document.getElementById('status').textContent = 'Not your turn to play.';
+                    return;
+                }
+                updateProbabilities(chip.probability);
+                probabilities.useProbabilityChip(isWhite, chip.probability);
+                createChips(containerId, isWhite);
+            };
+            container.appendChild(chipElement);
+        }
+    });
+}
+
+function updateProbabilities(increaseProbability) {
+    const squares = document.querySelectorAll('.square');
+    squares.forEach(square => {
+        const prob = square.querySelector('.probability');
+        const currentProb = parseFloat(prob.textContent);
+        const newProb = Math.min(100, currentProb + increaseProbability);
+
+        // Create and animate the increase text
+        const increase = document.createElement('div');
+        increase.className = 'probability-increase';
+        increase.textContent = `+${increaseProbability}%`;
+        square.appendChild(increase);
+
+        // Animate the increase text
+        setTimeout(() => {
+            increase.style.opacity = '1';
+            increase.style.transform = 'translateY(-20px)';
+        }, 10);
+
+        // Remove the increase text after animation
+        setTimeout(() => {
+            increase.remove();
+        }, 1000);
+
+        // Update the probability text
+        prob.textContent = `${newProb.toFixed(0)}%`;
+    });
+}
+
+function resetProbabilitiesOnBoard() {
+    const squares = document.querySelectorAll('.square');
+    squares.forEach(square => {
+        const prob = square.querySelector('.probability');
+        prob.textContent = `${prob.dataset.originalProb}%`;
+    });
 }

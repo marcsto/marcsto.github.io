@@ -97,6 +97,7 @@
             overflow-y: auto;
             background-color: #2b2b2b;
             margin-bottom: 20px;
+            border-radius: 10px;
         }
         #chessTable {
             width: 100%;
@@ -205,6 +206,20 @@
     <div class="board-panel-container">
         <div class="chessboard" id="chessboard"></div>
         <div class="side-panel-container">
+            <div id="chips-container" class="chips-container hidden">
+                <h2 class="chips-title">Probability Chips</h2>
+                <p class="chips-description">Use to increase the probability of your next move.</p>
+                <div class="chips-content">
+                    <div class="player-chips">
+                        <h3 class="player-label">White</h3>
+                        <div id="whiteChips" class="chip-container"></div>
+                    </div>
+                    <div class="player-chips">
+                        <h3 class="player-label">Black</h3>
+                        <div id="blackChips" class="chip-container"></div>
+                    </div>
+                </div>
+            </div>
             <div id="moveTableDiv" class="table-container">
                 <table id="chessTable">
                     <thead>
@@ -281,6 +296,12 @@
                 <option value="king-double" selected>King Moves Double Success Rate</option>
             </select>
             <div id="king-variant-explanation"></div>
+
+            <select id="prob-variants" name="prob-variants" class="dropdown variant-dropdown" onchange="onProbVariantChange()">
+                <option value="prob-variant-none" class="dropdown-title" selected>Select Probability Variant</option>
+                <option value="prob-variant-chips" >Probability Chips</option>
+            </select>
+            <div id="king-variant-explanation"></div>
         </div>
     </div>
     
@@ -335,6 +356,11 @@
 
             gameHistory.push({boardMove: boardMove, humanMove: data.move, 
                 fenBefore: fen, fenAfter: data.fen, played: data.played, status: data.status, score: score});
+            
+            if (probabilities.probabilityChipsEnabled()) {
+                probabilities.resetProbabilityModifier();
+                resetProbabilitiesOnBoard();
+            }
 
             if (data.played) {
                 failedInARow = 0;
@@ -605,6 +631,9 @@
             createDice('diceb');
             rollDiceForSide(1, 'w');
             rollDiceForSide(1, 'b');
+            probabilities.enableProbabilityChips();
+            createChips('whiteChips', true);
+            createChips('blackChips', false);
         }
         // Optional: Automatically roll the dice when the page loads
         window.onload = () => doOnload();
@@ -648,6 +677,27 @@
             }
         }
         onKingSuccessChange();
+
+        function onProbVariantChange() {
+            const selectElement = document.getElementById('prob-variants');
+            const selectedValue = selectElement.value;
+            const chipsContainer = document.getElementById('chips-container');
+            console.log('Probability variant:', selectedValue);
+            switch (selectedValue) {
+                case 'prob-variant-none':
+                    probabilities.disableProbabilityChips();
+                    chipsContainer.classList.add('hidden');
+                    break;
+                case 'prob-variant-chips':
+                    probabilities.enableProbabilityChips();
+                    chipsContainer.classList.remove('hidden');
+                    break;
+                default:
+                    // Defaults already set
+                    break;
+            }
+        }
+
         // If the URL has a parameter called autoplay, enable the AI Plays White checkbox.
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('autoplay')) {

@@ -80,3 +80,84 @@
     color: #bdbdbd;
     font-size: 1.1vmin;
 }
+
+/* .chip-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+} */
+.chip {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}
+.white-chip {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 2px solid #333;
+}
+.black-chip {
+    background-color: #333;
+    color: #f0f0f0;
+    border: 2px solid #f0f0f0;
+}
+
+.probability-increase {
+    position: absolute;
+    color: #4CAF50;
+    font-weight: bold;
+    opacity: 0;
+    transition: all 0.5s ease;
+    pointer-events: none;
+}
+
+.chips-container {
+    background-color: #2b2b2b;
+    border-radius: 10px;
+    padding: 15px;
+    width: 270px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.chips-title {
+    font-size: 20px;
+    color: #f0f0f0;
+    margin: 3px;
+    text-align: center;
+}
+
+.chips-description {
+    font-size: 14px;
+    color: #aaa;
+    margin: 2px;
+    text-align: center;
+}
+
+.chips-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-chips {
+    margin-bottom: 10px;
+}
+
+.player-label {
+    font-size: 16px;
+    color: #f0f0f0;
+    margin: 3px;
+}
+
+.chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 5px;
+}

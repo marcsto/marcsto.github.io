@@ -208,11 +208,14 @@ class Probabilities {
         }
         this.kingMoveProb = kingMoveProb;
         this.doubleKingMoveProb = false;
+        this.chipsWhite = null;
+        this.chipsBlack = null;
+        this.globalProbabilityModifier = 0;
     }
 
     initializeProbabilities() {
         this.probabilities = Array.from({ length: 8 }, () => 
-            Array.from({ length: 8 }, () => Math.min(Math.max(Math.random(), 0.25), 0.99))
+            Array.from({ length: 8 }, () => Math.round(Math.min(Math.max(Math.random(), 0.25), 0.99) * 100) / 100)
         );
         this.makeSymmetric();
         // Make sure the king's starting squares have at least a 10% probbility
@@ -248,6 +251,52 @@ class Probabilities {
         }
     }
 
+    probabilityChipsEnabled() {
+        return this.chipsWhite != null;
+    }
+    enableProbabilityChips() {
+        const chipTypes = [
+            { probability: 20, count: 1 },
+            { probability: 30, count: 1 },
+            { probability: 40, count: 1 }
+        ];
+        this.chipsWhite = [];
+        this.chipsBlack = [];
+        chipTypes.forEach(chip => {
+            this.chipsWhite.push({ probability: chip.probability, count: chip.count });
+            this.chipsBlack.push({ probability: chip.probability, count: chip.count });
+        });
+        this.globalProbabilityModifier = 0;
+    }
+
+    disableProbabilityChips() {
+        this.chipsWhite = null;
+        this.chipsBlack = null;
+        this.globalProbabilityModifier = 0;
+        resetProbabilitiesOnBoard();
+    }
+
+    getProbabilityChips(isWhite) {
+        return isWhite ? this.chipsWhite : this.chipsBlack;
+    }
+
+    useProbabilityChip(isWhite, probability) {
+        let chips = isWhite ? this.chipsWhite : this.chipsBlack;
+        for (let i = 0; i < chips.length; i++) {
+            if (chips[i].probability === probability && chips[i].count > 0) {
+                chips[i].count--;
+                // TODO: Add mechanism to play and undo moves for alpha beta search.
+                this.globalProbabilityModifier += probability / 100;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    resetProbabilityModifier() {
+        this.globalProbabilityModifier = 0;
+    }
+
     /**
      * Get the probability of successfully moving to the destination square.
      * 
@@ -263,7 +312,7 @@ class Probabilities {
         if (this.doubleKingMoveProb && move.piece === 'k') {
             prob = Math.min(prob * 2, 1);
         }
-        return prob;
+        return Math.min(prob + this.globalProbabilityModifier, 1.0);
     }
 
     getProbFromStrMove(move, board) {
