@@ -81,14 +81,15 @@
     font-size: 1.1vmin;
 }
 
-/* .chip-container {
+.chip-container {
     display: flex;
     justify-content: space-around;
-    margin-bottom: 20px;
-} */
+}
+
 .chip {
-    width: 60px;
-    height: 60px;
+    position: relative;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -96,7 +97,28 @@
     font-weight: bold;
     cursor: pointer;
     user-select: none;
+    margin-bottom: 20px; /* Space for the counter badge */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+.chip-count {
+    position: absolute;
+    bottom: -10px; /* Positioning below the chip */
+    right: 10px; /* Positioning to the right */
+    background-color: #1e1e1e;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: bold;
+}
+
 .white-chip {
     background-color: #f0f0f0;
     color: #333;
@@ -109,12 +131,51 @@
 }
 
 .probability-increase {
+    /* Animation when prob increased */
     position: absolute;
     color: #4CAF50;
     font-weight: bold;
+    font-size: 1.5vmin;
     opacity: 0;
     transition: all 0.5s ease;
     pointer-events: none;
+    bottom: 20%;
+    right: 4px;
+    z-index: 2000;
+
+    /* Put a rounded background behind the text */
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 2px;
+    border-radius: 3px;
+
+}
+
+.probability-modified {
+    /* Make the text green */
+    color: #4CAF50;
+    animation: glow 0.5s infinite alternate;
+}
+  
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px green;
+    }
+    to {
+        text-shadow: 0 0 20px green;
+    }
+}
+
+.probability-increase-small {
+    /* Small text under prob showing its incrase */
+    position: absolute; 
+    font-size: 0.7vmin;
+    z-index: 900;
+    color: #4CAF50;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 2px;
+    border-radius: 3px;
+    bottom: 2px;
+    right: 4px;
 }
 
 .chips-container {
@@ -143,10 +204,6 @@
 .chips-content {
     display: flex;
     flex-direction: column;
-}
-
-.player-chips {
-    margin-bottom: 10px;
 }
 
 .player-label {

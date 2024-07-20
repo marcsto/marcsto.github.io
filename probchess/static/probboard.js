@@ -311,6 +311,7 @@ function rollDice(finalFaceType, diceId) {
 }
 
 // For the pribabilistic chips variant.
+let chipUsedThisTurn = false;
 function createChips(containerId, isWhite) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -319,23 +320,42 @@ function createChips(containerId, isWhite) {
         return;
     }
     chips.forEach(chip => {
-        for (let i = 0; i < chip.count; i++) {
-            const chipElement = document.createElement('div');
-            chipElement.className = `chip ${isWhite ? 'white-chip' : 'black-chip'}`;
-            chipElement.textContent = `+${chip.probability}%`;
-            chipElement.onclick = () => {
-                const side = get_turn_from_fen(currentFEN);
-                if (side === 'w' && !isWhite || side === 'b' && isWhite) {
-                    console.log('Not your turn to play.');
-                    document.getElementById('status').textContent = 'Not your turn to play.';
-                    return;
-                }
-                updateProbabilities(chip.probability);
-                probabilities.useProbabilityChip(isWhite, chip.probability);
-                createChips(containerId, isWhite);
-            };
-            container.appendChild(chipElement);
+        if (chip.count === 0) {
+            return;
         }
+        
+        const chipElement = document.createElement('div');
+        chipElement.className = `chip ${isWhite ? 'white-chip' : 'black-chip'}`;
+        const chipProb = document.createElement('div');
+        chipProb.textContent = `+${chip.probability}%`;
+        chipElement.appendChild(chipProb);
+
+        chipElement.onclick = () => {
+            if (chipUsedThisTurn) {
+                console.log('You can only use one chip per turn.');
+                document.getElementById('status').textContent = 'You can only use one chip per turn.';
+                return;
+            }
+            chipUsedThisTurn = true;
+            const side = get_turn_from_fen(currentFEN);
+            if (side === 'w' && !isWhite || side === 'b' && isWhite) {
+                console.log('Not your turn to play.');
+                document.getElementById('status').textContent = 'Not your turn to play.';
+                return;
+            }
+            updateProbabilities(chip.probability);
+            probabilities.useProbabilityChip(isWhite, chip.probability);
+            createChips(containerId, isWhite);
+        };
+
+        const chipCount = document.createElement('div');
+        chipCount.className = 'chip-count';
+        chipCount.textContent = chip.count;
+        chipElement.appendChild(chipCount);
+
+
+        container.appendChild(chipElement);
+        
     });
 }
 
@@ -361,17 +381,28 @@ function updateProbabilities(increaseProbability) {
         // Remove the increase text after animation
         setTimeout(() => {
             increase.remove();
-        }, 1000);
+        }, 1500);
 
-        // Update the probability text
+        prob.classList.add('probability-modified');
+        // const probIncreateAmountSmallText = document.createElement('div');
+        // probIncreateAmountSmallText.className = 'probability-increase-small';
+        // probIncreateAmountSmallText.textContent = `+${increaseProbability}%`;
+        // square.appendChild(probIncreateAmountSmallText);
+
         prob.textContent = `${newProb.toFixed(0)}%`;
     });
 }
 
 function resetProbabilitiesOnBoard() {
+    chipUsedThisTurn = false;
     const squares = document.querySelectorAll('.square');
     squares.forEach(square => {
         const prob = square.querySelector('.probability');
         prob.textContent = `${prob.dataset.originalProb}%`;
+        prob.classList.remove('probability-modified');
+        // const probIncreateAmountSmallText = square.querySelector('.probability-increase-small');
+        // if (probIncreateAmountSmallText) {
+        //     probIncreateAmountSmallText.remove();
+        // }
     });
 }

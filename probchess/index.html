@@ -208,7 +208,6 @@
         <div class="side-panel-container">
             <div id="chips-container" class="chips-container hidden">
                 <h2 class="chips-title">Probability Chips</h2>
-                <p class="chips-description">Use to increase the probability of your next move.</p>
                 <div class="chips-content">
                     <div class="player-chips">
                         <h3 class="player-label">White</h3>
@@ -219,6 +218,7 @@
                         <div id="blackChips" class="chip-container"></div>
                     </div>
                 </div>
+                <p class="chips-description">Use to increase your next move's probability</p>
             </div>
             <div id="moveTableDiv" class="table-container">
                 <table id="chessTable">
@@ -299,7 +299,7 @@
 
             <select id="prob-variants" name="prob-variants" class="dropdown variant-dropdown" onchange="onProbVariantChange()">
                 <option value="prob-variant-none" class="dropdown-title" selected>Select Probability Variant</option>
-                <option value="prob-variant-chips" >Probability Chips</option>
+                <option value="prob-variant-chips">Probability Chips</option>
             </select>
             <div id="king-variant-explanation"></div>
         </div>
@@ -357,11 +357,6 @@
             gameHistory.push({boardMove: boardMove, humanMove: data.move, 
                 fenBefore: fen, fenAfter: data.fen, played: data.played, status: data.status, score: score});
             
-            if (probabilities.probabilityChipsEnabled()) {
-                probabilities.resetProbabilityModifier();
-                resetProbabilitiesOnBoard();
-            }
-
             if (data.played) {
                 failedInARow = 0;
                 document.querySelector('.autoretry').classList.add('hidden');
@@ -373,6 +368,11 @@
 
             rollDiceForSide(data.played, data.turn === 'b' ? 'w' : 'b');
             setTimeout(() => {
+                if (probabilities.probabilityChipsEnabled()) {
+                    probabilities.resetProbabilityModifier();
+                    resetProbabilitiesOnBoard();
+                }
+
                 if (data.status) {
                     document.getElementById('status').textContent = data.status;
                 }
@@ -697,6 +697,7 @@
                     break;
             }
         }
+        onProbVariantChange();
 
         // If the URL has a parameter called autoplay, enable the AI Plays White checkbox.
         const urlParams = new URLSearchParams(window.location.search);

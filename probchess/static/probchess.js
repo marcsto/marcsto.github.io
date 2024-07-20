@@ -254,11 +254,13 @@ class Probabilities {
     probabilityChipsEnabled() {
         return this.chipsWhite != null;
     }
+    
     enableProbabilityChips() {
         const chipTypes = [
-            { probability: 20, count: 1 },
-            { probability: 30, count: 1 },
-            { probability: 40, count: 1 }
+            { probability: 20, count: 4 },
+            { probability: 30, count: 3 },
+            { probability: 40, count: 2 },
+            { probability: 50, count: 1 }
         ];
         this.chipsWhite = [];
         this.chipsBlack = [];
