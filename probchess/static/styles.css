@@ -124,6 +124,10 @@ a:hover #twitter {
     width: 100%;
 }
 
+.center-margin {
+    margin: auto;
+}
+
 .share-button {
     display: flex;
     align-items: center;
