@@ -47,5 +47,6 @@ function showWinner(result) {
     document.getElementById('replay-title').textContent = overlayTitle;
     let replaySequence = gameHistory.slice(-4);
     showReplay([replaySequence]);
+    showFeedbackForm();
 
 }

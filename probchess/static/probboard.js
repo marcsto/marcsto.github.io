@@ -381,7 +381,7 @@ function updateProbabilities(increaseProbability) {
         // Remove the increase text after animation
         setTimeout(() => {
             increase.remove();
-        }, 1500);
+        }, 1100);
 
         prob.classList.add('probability-modified');
         // const probIncreateAmountSmallText = document.createElement('div');

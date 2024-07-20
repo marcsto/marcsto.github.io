@@ -34,6 +34,7 @@
     <script src="static/FileSaver.min.js"></script>
     <script src="static/gifmaker.js"></script>
     <script src="static/endgameoverlay.js"></script>
+    <script src="static/feedback.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
     <!-- <script type="module">
@@ -206,6 +207,9 @@
     <div class="board-panel-container">
         <div class="chessboard" id="chessboard"></div>
         <div class="side-panel-container">
+            <div id="survey-container" class="hidden">
+                <iframe id="survey-iframe" src="https://docs.google.com/forms/d/e/1FAIpQLSf8NadbkK9HQ_EVPbosPIdJgtIgs-AZfkMtnz3kJ_s6RciYCw/viewform?embedded=  true" width="300" height="650" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+            </div>
             <div id="chips-container" class="chips-container hidden">
                 <h2 class="chips-title">Probability Chips</h2>
                 <div class="chips-content">
@@ -249,7 +253,7 @@
                 <div class="side-by-side">
                     <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown">
                         <option value="moderate" selected>Moderate (fast)</option>
-                        <option value="veryhard">Hard AlphaBetaEm</option>
+                        <option value="hard">Hard AlphaBetaEm</option>
                         <option value="advanced">Advanced AlphaBetaEm</option>
                         <option value="expert" >Expert AlphaBetaEm (slow)</option>
                     </select>
@@ -262,7 +266,7 @@
                 <div class="side-by-side">
                     <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown">
                         <option value="moderate" selected>Moderate (fast)</option>
-                        <option value="veryhard">Hard AlphaBetaEm</option>
+                        <option value="hard">Hard AlphaBetaEm</option>
                         <option value="advanced">Advanced AlphaBetaEm</option>
                         <option value="expert" >Expert AlphaBetaEm</option>
                     </select>
@@ -446,13 +450,13 @@
                     aiStockfish = new StockfishAi();
                 }
                 aiStockfish.getBestMove(currentFEN, onAiMove);
-            } else if (difficulty === "hard") {
+            /*} else if (difficulty === "hard") {
                 if (aiMonteCarlo === null) {
                     aiMonteCarlo = new MonteCarloAi();
                 }
                 config = {'probabilities': probabilities};
-                aiMonteCarlo.getBestMove(currentFEN, onAiMove, config);
-            } else if (difficulty === "veryhard" || difficulty === "advanced" || difficulty === "expert") {
+                aiMonteCarlo.getBestMove(currentFEN, onAiMove, config);*/
+            } else if (difficulty === "hard" || difficulty === "veryhard" || difficulty === "advanced" || difficulty === "expert") {
                 if (aiAlphaBetaEm === null) {
                     aiAlphaBetaEm = new AlphaBetaEmAi();
                 }
