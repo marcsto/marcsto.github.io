@@ -393,6 +393,8 @@
                     const turn_opposite = data.turn === 'b' ? 'w' : 'b';
                     addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN, score);
                 }
+
+                //saveGameStateToLocalStorage();
                 
                 if (data.winner) {
                     showWinner(data.winner);
@@ -639,14 +641,12 @@
             probabilities.enableProbabilityChips();
             createChips('whiteChips', true);
             createChips('blackChips', false);
+            initializeUiChangeEventListeners();
         }
-        // Optional: Automatically roll the dice when the page loads
-        window.onload = () => doOnload();
         
-
+        //loadGameStateFromLocalStorage();
         createChessboard('chessboard');
-
-
+        window.onload = () => doOnload();
     </script>
 
     <div id="resultAnimation" class="hidden">

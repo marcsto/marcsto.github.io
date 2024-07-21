@@ -343,7 +343,7 @@ function createChips(containerId, isWhite) {
                 document.getElementById('status').textContent = 'Not your turn to play.';
                 return;
             }
-            updateProbabilities(chip.probability);
+            temporarilyIncreaseProbabilities(chip.probability);
             probabilities.useProbabilityChip(isWhite, chip.probability);
             createChips(containerId, isWhite);
         };
@@ -359,7 +359,7 @@ function createChips(containerId, isWhite) {
     });
 }
 
-function updateProbabilities(increaseProbability) {
+function temporarilyIncreaseProbabilities(increaseProbability) {
     const squares = document.querySelectorAll('.square');
     squares.forEach(square => {
         const prob = square.querySelector('.probability');
@@ -404,5 +404,87 @@ function resetProbabilitiesOnBoard() {
         // if (probIncreateAmountSmallText) {
         //     probIncreateAmountSmallText.remove();
         // }
+    });
+}
+
+function saveGameStateToLocalStorage() {
+    const gameState = {
+        currentFEN: currentFEN,
+        gameHistory: gameHistory,
+        probabilities: probabilities.toJson(),
+        
+        checkboxes: {},
+        dropdowns: {}
+
+        // UI State
+        // aiwEnabled: document.getElementById('aiw').checked,
+        // aibEnabled: document.getElementById('aib').checked,
+        // aiStrengthW: document.getElementById('ai-strength-w').value,
+        // aiStrengthB: document.getElementById('ai-strength-b').value,
+        // kingSuccessVariant: document.getElementById('king-success-variants').value,
+        // probVariant: document.getElementById('prob-variants').value,
+    };
+
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        gameState.checkboxes[checkbox.id] = checkbox.checked;
+    });
+    
+    const dropdowns = document.querySelectorAll('select');
+    dropdowns.forEach(dropdown => {
+        gameState.dropdowns[dropdown.id] = dropdown.value;
+    });
+    localStorage.setItem('gameState', JSON.stringify(gameState));
+}
+
+function loadGameStateFromLocalStorage() {
+    const gameState = JSON.parse(localStorage.getItem('gameState'));
+    if (gameState) {
+        currentFEN = gameState.currentFEN;
+        gameHistory = gameState.gameHistory;
+        probabilities = Probabilities.fromJson(gameState.probabilities);
+        // document.getElementById('aiw').checked = gameState.aiwEnabled;
+        // document.getElementById('aib').checked = gameState.aibEnabled;
+        // document.getElementById('ai-strength-w').value = gameState.aiStrengthW;
+        // document.getElementById('ai-strength-b').value = gameState.aiStrengthB;
+        // document.getElementById('king-success-variants').value = gameState.kingSuccessVariant;
+        // document.getElementById('prob-variants').value = gameState.probVariant;
+
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const dropdowns = document.querySelectorAll('select');
+
+        checkboxes.forEach(checkbox => {
+            if (gameState.checkboxes.hasOwnProperty(checkbox.id)) {
+                checkbox.checked = gameState.checkboxes[checkbox.id];
+            }
+        });
+
+        dropdowns.forEach(dropdown => {
+            if (gameState.dropdowns.hasOwnProperty(dropdown.id)) {
+                dropdown.value = gameState.dropdowns[dropdown.id];
+            }
+        });
+    }
+}
+
+function loadBoardProbabilities() {
+    const squares = document.querySelectorAll('.square');
+    squares.forEach(square => {
+        const prob = probabilities.getProbability(square.dataset.row, square.dataset.col);
+        //const prob = square.querySelector('.probability');
+        prob.textContent = `${prob.dataset.originalProb}%`;
+    });
+}
+
+function initializeUiChangeEventListeners() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const dropdowns = document.querySelectorAll('select');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', saveGameStateToLocalStorage);
+    });
+
+    dropdowns.forEach(dropdown => {
+        dropdown.addEventListener('change', saveGameStateToLocalStorage);
     });
 }

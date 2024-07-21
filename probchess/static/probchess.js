@@ -213,6 +213,28 @@ class Probabilities {
         this.globalProbabilityModifier = 0;
     }
 
+    toJson() {
+        return {
+            probabilities: this.probabilities,
+            kingMoveProb: this.kingMoveProb,
+            doubleKingMoveProb: this.doubleKingMoveProb,
+            chipsWhite: this.chipsWhite,
+            chipsBlack: this.chipsBlack,
+            globalProbabilityModifier: this.globalProbabilityModifier
+        };
+    }
+
+    static fromJson(json) {
+        let prob = new Probabilities();
+        prob.probabilities = json.probabilities;
+        prob.kingMoveProb = json.kingMoveProb;
+        prob.doubleKingMoveProb = json.doubleKingMoveProb;
+        prob.chipsWhite = json.chipsWhite;
+        prob.chipsBlack = json.chipsBlack;
+        prob.globalProbabilityModifier = json.globalProbabilityModifier;
+        return prob;
+    }
+
     initializeProbabilities() {
         this.probabilities = Array.from({ length: 8 }, () => 
             Array.from({ length: 8 }, () => Math.round(Math.min(Math.max(Math.random(), 0.25), 0.99) * 100) / 100)
@@ -254,7 +276,7 @@ class Probabilities {
     probabilityChipsEnabled() {
         return this.chipsWhite != null;
     }
-    
+
     enableProbabilityChips() {
         const chipTypes = [
             { probability: 20, count: 4 },
