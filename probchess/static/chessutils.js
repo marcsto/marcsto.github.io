@@ -183,3 +183,7 @@ function deepEqual(obj1, obj2) {
 
     return true;
 }
+
+function inCheck(board, turn) {
+    return board.king_attacked(turn)
+}

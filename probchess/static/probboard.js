@@ -343,20 +343,22 @@ function createChips(containerId, isWhite) {
                 document.getElementById('status').textContent = 'Not your turn to play.';
                 return;
             }
-            temporarilyIncreaseProbabilities(chip.probability);
-            probabilities.useProbabilityChip(isWhite, chip.probability);
-            createChips(containerId, isWhite);
+            useProbabilityChipWithUi(isWhite, chip);
         };
 
         const chipCount = document.createElement('div');
         chipCount.className = 'chip-count';
         chipCount.textContent = chip.count;
         chipElement.appendChild(chipCount);
-
-
         container.appendChild(chipElement);
-        
     });
+}
+
+function useProbabilityChipWithUi(isWhite, chip) {
+    temporarilyIncreaseProbabilities(chip.probability);
+    probabilities.useProbabilityChip(isWhite, chip.probability);
+    let containerId = isWhite ? 'whiteChips' : 'blackChips';
+    createChips(containerId, isWhite);
 }
 
 function temporarilyIncreaseProbabilities(increaseProbability) {

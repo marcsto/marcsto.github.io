@@ -535,8 +535,36 @@
                 move = rnd_move;
             }
             console.log('Playing AI move on board:', move);
+            
+            if (document.getElementById('prob-variants').value === 'prob-variant-chips') {
+                maybePlayChipForAi(move);
+            }
+            
             // Play the ai move as if the user had clicked on the start square and end square
             playMoveOnBoard(move, score);
+        }
+
+        /**
+         * Since AI doesn't yet support using probability chips, we'll do a simple algo here:
+         * If the AI is in check, play the highest probability chip.
+         **/
+        function maybePlayChipForAi(move) {
+            // Check if the AI is in check
+            let board = new Chess(currentFEN);
+            if (inCheck(board, board.turn())) {
+                let isWhite = board.turn() === 'w';
+                let chip = null;
+                probabilities.getProbabilityChips(isWhite).forEach(c => {
+                    if ((c.count > 0 && chip === null) || (c.count > 0 && c.probability > chip.probability)) {
+                        chip = c;
+                    }
+                });
+                if (chip) {
+                    console.log('AI using probability chip:', chip);
+                    useProbabilityChipWithUi(isWhite, chip);
+                }
+            }
+            
         }
 
         function playMoveOnBoard(move, score=null) {
