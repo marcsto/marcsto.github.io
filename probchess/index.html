@@ -546,12 +546,12 @@
 
         /**
          * Since AI doesn't yet support using probability chips, we'll do a simple algo here:
-         * If the AI is in check, play the highest probability chip.
+         * If the AI is in check or it can capture the opponent's king, play the highest probability chip.
          **/
         function maybePlayChipForAi(move) {
             // Check if the AI is in check
             let board = new Chess(currentFEN);
-            if (inCheck(board, board.turn())) {
+            if (inCheck(board, board.turn()) || inCheck(board, swapColor(board.turn()))) {
                 let isWhite = board.turn() === 'w';
                 let chip = null;
                 probabilities.getProbabilityChips(isWhite).forEach(c => {
