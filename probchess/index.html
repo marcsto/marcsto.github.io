@@ -35,6 +35,8 @@
     <script src="static/gifmaker.js"></script>
     <script src="static/endgameoverlay.js"></script>
     <script src="static/feedback.js"></script>
+    <script src="static/gameencoder.js"></script>
+    
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
     <!-- <script type="module">
@@ -171,6 +173,21 @@
         .button:hover {
             background-color: #0056b3; /* Darker color on hover */
         }
+
+        .button-dark {
+            background-color: #444; /* Button-like background color */
+            color: white; /* Text color */
+            padding: 6px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer; /* Makes the div look clickable */
+            text-align: center; /* Center the text inside the div */
+            transition: background-color 0.3s; /* Smooth transition for hover effect */
+            margin-right: 10px; /* Space between button and text */
+        }
+        .button-dark:hover {
+            background-color: #0056b3; /* Darker color on hover */
+        }
         
         /* Use media query to make the side panel under the chessboard on smaller screens */
         @media (max-width: calc(92vmin + 350px)) {
@@ -249,27 +266,27 @@
             <hr />
             <div class="side-by-side-wrapper">
                 <div class="side-by-side">
-                    <input type="checkbox" id="aiw" onclick="requestAiMove()">AI White</checkbox>
+                    <input type="checkbox" id="aiw" onclick="requestAiMove()" data-key="cw" data-id="xw" >AI White</checkbox>
                 </div>
                 <div class="side-by-side">
-                    <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown">
-                        <option value="moderate" selected>Moderate (fast)</option>
-                        <option value="hard">Hard AlphaBetaEm</option>
-                        <option value="advanced">Advanced AlphaBetaEm</option>
-                        <option value="expert" >Expert AlphaBetaEm (slow)</option>
+                    <select id="ai-strength-w" name="ai-strength-w" class="dropdown ai-dropdown" data-key="sw">
+                        <option value="moderate" data-id="1" selected>Moderate (fast)</option>
+                        <option value="hard" data-id="2">Hard AlphaBetaEm</option>
+                        <option value="advanced" data-id="3">Advanced AlphaBetaEm</option>
+                        <option value="expert" data-id="4">Expert AlphaBetaEm (slow)</option>
                     </select>
                 </div>
             </div>
             <div class="side-by-side-wrapper">
                 <div class="side-by-side">
-                    <input type="checkbox" id="aib" onclick="requestAiMove()" checked>AI Black</checkbox>
+                    <input type="checkbox" id="aib" onclick="requestAiMove()" data-key="cb" data-id="xb" checked>AI Black</checkbox>
                 </div>
                 <div class="side-by-side">
-                    <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown">
-                        <option value="moderate" selected>Moderate (fast)</option>
-                        <option value="hard">Hard AlphaBetaEm</option>
-                        <option value="advanced">Advanced AlphaBetaEm</option>
-                        <option value="expert" >Expert AlphaBetaEm</option>
+                    <select id="ai-strength-b" name="ai-strength-b" class="dropdown ai-dropdown" data-key="sb">
+                        <option value="moderate" data-id="1" selected>Moderate (fast)</option>
+                        <option value="hard" data-id="2">Hard AlphaBetaEm</option>
+                        <option value="advanced" data-id="3">Advanced AlphaBetaEm</option>
+                        <option value="expert" data-id="4">Expert AlphaBetaEm</option>
                     </select>
                 </div>
             </div>
@@ -293,18 +310,20 @@
             </div>
             Learn More in <a href='https://marc.ai/probabilistic-chess.html' class="white-link">this Blog Post</a>
             <hr />
+            <button class="button-dark" onclick="newGame()">New Game</button>
+            <hr />
             <b>Variants</b><br />
 
-            <select id="king-success-variants" name="king-success-variants" class="dropdown variant-dropdown" onchange="onKingSuccessChange()">
-                <option value="king-none" class="dropdown-title">Select King Move Variant</option>
-                <option value="king-always" >King Moves Always Succeed</option>
-                <option value="king-double" selected>King Moves Double Success Rate</option>
+            <select id="king-success-variants" name="king-success-variants" class="dropdown variant-dropdown" onchange="onKingSuccessChange()" data-key="sk">
+                <option value="king-none" class="dropdown-title" data-id="1">Select King Move Variant</option>
+                <option value="king-always" data-id="2">King Moves Always Succeed</option>
+                <option value="king-double" data-id="3" selected>King Moves Double Success Rate</option>
             </select>
             <div id="king-variant-explanation"></div>
 
-            <select id="prob-variants" name="prob-variants" class="dropdown variant-dropdown" onchange="onProbVariantChange()">
-                <option value="prob-variant-none" class="dropdown-title" selected>Select Probability Variant</option>
-                <option value="prob-variant-chips">Probability Chips</option>
+            <select id="prob-variants" name="prob-variants" class="dropdown variant-dropdown" onchange="onProbVariantChange()" data-key="sp">
+                <option value="prob-variant-none" class="dropdown-title" data-id="1" selected>Select Probability Variant</option>
+                <option value="prob-variant-chips" data-id="2">Probability Chips</option>
             </select>
             <div id="king-variant-explanation"></div>
         </div>
@@ -331,6 +350,7 @@
             fen: data.fen, played: data.played, status: data.status, score: score}
         */
         let gameHistory = [];
+        let indexInGameHistory = 0;
         
 
         function sendMoveToServer(startRow, startCol, endRow, endCol, fen, score=null) {
@@ -359,8 +379,24 @@
                 return;
             }
 
-            gameHistory.push({boardMove: boardMove, humanMove: data.move, 
-                fenBefore: fen, fenAfter: data.fen, played: data.played, status: data.status, score: score});
+            let chipProbability = null;
+            if (probabilities.probabilityChipModifier > 0) {
+                chipProbability = Math.round(probabilities.probabilityChipModifier * 100);
+            }
+
+            if (indexInGameHistory < gameHistory.length - 1) {
+                // The user went back into the game and now played a move. 
+                // Remove all moves after the current move
+                console.log('User went back in history and played a move. Removing all moves after this move.');
+                gameHistory = gameHistory.slice(0, indexInGameHistory + 1);
+                loadGameFromHistory(gameHistory);
+            }
+            gameHistory.push({boardMove: boardMove, humanMove: data.move, 'algebraicMove': data.algebraicMove,
+                fenBefore: fen, fenAfter: data.fen, played: data.played, status: data.status, score: score, chipUsed: chipProbability});
+            indexInGameHistory = gameHistory.length;
+
+            let url = new GameEncoder().toUrl(probabilities.probabilities, gameHistory, probabilities.initialChips);
+            window.history.pushState({}, '', url);
             
             if (data.played) {
                 failedInARow = 0;
@@ -391,7 +427,7 @@
                 if (data.move) {
                     const strikeThrough = data.played === 1 ? 0 : 1;
                     const turn_opposite = data.turn === 'b' ? 'w' : 'b';
-                    addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN, score);
+                    addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN, score, gameHistory.length - 1);
                 }
 
                 //saveGameStateToLocalStorage();
@@ -604,7 +640,7 @@
          * @param {string} humanReadableMove - The move to add
          * @param {number} strikeThrough - Whether to strike through the text of the move
          */
-        function addMoveToSidePanel(humanReadableMove, moveTurn, strikeThrough, fen, score) {
+        function addMoveToSidePanel(humanReadableMove, moveTurn, strikeThrough, fen, score, moveIndex) {
             if (humanReadableMove === '') {
                 alert('Please enter a move.');
                 return;
@@ -642,9 +678,10 @@
                 cell.textContent += ' (' + score + ')';
             }
             cell.dataset.fen = fen;
+            cell.dataset.moveIndex = moveIndex;
             cell.classList.add('move');
             cell.addEventListener('click', handleHistoricalMoveClick)
-            if (strikeThrough === 1) {
+            if (strikeThrough === 1 || strikeThrough === true) {
                 cell.style.color = 'red';
             }
             moveTableDiv.scrollTop = moveTableDiv.scrollHeight;
@@ -652,28 +689,37 @@
 
         function handleHistoricalMoveClick(event) {
             const move = event.target.textContent;
+            const moveIndex = parseInt(event.target.dataset.moveIndex);
             const fen = event.target.dataset.fen;
             if (move === '') {
                 return;
             }
             console.log('Historical move clicked:', move, fen);
             currentFEN = fen;
+            indexInGameHistory = moveIndex;
             updateBoardFromFEN(fen);
         }
 
         function doOnload() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const decodedData = new GameEncoder().fromUrl(urlParams);
+            if (decodedData) {
+                console.log('Decoded Data:', decodedData);
+                loadGameFromSavedState(decodedData);
+            }
+
             createDice('dicew');
             createDice('diceb');
             rollDiceForSide(1, 'w');
             rollDiceForSide(1, 'b');
-            probabilities.enableProbabilityChips();
             createChips('whiteChips', true);
             createChips('blackChips', false);
             initializeUiChangeEventListeners();
+            createChessboard('chessboard');
         }
         
         //loadGameStateFromLocalStorage();
-        createChessboard('chessboard');
+        
         window.onload = () => doOnload();
     </script>
 
@@ -737,6 +783,12 @@
         if (urlParams.has('autoplay')) {
             document.getElementById('aiw').checked = true;
             requestAiMove();
+        }
+
+        function newGame() {
+            // Remove any parameters from the URL
+            window.history.pushState({}, '', window.location.pathname);
+            location.reload();
         }
     </script>
 

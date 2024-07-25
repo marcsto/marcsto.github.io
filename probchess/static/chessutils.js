@@ -67,6 +67,9 @@ function chessMoveToIndices(move) {
  * @returns string move in the form 'e2e4'
  */
 function toAlgebraic(move) {
+    if (!move) {
+        return null;
+    }
     // For when it's already in the format 'e2e4'
     if (typeof move === 'string') {
         return move;

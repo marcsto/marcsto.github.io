@@ -336,13 +336,13 @@ function createChips(containerId, isWhite) {
                 document.getElementById('status').textContent = 'You can only use one chip per turn.';
                 return;
             }
-            chipUsedThisTurn = true;
             const side = get_turn_from_fen(currentFEN);
             if (side === 'w' && !isWhite || side === 'b' && isWhite) {
                 console.log('Not your turn to play.');
                 document.getElementById('status').textContent = 'Not your turn to play.';
                 return;
             }
+            chipUsedThisTurn = true;    
             useProbabilityChipWithUi(isWhite, chip);
         };
 
@@ -489,4 +489,16 @@ function initializeUiChangeEventListeners() {
     dropdowns.forEach(dropdown => {
         dropdown.addEventListener('change', saveGameStateToLocalStorage);
     });
+}
+
+function loadGameFromHistory(gameHistory) {
+    // Clear the move history
+    document.getElementById('chessTable').getElementsByTagName('tbody')[0].innerHTML = '';
+
+    for (let i = 0; i < gameHistory.length; i++) {
+        const historyObj = gameHistory[i];
+        let moveTurn =  swapColor(turnFen(historyObj.fenAfter));
+        addMoveToSidePanel(historyObj.humanMove, moveTurn, !historyObj.played, historyObj.fenAfter, historyObj.score, i);
+    }
+    // TODO: Handle probability chips.
 }

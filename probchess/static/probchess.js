@@ -23,6 +23,7 @@ function probMove(data) {
             'played': 0,
             'status': 'Game is over. No moves can be made.',
             'move': null,
+            'algebraicMove': null,
             'is_illegal': true,
             'turn': null,
             'winner': get_winner(fen)
@@ -43,9 +44,10 @@ function probMove(data) {
         // Get the probability of the destination square
         var destProb = probabilities.getProb(moveObj) //probabilities[endRow][endCol];
         console.log('Destination probability: ' + destProb);
-
+        var rndProb = Math.random();
+        console.log('Move prob result: ' + rndProb);
         // Play the move if a random number is less than the destination square's probability
-        if (Math.random() < destProb) {
+        if (rndProb < destProb) {
             statusText = 'Move ' + moveObj.san + ' succeeded! :)';
             played = 1;
             newFen = board.fen();
@@ -70,6 +72,7 @@ function probMove(data) {
         'played': played,
         'status': statusText,
         'move': moveObj ? moveObj.san : null,
+        'algebraicMove': toAlgebraic(moveObj),
         'is_illegal': isIllegal,
         'turn': nextTurn,
         'winner': get_winner(newFen)
@@ -210,7 +213,8 @@ class Probabilities {
         this.doubleKingMoveProb = false;
         this.chipsWhite = null;
         this.chipsBlack = null;
-        this.globalProbabilityModifier = 0;
+        this.isChipsEnabled = false;
+        this.initializeProbabilityChips();
     }
 
     toJson() {
@@ -220,7 +224,7 @@ class Probabilities {
             doubleKingMoveProb: this.doubleKingMoveProb,
             chipsWhite: this.chipsWhite,
             chipsBlack: this.chipsBlack,
-            globalProbabilityModifier: this.globalProbabilityModifier
+            probabilityChipModifier: this.probabilityChipModifier
         };
     }
 
@@ -231,7 +235,7 @@ class Probabilities {
         prob.doubleKingMoveProb = json.doubleKingMoveProb;
         prob.chipsWhite = json.chipsWhite;
         prob.chipsBlack = json.chipsBlack;
-        prob.globalProbabilityModifier = json.globalProbabilityModifier;
+        prob.probabilityChipModifier = json.probabilityChipModifier;
         return prob;
     }
 
@@ -273,30 +277,38 @@ class Probabilities {
         }
     }
 
-    probabilityChipsEnabled() {
-        return this.chipsWhite != null;
-    }
-
-    enableProbabilityChips() {
-        const chipTypes = [
-            { probability: 20, count: 4 },
-            { probability: 30, count: 3 },
-            { probability: 40, count: 2 },
-            { probability: 50, count: 1 }
-        ];
+    initializeProbabilityChips(initialChips = null) {
+        this.probabilityChipModifier = 0;
+        if (!initialChips) {
+            initialChips = [
+                { probability: 20, count: 4 },
+                { probability: 30, count: 3 },
+                { probability: 40, count: 2 },
+                { probability: 50, count: 1 }
+            ];
+        }
+        this.initialChips = initialChips;
+        
         this.chipsWhite = [];
         this.chipsBlack = [];
-        chipTypes.forEach(chip => {
+        initialChips.forEach(chip => {
             this.chipsWhite.push({ probability: chip.probability, count: chip.count });
             this.chipsBlack.push({ probability: chip.probability, count: chip.count });
         });
-        this.globalProbabilityModifier = 0;
+        this.probabilityChipModifier = 0;
+    }
+
+    probabilityChipsEnabled() {
+        return this.isChipsEnabled;
+    }
+
+    enableProbabilityChips() {
+        this.isChipsEnabled = true;
     }
 
     disableProbabilityChips() {
-        this.chipsWhite = null;
-        this.chipsBlack = null;
-        this.globalProbabilityModifier = 0;
+        this.isChipsEnabled = false;
+        this.probabilityChipModifier = 0;
         resetProbabilitiesOnBoard();
     }
 
@@ -310,7 +322,7 @@ class Probabilities {
             if (chips[i].probability === probability && chips[i].count > 0) {
                 chips[i].count--;
                 // TODO: Add mechanism to play and undo moves for alpha beta search.
-                this.globalProbabilityModifier += probability / 100;
+                this.probabilityChipModifier += probability / 100;
                 return true;
             }
         }
@@ -318,7 +330,7 @@ class Probabilities {
     }
 
     resetProbabilityModifier() {
-        this.globalProbabilityModifier = 0;
+        this.probabilityChipModifier = 0;
     }
 
     /**
@@ -336,7 +348,7 @@ class Probabilities {
         if (this.doubleKingMoveProb && move.piece === 'k') {
             prob = Math.min(prob * 2, 1);
         }
-        return Math.min(prob + this.globalProbabilityModifier, 1.0);
+        return Math.min(prob + this.probabilityChipModifier, 1.0);
     }
 
     getProbFromStrMove(move, board) {
