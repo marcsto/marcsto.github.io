@@ -324,11 +324,7 @@ function createChips(containerId, isWhite) {
             return;
         }
         
-        const chipElement = document.createElement('div');
-        chipElement.className = `chip ${isWhite ? 'white-chip' : 'black-chip'}`;
-        const chipProb = document.createElement('div');
-        chipProb.textContent = `+${chip.probability}%`;
-        chipElement.appendChild(chipProb);
+        const chipElement = createSingleChip(isWhite, chip.probability);
 
         chipElement.onclick = () => {
             if (chipUsedThisTurn) {
@@ -352,6 +348,18 @@ function createChips(containerId, isWhite) {
         chipElement.appendChild(chipCount);
         container.appendChild(chipElement);
     });
+}
+
+function createSingleChip(isWhite, probability, small=false) {
+    const chipElement = document.createElement('div');
+    chipElement.className = `chip ${isWhite ? 'white-chip' : 'black-chip'}`;
+    if (small) {
+        chipElement.classList.add('chip-small');
+    }
+    const chipProb = document.createElement('div');
+    chipProb.textContent = `+${probability}%`;
+    chipElement.appendChild(chipProb);
+    return chipElement;
 }
 
 function useProbabilityChipWithUi(isWhite, chip) {

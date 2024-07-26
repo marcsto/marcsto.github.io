@@ -139,6 +139,13 @@
             cursor: pointer;
         }
 
+        .moveTableContent {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+        }
+
         .highlight {
             background-color: #0055a5;
         }
@@ -671,12 +678,25 @@
                 }
             }
 
-            cell.textContent = humanReadableMove;
+            const cellContent = document.createElement('span');
+            cellContent.classList.add('moveTableContent')
+            cell.appendChild(cellContent);
+
+            cellContent.textContent = humanReadableMove;
             if (score && score !== '') {
                 score = score / 100;
                 score = score.toFixed(2);
-                cell.textContent += ' (' + score + ')';
+                cellContent.textContent += ' (' + score + ')';
             }
+
+            const historyObj = gameHistory[moveIndex];
+            if (historyObj.chipUsed && historyObj.chipUsed > 0) {
+                const chipElement = createSingleChip(false, historyObj.chipUsed, true);
+                // Show a probability chip
+                chipElement.style.marginLeft = '5px';
+                cellContent.appendChild(chipElement);
+            }
+
             cell.dataset.fen = fen;
             cell.dataset.moveIndex = moveIndex;
             cell.classList.add('move');
@@ -715,9 +735,9 @@
             createChips('whiteChips', true);
             createChips('blackChips', false);
             initializeUiChangeEventListeners();
-            createChessboard('chessboard');
+            
         }
-        
+        createChessboard('chessboard');
         //loadGameStateFromLocalStorage();
         
         window.onload = () => doOnload();

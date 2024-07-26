@@ -101,6 +101,23 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.chip-small {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 7px;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f0f0f0 !important;
+}
+
 .chip-count {
     position: absolute;
     bottom: -10px; /* Positioning below the chip */
