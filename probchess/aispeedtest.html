@@ -14,23 +14,37 @@
 <body>
     <script>
         
-        let stockfish = new SynchronousStockfish();
+        //let stockfish = new SynchronousStockfish();
         
-
+        let stockfishWorkers = [];
+        const WORKERS = 15;
+        for (let i= 0; i < WORKERS; i++) {
+            stockfishWorkers.push(new SynchronousStockfish());
+        }
         async function run() {
             let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             // Run the algo several times and track how long it takes.
-            const ITERATIONS = 10000;
+            const ITERATIONS = 100000;
             let board = new Chess(fen);
 
             let start = performance.now();
-            for (let i = 0; i < ITERATIONS; i++) {
-                let result = await stockfish.getBestMove(fen, 1, 1, board);
-                if (i==0) {
-                    console.log("stockfish", result);
+            // for (let i = 0; i < ITERATIONS; i++) {
+            //     let result = await stockfish.getBestMove(fen, 1, 1, board);
+            //     if (i==0) {
+            //         console.log("stockfish", result);
+            //     }
+            // }
+
+            for (let j = 0; j < ITERATIONS; j += WORKERS) {
+                let results = []
+                for (let i = 0; i < WORKERS; i++) {
+                    results.push(stockfishWorkers[i].getBestMove(fen, 1, 1, board));
                 }
-                // console.log("stockfish", result);
+                for (let i = 0; i < WORKERS; i++) {
+                    await results[i];
+                }
             }
+
             let end = performance.now();
             console.log("stockfish", "average time", (end - start) / ITERATIONS);
             console.log("stockfish", "total time", (end - start));
@@ -51,7 +65,14 @@
         // No lok for winner, king_attacked
         // 0.34, 1, 10,000, score=112
 
-        
+        // Multiple workers (laptop results)
+        // 01 workers: 0.58
+        // 10 workers: 0.21
+        // 12 workers: 0.17
+        // 15 workers: 0.13
+        // 20 workers: 0.13
+        // 30 workers: 0.12
+        // 40 workers: 0.14
     </script>
 
 </body>

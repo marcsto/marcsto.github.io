@@ -75,7 +75,7 @@
 
 .bottom-right-text {
     position: absolute;
-    bottom: 0;
+    top: 0;
     right: 0;
     margin: 10px;
     font-size: 1.5vmin;

@@ -38,6 +38,7 @@ function playAllSequences(replaySequences, makeGif = true) {
   
   let gifGen = null; 
   if (makeGif) {
+    document.getElementById('overlayMoveString').appendChild(gameHistoryToMoveSpan());
     gifGen = new GifGenerator('replay-share-content')
   }
   const playPromises = replaySequences.map((sequence, index) => 
@@ -128,6 +129,9 @@ function playMoves(moves, boardIndex, gifGen) {
           happyFace = '😢';
         }
         let moveStatus = move.status;
+        if (!moveStatus) {
+          moveStatus = move.humanMove;
+        }
         if (moveStatus.endsWith(':)')) {
           moveStatus = moveStatus.substring(0, moveStatus.length - 3);
         }

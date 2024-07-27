@@ -19,12 +19,35 @@ class SynchronousStockfish {
 
     initWorker() {
         console.log("Initializing stockfish worker...");
-        var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-        console.log("Wasm supported: ", wasmSupported);
-        this.stockfish = new Worker(wasmSupported ? 'static/stockfish.wasm.js' : 'static/stockfish.js');        
-        this.stockfish.addEventListener('message', (e) => this.handleMessage(e));
+        let multithreaded = false;
+        if (multithreaded) {
+            this.stockfish = typeof STOCKFISH === "function" ? STOCKFISH() : new Worker('static/stockfish-nnue-16.js#stockfish-nnue-16.wasm');
+            // this.stockfish.onerror = (e) => {console.log(e);};
+            // this.stockfish.onmessage = function(event) {
+            //     console.log(event);
+            // };
+
+            // var engine = typeof STOCKFISH === "function" ? STOCKFISH() : new Worker('static/stockfish-nnue-16.js#stockfish-nnue-16.wasm');
+            // engine.onmessage = function(event) {
+            //     console.log(event);
+            // };
+            // engine.postMessage('uci');
+            // engine.postMessage('ucinewgame');
+            // engine.postMessage('go depth 10');
+            // console.log("Engine: ", engine);
+        } else {
+            var wasmSupported = typeof WebAssembly === 'object' && WebAssembly.validate(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+            console.log("Wasm supported: ", wasmSupported);
+            this.stockfish = new Worker(wasmSupported ? 'static/stockfish.wasm.js' : 'static/stockfish.js');
+            
+        }
         this.stockfish.onerror = (e) => this.onerror(e);
+        this.stockfish.addEventListener('message', (e) => this.handleMessage(e));
         this.stockfish.postMessage('uci');
+        
+        
+        
+        
     }
 
     onerror(e) {

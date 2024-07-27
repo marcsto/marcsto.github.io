@@ -24,6 +24,8 @@ let currentFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 // let currentFEN = "k6Q/8/K7/8/8/8/8/8 w - - 0 1"; // Capture king
 
 let lastClickedSquare = null;
+let lastMoveStartSquare = null;
+let lastMoveEndSquare = null;
 
 function createChessboard(boardId, small=false) {
     const chessboard = document.getElementById(boardId);
@@ -143,6 +145,7 @@ function handleSquareClick(event) {
     let clickedPiece = clickedSquare.querySelector('.piece');
 
     if (lastClickedSquare == null) {
+        // Start of click.
         turn = currentFEN.split(' ')[1];
         if (turn === 'w' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toLowerCase()
             || turn === 'b' && clickedPiece.dataset.piece === clickedPiece.dataset.piece.toUpperCase()) {
@@ -158,12 +161,27 @@ function handleSquareClick(event) {
             return;
         }
         clickedPiece.classList.add('piece-selected');
+        clickedSquare.classList.add('square-selected');
     } else if (lastClickedSquare == clickedSquare) {
         console.log('Deselecting previously selected piece');
         let lastClickedPiece = lastClickedSquare.querySelector('.piece');
         lastClickedPiece.classList.remove('piece-selected');
+        lastClickedSquare.classList.remove('square-selected');
         lastClickedSquare = null;
     } else {
+        // Destination click
+        if (lastMoveStartSquare) {
+            lastMoveStartSquare.classList.remove('square-selected');
+            lastMoveStartSquare.classList.remove('square-selected-success');
+            lastMoveStartSquare.classList.remove('square-selected-fail');
+            lastMoveEndSquare.classList.remove('square-selected');
+            lastMoveEndSquare.classList.remove('square-selected-success');
+            lastMoveEndSquare.classList.remove('square-selected-fail');
+        }
+        clickedSquare.classList.add('square-selected');
+        lastMoveStartSquare = lastClickedSquare;
+        lastMoveEndSquare = clickedSquare;
+
         const startRow = lastClickedSquare.dataset.row;
         const startCol = lastClickedSquare.dataset.col;
         const endRow = clickedSquare.dataset.row;
@@ -203,7 +221,7 @@ function updateBoardFromFEN(fen, boardId='chessboard') {
     const cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
     squares.forEach(square => {
-        square.classList.remove('square-selected');
+        //square.classList.remove('square-selected');
         const row = square.dataset.row;
         const col = square.dataset.col;
         // Convert from our row col to chess.js row col.

@@ -442,6 +442,16 @@
                     addMoveToSidePanel(data.move, turn_opposite, strikeThrough, currentFEN, score, gameHistory.length - 1);
                 }
 
+                if (lastMoveStartSquare && lastMoveEndSquare) {
+                    if (data.played) {
+                        lastMoveStartSquare.classList.add('square-selected-success');
+                        lastMoveEndSquare.classList.add('square-selected-success');
+                    } else {
+                        lastMoveStartSquare.classList.add('square-selected-fail');
+                        lastMoveEndSquare.classList.add('square-selected-fail');
+                    }
+                }
+
                 //saveGameStateToLocalStorage();
                 
                 if (data.winner) {
@@ -489,7 +499,7 @@
             playMoveOnBoard(lastMove);
         }
 
-        let aiStockfish = null;
+        let aiStockfish = new StockfishAi();
         let aiMonteCarlo = null;
         let aiAlphaBetaEm = null;
         
@@ -683,28 +693,14 @@
                 }
             }
 
-            const cellContent = document.createElement('span');
-            cellContent.classList.add('moveTableContent')
-            cell.appendChild(cellContent);
-
-            cellContent.textContent = humanReadableMove;
-            if (score && score !== '') {
-                score = score / 100;
-                score = score.toFixed(2);
-                cellContent.textContent += ' (' + score + ')';
-            }
-
             const historyObj = gameHistory[moveIndex];
-            if (historyObj.chipUsed && historyObj.chipUsed > 0) {
-                const chipElement = createSingleChip(false, historyObj.chipUsed, true);
-                // Show a probability chip
-                chipElement.style.marginLeft = '5px';
-                cellContent.appendChild(chipElement);
-            }
-
+            const cellContent = createMoveForUi(humanReadableMove, score, historyObj.chipUsed);
+            cellContent.classList.add('moveTableContent')
+            cellContent.classList.add('move');
+            
+            cell.appendChild(cellContent);
             cellContent.dataset.fen = fen;
             cellContent.dataset.moveIndex = moveIndex;
-            cellContent.classList.add('move');
             cellContent.addEventListener('click', handleHistoricalMoveClick)
             if (strikeThrough === 1 || strikeThrough === true) {
                 cell.style.color = 'red';
@@ -722,7 +718,6 @@
             event.target.style.border = '1px solid white';
             
 
-
             const move = event.target.textContent;
             const moveIndex = parseInt(event.target.dataset.moveIndex);
             const fen = event.target.dataset.fen;
@@ -734,6 +729,55 @@
             indexInGameHistory = moveIndex;
             updateBoardFromFEN(fen);
         }
+
+        function createMoveForUi(humanReadableMove, score, chipUsed) {
+            const cellContent = document.createElement('span');
+            
+            cellContent.textContent = humanReadableMove;
+            if (score && score !== '') {
+                score = score / 100;
+                score = score.toFixed(2);
+                cellContent.textContent += ' (' + score + ')';
+            }
+
+            
+            if (chipUsed && chipUsed > 0) {
+                const chipElement = createSingleChip(false, chipUsed, true);
+                // Show a probability chip
+                chipElement.style.marginLeft = '5px';
+                cellContent.appendChild(chipElement);
+            }
+            
+            return cellContent;
+        }
+
+        function gameHistoryToMoveSpan() {
+            const moveSpan = document.createElement('span');
+            
+            for (let i = 0; i < gameHistory.length; i++) {
+                let historyObj = gameHistory[i];
+                
+                let moveNumber = '';
+                if (i % 2 == 0) {
+                    moveNumber = i / 2 + 1;
+                    moveNumber += ".";
+                }
+                let moveStr = moveNumber + historyObj.humanMove;
+                // moveStr += "&nspb;"
+                const oneMove = createMoveForUi(moveStr, historyObj.score, historyObj.chipUsed)
+                oneMove.style.display = 'inline-flex';
+                oneMove.style.marginLeft = '4px';
+                if (!historyObj.played) {
+                    oneMove.style.color = 'red';
+                }
+                moveSpan.appendChild(oneMove);
+            }
+            // document.getElementById('mytest').innerHTML = '';
+            // document.getElementById('mytest').appendChild(moveSpan);
+            return moveSpan
+        }
+
+
 
         function doOnload() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -757,7 +801,7 @@
         
         window.onload = () => doOnload();
     </script>
-
+    <div id="mytest"></div>
     <div id="resultAnimation" class="hidden">
         <div id="resultMessage"></div>
     </div>
@@ -837,8 +881,10 @@
                 <div id="replay-title">
                     Congratulations, You Beat Stockfish at Probabilistic Chess!
                 </div>
-                <div id="replay-boards"></div>
                 <div class="bottom-right-text">marc.ai/probchess</div>
+                <div id="replay-boards"></div>
+                <div id="overlayMoveString" class="center-container"></div>
+                
             </div>
             <div class="center-container">
                 <button id="sharebtn" class="share-button hidden">
@@ -855,6 +901,7 @@
                     </svg>
                     Download GIF</button>
             </div>
+            
         </div>
     </div>
 
