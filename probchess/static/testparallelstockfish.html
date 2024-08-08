@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+   </head>
+   <body>
+
+    <script>
+        var engine = typeof STOCKFISH === "function" ? STOCKFISH() : new Worker('stockfish-nnue-16.js#stockfish-nnue-16.wasm');
+        engine.onmessage = function(event) {
+            console.log(event);
+        };
+        engine.postMessage('uci');
+        engine.postMessage('ucinewgame');
+        engine.postMessage('go depth 10');
+    </script> 
+  </body>
+</html>

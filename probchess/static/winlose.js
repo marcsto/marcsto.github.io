@@ -36,6 +36,7 @@ function showWinner(result) {
     let aiWhite = document.getElementById('aiw').checked;
     let aiBlack = document.getElementById('aib').checked;
     // If the player was palying against the AI, a custom message.
+    
     if ((aiWhite || aiBlack) && !(aiWhite && aiBlack)) {
         const playerWon = (aiBlack && result === 'w') || (aiWhite && result === 'b');
         if (playerWon) {
@@ -43,6 +44,7 @@ function showWinner(result) {
         } else {
             overlayTitle = 'Stockfish Wins. Better luck next time!';
         }
+        //showRewards(playerWon)
     }
     document.getElementById('replay-title').textContent = overlayTitle;
     let replaySequence = gameHistory.slice(-4);

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Reward Screen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .reward-screen {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 300px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .reward-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .reward-label {
+            display: flex;
+            align-items: center;
+        }
+        .icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        .total {
+            border-top: 1px solid #e0e0e0;
+            margin-top: 20px;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="rewardScreen" class="reward-screen">
+        <h1 id="gameResult">Game Result</h1>
+        <div id="rewardsList"></div>
+        <div id="totalReward" class="reward-item total"></div>
+    </div>
+
+    <script>
+        function displayRewards(rewards, isWin) {
+            const rewardsList = document.getElementById('rewardsList');
+            const gameResult = document.getElementById('gameResult');
+            const totalReward = document.getElementById('totalReward');
+
+            gameResult.textContent = isWin ? 'Victory!' : 'Game Over';
+
+            rewardsList.innerHTML = '';
+            for (const [key, value] of Object.entries(rewards)) {
+                if (key !== 'total') {
+                    const rewardItem = document.createElement('div');
+                    rewardItem.className = 'reward-item';
+                    rewardItem.innerHTML = `
+                        <span class="reward-label">
+                            <img src="${getIconUrl(key)}" alt="${key}" class="icon">
+                            ${formatRewardLabel(key)}
+                        </span>
+                        <span>${value}</span>
+                    `;
+                    rewardsList.appendChild(rewardItem);
+                }
+            }
+
+            totalReward.innerHTML = `
+                <span class="reward-label">
+                    <img src="${getIconUrl('total')}" alt="total" class="icon">
+                    Total XP Earned
+                </span>
+                <span>${rewards.total}</span>
+            `;
+        }
+
+        function formatRewardLabel(key) {
+            const labels = {
+                win: 'Win Bonus',
+                loss: 'Loss Bonus',
+                firstGameOfDay: 'First Game of Day',
+                streak: 'Streak Bonus',
+                levelUp: 'Level Up',
+                newAvatar: 'New Avatar'
+            };
+            return labels[key] || key;
+        }
+
+        function getIconUrl(key) {
+            // Replace these with actual icon URLs in a real implementation
+            const icons = {
+                win: '/api/placeholder/24/24',
+                loss: '/api/placeholder/24/24',
+                firstGameOfDay: '/api/placeholder/24/24',
+                streak: '/api/placeholder/24/24',
+                levelUp: '/api/placeholder/24/24',
+                newAvatar: '/api/placeholder/24/24',
+                total: '/api/placeholder/24/24'
+            };
+            return icons[key] || '/api/placeholder/24/24';
+        }
+
+        // Example usage
+        const exampleRewards = {
+            win: 100,
+            firstGameOfDay: 75,
+            streak: 50,
+            levelUp: 6,
+            newAvatar: 'cool_avatar_1',
+            total: 225
+        };
+        displayRewards(exampleRewards, true);
+
+        // For a loss scenario, you might use:
+        // const lossRewards = {
+        //     loss: 50,
+        //     firstGameOfDay: 75,
+        //     total: 125
+        // };
+        // displayRewards(lossRewards, false);
+    </script>
+</body>
+</html>

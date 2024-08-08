@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="static/threedots.css">
     <link rel="stylesheet" href="static/happydice.css">
     <link rel="stylesheet" href="static/endgameoverlay.css">
+    <link rel="stylesheet" href="static/rewards.css">
+
     <script src="static/chessutils.js"></script>
     <script src="static/chess.js"></script>
     <script src="static/probchess.js"></script>
@@ -30,12 +32,12 @@
     <script src="static/probboard.js"></script>
     <script src="static/html2canvas.min.js"></script>
     <script src="static/gif.js"></script>
-    
     <script src="static/FileSaver.min.js"></script>
     <script src="static/gifmaker.js"></script>
     <script src="static/endgameoverlay.js"></script>
     <script src="static/feedback.js"></script>
     <script src="static/gameencoder.js"></script>
+    <script src="static/rewards.js"></script>
     
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script> -->
@@ -271,6 +273,8 @@
             </div>
             <div class="status" id="status">Welcome to Probabilistic Chess</div>
             <hr />
+            <div id="xp-container" class="side-by-side-wrapper"><div id="avatar"></div><div id="current-xp"></div></div>
+            
             <div class="side-by-side-wrapper">
                 <div class="side-by-side">
                     <input type="checkbox" id="aiw" onclick="requestAiMove()" data-key="cw" data-id="xw" >AI White</checkbox>
@@ -329,8 +333,8 @@
             <div id="king-variant-explanation"></div>
 
             <select id="prob-variants" name="prob-variants" class="dropdown variant-dropdown" onchange="onProbVariantChange()" data-key="sp">
-                <option value="prob-variant-none" class="dropdown-title" data-id="1" selected>Select Probability Variant</option>
-                <option value="prob-variant-chips" data-id="2">Probability Chips</option>
+                <option value="prob-variant-none" class="dropdown-title" data-id="1" >Select Probability Variant</option>
+                <option value="prob-variant-chips" data-id="2" selected>Probability Chips</option>
             </select>
             <div id="king-variant-explanation"></div>
         </div>
@@ -794,6 +798,7 @@
             createChips('whiteChips', true);
             createChips('blackChips', false);
             initializeUiChangeEventListeners();
+            //showPlayerXp();
             
         }
         createChessboard('chessboard');
@@ -905,6 +910,15 @@
         </div>
     </div>
 
+    <div id="reward-overlay" class="hidden">
+        <div id="rewardScreen" class="reward-screen">
+            <h1 id="rewardGameResult">Game Result</h1>
+            <div id="rewardsList"></div>
+            <div id="totalReward" class="reward-item reward-total"></div>
+            <div><center><button class="share-button" onclick="document.getElementById('reward-overlay').classList.add('hidden')">Next</button></center></div>
+        </div>
+    </div>
+    
 
 </body>
 </html>
