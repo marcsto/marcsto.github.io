@@ -69,24 +69,32 @@
   }
 
   #replay-title {
-    font-size: 3vmin;
+    display: flex;
+    font-size: 2.8vmin;
     padding: 2vmin;
+    align-items: center;
+    justify-content: center;
   }
 
-.bottom-right-text {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 10px;
-    font-size: 1.5vmin;
-}
+  .endgame-overlay-avatar {
+    margin-right: 1vmin;
+    /* Make the width equivalent to 40px on a desktop, but have it scale down on smaller screens */
+    width: 2.5vmin;
+  }
 
 .top-right-text {
   position: absolute;
   top: 0;
   right: 0;
-  margin: 10px;
+  margin-right: 10px;
   font-size: 1.5vmin;
+}
+
+.top-left-avatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-left: 10px;
 }
 
 #replay-share-content {

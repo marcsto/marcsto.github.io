@@ -1,5 +1,6 @@
 
-const allAvatars = ['images/avatars/a1.png', 'images/avatars/a2.png']
+// Make a list of avatars. The format is ['images/avatars/avatar_0.png', 'images/avatars/avatar_1.png', ...] up to 11
+const allAvatars = Array.from({length: 12}, (v, i) => `static/images/avatars/avatar_${i}.png`);
 
 class RewardState {
     constructor() {
@@ -9,8 +10,11 @@ class RewardState {
         this.firstGameOfDayBonusDate = new Date(0);
 
         // If you play multiple days in a row you get a bonus
-        this.streakStartDate = null;
-        this.streakEndDate = null;
+        // Start them with a 1 day streak.
+        this.streakStartDate = new Date();
+        this.streakStartDate.setHours(3, 0, 0, 0);
+        this.streakStartDate.setDate(this.streakStartDate.getDate() - 1);
+        this.streakEndDate = this.streakStartDate;
     }
 
     // Static method to create a new instance by loading from local storage
@@ -34,23 +38,48 @@ class RewardState {
         localStorage.setItem('rewardState', JSON.stringify(this));
     }
 
-    getLevel() {
-        // Level is exponentially related to xp
-        if (this.xp == 0) {
-            return 1;
+    calculateLevelAndNextXp(currentXp) {
+        /* Level 1 is from 0 to 100,000 XP. 
+           Level 2 is from 100,000 to 300,000.
+           Level 3 is from 300,000 to 600,000 and so on. 
+           The maximum amount of XP needed to get to the next level is 1,200,000.  
+        */
+        const maxXpIncrease = 1200000; // Maximum XP increment
+        let level = 1;
+        let nextLevelXp = 100000; // XP needed to reach level 2
+    
+        // Determine the level based on current XP
+        while (currentXp >= nextLevelXp && level < Infinity) {
+            level++;
+            nextLevelXp += Math.min(level * 100000, maxXpIncrease);
         }
-        return Math.floor(Math.log2(this.xp));
+    
+        return [ level, nextLevelXp ];
+    }
+    
+    getXpToNextLevel() {
+        const [ level, nextLevelXp ] = this.calculateLevelAndNextXp(this.xp);
+        return nextLevelXp - this.xp;
+    }
+    
+    getLevel() {
+        const [ level, nextLevelXp ] = this.calculateLevelAndNextXp(this.xp);
+        return level;
     }
 
-    getXPForNextLevel() {
-        return Math.pow(2, this.getLevel() + 1);
-    }
+    // getLevel() {
+    //     // Level is exponentially related to xp
+    //     if (this.xp == 0) {
+    //         return 1;
+    //     }
+    //     return Math.floor(Math.log2(this.xp));
+    // }
 
     getFirstGameOfDayBonus(now) {
         let lastBonusDate = new Date(this.firstGameOfDayBonusDate);
         // Only give a bonus if the last bonus was not today (checking year, month and day)
         if (lastBonusDate.getFullYear() != now.getFullYear() || lastBonusDate.getMonth() != now.getMonth() || lastBonusDate.getDate() != now.getDate()) {
-            return 10;
+            return 50000;
         }
         return 0;
     }
@@ -74,7 +103,7 @@ class RewardState {
             return 0;
         }
 
-        const diffTime = Math.abs(this.streakEndDate - this.streakStartDate);
+        const diffTime = Math.abs(now - this.streakStartDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return diffDays;
         
@@ -90,15 +119,16 @@ class RewardState {
         if (isSameDay(this.streakEndDate, now)) {
             return 0;
         }
-        return 10;
+        let bonus = Math.min(40000 * Math.pow(1.1, streakLength), 300000);
+        return bonus;
     }
 
     getWinBonus() {
-        return 10;
+        return 50000;
     }
 
     getLossBonus() {
-        return 2;
+        return 10000;
     }
 
     getRandomNotOwnedAvatar() {
@@ -138,19 +168,14 @@ function testLevels() {
     }
 }
 
-function applyReward(isWin) {
+function applyReward(rewardState, isWin, now) {
     rewards = {};
-    const rewardState = RewardState.load()
     let currentLevel = rewardState.getLevel();
     if (isWin) {
         rewards['win'] = rewardState.getWinBonus();
     } else {
         rewards['loss'] = rewardState.getLossBonus();
     }
-    
-    let now = new Date();
-    // Make now be 3 am today so streaks always reset at the same time.
-    now.setHours(3, 0, 0, 0);
     
     // First game of day bonus
     let firstGameOfDayBonus = rewardState.getFirstGameOfDayBonus(now);
@@ -194,52 +219,74 @@ function applyReward(isWin) {
 // ---- Display the rewards
 function showRewards(isWin) {
     const rewardOverlay = document.getElementById('reward-overlay'); 
-    const rewardsList = document.getElementById('rewardsList');
+    const rewardsList = document.getElementById('rewardsList'); 
     const gameResult = document.getElementById('rewardGameResult');
     const totalReward = document.getElementById('totalReward');
+    const xpUntilNextLevel = document.getElementById('xpUntilNextLevel');
 
-    
-    rewards = applyReward(isWin);
+    const rewardState = RewardState.load()
+    let now = new Date();
+    // Make now be 3 am today so streaks always reset at the same time.
+    now.setHours(3, 0, 0, 0);
+
+    rewards = applyReward(rewardState, isWin, now);
 
     gameResult.textContent = isWin ? 'Victory!' : 'Game Over';
 
     rewardsList.innerHTML = '';
-    for (const [key, value] of Object.entries(rewards)) {
+    for (let [key, value] of Object.entries(rewards)) {
         if (key !== 'total') {
+            if (key === 'newAvatar') {
+                value = `<img src="${value}" alt="New Avatar" width="40px"></img>`
+            } else {
+                // Make the number look nice
+                value = value.toLocaleString();
+            }
             const rewardItem = document.createElement('div');
             rewardItem.className = 'reward-item';
+            // <img src="${getIconUrl(key)}" alt="${key}" class="icon">
             rewardItem.innerHTML = `
                 <span class="reward-label">
-                    <img src="${getIconUrl(key)}" alt="${key}" class="icon">
-                    ${formatRewardLabel(key)}
+                    ${formatRewardLabel(key, rewardState, now)}
                 </span>
                 <span>${value}</span>
             `;
             rewardsList.appendChild(rewardItem);
         }
     }
-
+    // <img src="${getIconUrl('total')}" alt="total" class="icon">
     totalReward.innerHTML = `
         <span class="reward-label">
-            <img src="${getIconUrl('total')}" alt="total" class="icon">
             Total XP Earned
         </span>
-        <span>${rewards.total}</span>
+        <span>${rewards.total.toLocaleString()}</span>
+    `;
+
+    xpUntilNextLevel.innerHTML = `
+        <span class="reward-label">
+            XP Until Next Level
+        </span>
+        <span>${rewardState.getXpToNextLevel().toLocaleString()}</span>
     `;
 
     rewardOverlay.classList.remove('hidden');
     showPlayerXp();
 }
 
-function formatRewardLabel(key) {
+function formatRewardLabel(key, rewardState, now) {
     const labels = {
         win: 'Win Bonus',
         loss: 'XP Bonus',
-        firstGameOfDay: 'First Game of Day',
-        streak: 'Streak Bonus',
-        levelUp: 'Level Up',
-        newAvatar: 'New Avatar'
+        firstGameOfDay: 'First Game of Day Bonus',
+        streak: 'Streak Bonus' ,
+        levelUp: 'New Level!',
+        newAvatar: 'New Avatar!'
     };
+    if (key === 'streak') {
+        let streakLength = rewardState.getStreakLength(now);
+        return `Streak Bonus (${streakLength} day${streakLength == 1 ? '' : 's'})`;
+    }
+
     return labels[key] || key;
 }
 
@@ -262,7 +309,58 @@ function showPlayerXp() {
     const rewardState = RewardState.load()
     const avatarDiv = document.getElementById('avatar'); 
     const xpDiv = document.getElementById('current-xp');
-    xpDiv.textContent = rewardState.xp + " XP";
-    avatarDiv.innerHTML = `<img src="${rewardState.selectedAvatar}" alt="avatar"></img>`
+    const avatarEndgameOverlayImg = document.getElementById('endgame-overlay-avatar'); 
     
+
+    let now = new Date();
+    now.setHours(3, 0, 0, 0);
+
+    let streakLength = rewardState.getStreakLength(now);
+    xpDiv.textContent = "Level: " + rewardState.getLevel() + "\r\nStreak: " + streakLength + (streakLength == 1 ? " day" : " days");
+    
+    avatarDiv.innerHTML = `<img src="${rewardState.selectedAvatar}" alt="avatar" width='40px'></img>`
+    avatarEndgameOverlayImg.src = rewardState.selectedAvatar;
+    
+}
+
+
+// ---- Avatar selection ----
+
+function createAvatarSelectionPopup() {
+    console.log('Creating avatar selection popup');
+    const rewardState = RewardState.load();
+    const ownedAvatars = rewardState.ownedAvatars;
+    const avatarGrid = document.getElementById('avatarGrid');
+    avatarGrid.innerHTML = '';
+
+    allAvatars.forEach(avatarUrl => {
+        const avatarImg = document.createElement('img');
+        avatarImg.src = avatarUrl;
+        avatarImg.classList.add('avatar');
+
+        if (ownedAvatars.includes(avatarUrl)) {
+            avatarImg.onclick = () => updateAvatar(avatarUrl);
+        } else {
+            avatarImg.classList.add('unowned');
+        }
+
+        avatarGrid.appendChild(avatarImg);
+    });
+    openPopup()
+}
+
+function openPopup() {
+    document.getElementById('avatarPopup').style.display = 'block';
+}
+
+function closePopup() {
+    document.getElementById('avatarPopup').style.display = 'none';
+}
+
+function updateAvatar(avatarUrl) {
+    console.log('Updating avatar to:', avatarUrl);
+    const rewardState = RewardState.load();
+    rewardState.setSelectedAvatar(avatarUrl);
+    showPlayerXp();
+    closePopup();
 }

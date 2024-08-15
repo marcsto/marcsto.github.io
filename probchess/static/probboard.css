@@ -46,12 +46,20 @@
     /* background-color: rgba(255, 255, 0, 0.1); */
 }
 
-.square-selected-success {
-    background-color: rgba(0, 128, 0, 0.7);
+.square-selected-success-white {
+    background-color: #d6efbd;
 }
 
-.square-selected-fail {
-    background-color: rgba(255, 0, 0, 0.7)
+.square-selected-success-black {
+    background-color: #6aa04d
+}
+
+.square-selected-fail-white {
+    background-color: #efd6bd;
+}
+
+.square-selected-fail-black {
+    background-color: #83874d;
 }
 
 .piece-selected {

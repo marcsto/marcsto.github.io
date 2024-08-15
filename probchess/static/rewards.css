@@ -49,3 +49,78 @@
     margin-top: 20px;
     padding-top: 10px;
 }
+
+.current-xp {
+    margin-left: 20px;
+    /* Center the content vertically */
+    display: flex;
+    align-items: center;
+    white-space: pre;
+
+}
+
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    color: #333;
+}
+.avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.avatar {
+    width: 100px;
+    height: 170px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.avatar:hover {
+    border-color: #007bff;
+}
+.avatar.unowned {
+    filter: grayscale(100%);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+    .avatar-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .avatar {
+        width: 80px;
+        height: 136px; /* Maintains the same aspect ratio */
+    }
+}
+
+/* Media query for very small screens */
+@media (max-width: 320px) {
+    .avatar-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    .avatar {
+        width: 100px;
+        height: 170px; /* Back to original size, but in a single column */
+    }
+}

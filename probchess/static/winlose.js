@@ -44,9 +44,9 @@ function showWinner(result) {
         } else {
             overlayTitle = 'Stockfish Wins. Better luck next time!';
         }
-        //showRewards(playerWon)
+        showRewards(playerWon)
     }
-    document.getElementById('replay-title').textContent = overlayTitle;
+    document.getElementById('replay-title-text').textContent = overlayTitle;
     let replaySequence = gameHistory.slice(-4);
     showReplay([replaySequence]);
     showFeedbackForm();

@@ -172,11 +172,15 @@ function handleSquareClick(event) {
         // Destination click
         if (lastMoveStartSquare) {
             lastMoveStartSquare.classList.remove('square-selected');
-            lastMoveStartSquare.classList.remove('square-selected-success');
-            lastMoveStartSquare.classList.remove('square-selected-fail');
+            lastMoveStartSquare.classList.remove('square-selected-success-white');
+            lastMoveStartSquare.classList.remove('square-selected-fail-white');
+            lastMoveStartSquare.classList.remove('square-selected-success-black');
+            lastMoveStartSquare.classList.remove('square-selected-fail-black');
             lastMoveEndSquare.classList.remove('square-selected');
-            lastMoveEndSquare.classList.remove('square-selected-success');
-            lastMoveEndSquare.classList.remove('square-selected-fail');
+            lastMoveEndSquare.classList.remove('square-selected-success-white');
+            lastMoveEndSquare.classList.remove('square-selected-fail-white');
+            lastMoveEndSquare.classList.remove('square-selected-success-black');
+            lastMoveEndSquare.classList.remove('square-selected-fail-black');
         }
         clickedSquare.classList.add('square-selected');
         lastMoveStartSquare = lastClickedSquare;

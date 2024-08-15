@@ -273,8 +273,8 @@
             </div>
             <div class="status" id="status">Welcome to Probabilistic Chess</div>
             <hr />
-            <div id="xp-container" class="side-by-side-wrapper"><div id="avatar"></div><div id="current-xp"></div></div>
-            
+            <div id="xp-container" class="side-by-side-wrapper"><div id="avatar" onclick="createAvatarSelectionPopup();"></div><div id="current-xp" class="current-xp"></div></div>
+            <hr />
             <div class="side-by-side-wrapper">
                 <div class="side-by-side">
                     <input type="checkbox" id="aiw" onclick="requestAiMove()" data-key="cw" data-id="xw" >AI White</checkbox>
@@ -447,13 +447,12 @@
                 }
 
                 if (lastMoveStartSquare && lastMoveEndSquare) {
+                    let class_name = 'square-selected-fail-';
                     if (data.played) {
-                        lastMoveStartSquare.classList.add('square-selected-success');
-                        lastMoveEndSquare.classList.add('square-selected-success');
-                    } else {
-                        lastMoveStartSquare.classList.add('square-selected-fail');
-                        lastMoveEndSquare.classList.add('square-selected-fail');
+                        class_name = 'square-selected-success-';
                     }
+                    lastMoveStartSquare.classList.add(class_name + (lastMoveStartSquare.classList.contains('white') ? 'white' : 'black'));
+                    lastMoveEndSquare.classList.add(class_name + (lastMoveEndSquare.classList.contains('white') ? 'white' : 'black'));
                 }
 
                 //saveGameStateToLocalStorage();
@@ -798,7 +797,7 @@
             createChips('whiteChips', true);
             createChips('blackChips', false);
             initializeUiChangeEventListeners();
-            //showPlayerXp();
+            showPlayerXp();
             
         }
         createChessboard('chessboard');
@@ -884,9 +883,11 @@
         <div id="replay-container">
             <div id="replay-share-content">
                 <div id="replay-title">
-                    Congratulations, You Beat Stockfish at Probabilistic Chess!
+                    <img src="static/images/avatars/avatar_10.png" alt="Avatar" class="endgame-overlay-avatar" id="endgame-overlay-avatar"></img>
+                    <div id="replay-title-text">Congratulations, You Beat Stockfish at Probabilistic Chess!</div>
                 </div>
-                <div class="bottom-right-text">marc.ai/probchess</div>
+                <div class="top-right-text">marc.ai/probchess</div>
+                <div class="top-left-avatar"></div>
                 <div id="replay-boards"></div>
                 <div id="overlayMoveString" class="center-container"></div>
                 
@@ -915,10 +916,15 @@
             <h1 id="rewardGameResult">Game Result</h1>
             <div id="rewardsList"></div>
             <div id="totalReward" class="reward-item reward-total"></div>
+            <div id="xpUntilNextLevel" class="reward-item"></div>
             <div><center><button class="share-button" onclick="document.getElementById('reward-overlay').classList.add('hidden')">Next</button></center></div>
         </div>
     </div>
-    
+    <div id="avatarPopup" class="popup">
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <h2>Select Your Avatar</h2>
+        <div id="avatarGrid" class="avatar-grid"></div>
+    </div>
 
 </body>
 </html>
