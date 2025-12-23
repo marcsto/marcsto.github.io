@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pass the Pigs Scorekeeper</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #fce7f3; /* Light pink background */
+        }
+        .pig-gradient {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+        /* Custom scrollbar for cleanliness */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fce7f3;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fbcfe8;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Icons ---
+        const PiggyBank = ({ size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2.5V5z" />
+                <path d="M2 9v1c0 1.1.9 2 2 2h1" />
+                <path d="M16 11h.01" />
+            </svg>
+        );
+
+        const Trophy = ({ size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M12 2v7" />
+                <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7Z" />
+            </svg>
+        );
+
+        const RotateCcw = ({ size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+            </svg>
+        );
+
+        const UserPlus = ({ size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" x2="19" y1="8" y2="14" />
+                <line x1="22" x2="16" y1="11" y2="11" />
+            </svg>
+        );
+
+        const Plus = ({ size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+            </svg>
+        );
+
+        const Skull = ({ size = 18, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="9" cy="12" r="1" />
+                <circle cx="15" cy="12" r="1" />
+                <path d="M8 20v2h8v-2" />
+                <path d="m12.5 17-.5-1-.5 1h1z" />
+                <path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20" />
+            </svg>
+        );
+
+        const Trash2 = ({ size = 16, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M3 6h18" />
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                <line x1="10" x2="10" y1="11" y2="17" />
+                <line x1="14" x2="14" y1="11" y2="17" />
+            </svg>
+        );
+
+        const App = () => {
+            const [players, setPlayers] = useState([]);
+            const [newPlayerName, setNewPlayerName] = useState('');
+            const [confirmWipeoutId, setConfirmWipeoutId] = useState(null);
+            const [isResetting, setIsResetting] = useState(false);
+
+            const inputRef = useRef(null);
+
+            useEffect(() => {
+                if(inputRef.current) inputRef.current.focus();
+            }, []);
+
+            // Clear wipeout confirmation if clicked elsewhere
+            useEffect(() => {
+                const clearConfirm = () => setConfirmWipeoutId(null);
+                window.addEventListener('click', clearConfirm);
+                return () => window.removeEventListener('click', clearConfirm);
+            }, []);
+
+            const addPlayer = (e) => {
+                e.preventDefault();
+                if (!newPlayerName.trim()) return;
+
+                const newPlayer = {
+                    id: Date.now(),
+                    name: newPlayerName.trim(),
+                    score: 0,
+                    turnInput: ''
+                };
+
+                setPlayers(prev => [...prev, newPlayer]);
+                setNewPlayerName('');
+            };
+
+            const removePlayer = (id) => {
+                setPlayers(prev => prev.filter(p => p.id !== id));
+            };
+
+            const updateScore = (id, amount) => {
+                setPlayers(prev => prev.map(p => {
+                    if (p.id === id) {
+                        return { ...p, score: p.score + parseInt(amount || 0), turnInput: '' };
+                    }
+                    return p;
+                }));
+            };
+
+            const handleWipeoutClick = (e, id) => {
+                e.stopPropagation(); // Prevent window click listener from clearing immediately
+                if (confirmWipeoutId === id) {
+                    // Confirmed
+                    setPlayers(prev => prev.map(p => {
+                        if (p.id === id) return { ...p, score: 0, turnInput: '' };
+                        return p;
+                    }));
+                    setConfirmWipeoutId(null);
+                } else {
+                    // First click
+                    setConfirmWipeoutId(id);
+                }
+            };
+
+            const handleInputChange = (id, value) => {
+                if (!/^\d*$/.test(value)) return;
+                setPlayers(prev => prev.map(p => {
+                    if (p.id === id) return { ...p, turnInput: value };
+                    return p;
+                }));
+            };
+
+            const resetGame = () => {
+                if (isResetting) {
+                    // Confirmed reset
+                    setPlayers(prev => prev.map(p => ({ ...p, score: 0, turnInput: '' })));
+                    setIsResetting(false);
+                } else {
+                    // Ask for confirmation
+                    setIsResetting(true);
+                    // Auto-clear confirmation after 3 seconds
+                    setTimeout(() => setIsResetting(false), 3000);
+                }
+            };
+
+            const getProgressColor = (score) => {
+                if (score >= 100) return 'bg-green-500';
+                if (score >= 80) return 'bg-yellow-400';
+                return 'bg-pink-400';
+            };
+
+            return (
+                <div className="min-h-screen max-w-4xl mx-auto bg-white flex flex-col shadow-2xl">
+
+                    {/* Compact Header */}
+                    <header className="pig-gradient text-white p-3 shadow-md relative z-10">
+                        <div className="flex justify-between items-center mb-2">
+                            <h1 className="text-xl font-bold flex items-center gap-2">
+                                <PiggyBank size={24} />
+                                Pass The Pigs
+                            </h1>
+                            {players.length > 0 && (
+                                <button
+                                    onClick={resetGame}
+                                    type="button"
+                                    className={`p-1.5 rounded-full transition flex items-center gap-1 ${isResetting ? 'bg-red-500 text-white shadow-lg ring-2 ring-white/50' : 'bg-white/20 hover:bg-white/30 text-white'}`}
+                                    title="Reset All Scores"
+                                >
+                                    {isResetting ? (
+                                        <span className="text-[10px] font-bold px-1 uppercase whitespace-nowrap">Sure?</span>
+                                    ) : (
+                                        <RotateCcw size={16} />
+                                    )}
+                                </button>
+                            )}
+                        </div>
+
+                        <form onSubmit={addPlayer} className="relative">
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={newPlayerName}
+                                onChange={(e) => setNewPlayerName(e.target.value)}
+                                placeholder="Add player name..."
+                                className="w-full py-2 px-3 pr-10 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 shadow-inner"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!newPlayerName.trim()}
+                                className="absolute right-1 top-1 bg-pink-600 text-white p-1.5 rounded-md disabled:opacity-50 hover:bg-pink-700 transition"
+                            >
+                                <UserPlus size={16} />
+                            </button>
+                        </form>
+                    </header>
+
+                    {/* Main Content - Grid Layout */}
+                    <main className="flex-1 p-2 overflow-y-auto bg-gray-50">
+
+                        {players.length === 0 && (
+                            <div className="text-center text-gray-400 mt-10 flex flex-col items-center">
+                                <PiggyBank size={48} className="mb-2 opacity-30" />
+                                <p className="text-sm">Add players to start!</p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {players.map((player) => {
+                                const needed = 100 - player.score;
+                                const isWinner = player.score >= 100;
+                                const isWiping = confirmWipeoutId === player.id;
+
+                                return (
+                                    <div
+                                        key={player.id}
+                                        className={`relative bg-white border ${isWinner ? 'border-green-400 bg-green-50' : 'border-gray-200'} rounded-lg p-2 shadow-sm`}
+                                    >
+                                        {/* Remove Button (Top Right Absolute) */}
+                                        <button
+                                            onClick={() => removePlayer(player.id)}
+                                            className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition"
+                                            title="Remove Player"
+                                            type="button"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+
+                                        {/* Name & Score Header */}
+                                        <div className="flex justify-between items-baseline pr-6 mb-1">
+                                            <div className="flex items-center gap-1 overflow-hidden">
+                                                <h2 className="text-lg font-bold text-gray-800 truncate">{player.name}</h2>
+                                                {isWinner && <Trophy size={16} className="text-yellow-500" />}
+                                            </div>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className={`text-2xl font-bold leading-none ${isWinner ? 'text-green-600' : 'text-gray-800'}`}>
+                                                    {player.score}
+                                                </span>
+                                                {!isWinner && (
+                                                    <span className="text-[10px] text-gray-400">
+                                                        ({Math.max(0, needed)} left)
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Slim Progress Bar */}
+                                        <div className="w-full bg-gray-100 h-1.5 rounded-full mb-2 overflow-hidden">
+                                            <div
+                                                className={`h-full transition-all duration-300 ${getProgressColor(player.score)}`}
+                                                style={{ width: `${Math.min(100, player.score)}%` }}
+                                            ></div>
+                                        </div>
+
+                                        {/* Input & Actions Row */}
+                                        <div className="flex items-center gap-1 h-8">
+                                            <input
+                                                type="number"
+                                                pattern="\d*"
+                                                placeholder="Score"
+                                                value={player.turnInput}
+                                                onChange={(e) => handleInputChange(player.id, e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') updateScore(player.id, player.turnInput);
+                                                }}
+                                                className="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-base focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 transition"
+                                            />
+
+                                            <button
+                                                onClick={() => updateScore(player.id, player.turnInput)}
+                                                disabled={!player.turnInput}
+                                                type="button"
+                                                className="bg-green-500 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white w-8 h-full rounded flex items-center justify-center transition active:scale-95"
+                                            >
+                                                <Plus size={18} />
+                                            </button>
+
+                                            <div className="w-px h-6 bg-gray-200 mx-0.5"></div>
+
+                                            <button
+                                                onClick={(e) => handleWipeoutClick(e, player.id)}
+                                                type="button"
+                                                className={`h-full px-2 rounded flex items-center justify-center gap-1 transition text-xs font-bold uppercase tracking-tighter
+                                                    ${isWiping
+                                                        ? 'bg-red-500 text-white hover:bg-red-600 w-auto'
+                                                        : 'bg-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 w-8'
+                                                    }`}
+                                                title="Wipeout (Reset Score)"
+                                            >
+                                                {isWiping ? (
+                                                    <span>Sure?</span>
+                                                ) : (
+                                                    <Skull size={16} />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
