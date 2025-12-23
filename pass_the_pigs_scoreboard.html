@@ -108,7 +108,16 @@
         );
 
         const App = () => {
-            const [players, setPlayers] = useState([]);
+            // Load players from local storage on initial render
+            const [players, setPlayers] = useState(() => {
+                try {
+                    const saved = localStorage.getItem('passThePigsPlayers');
+                    if (saved) return JSON.parse(saved);
+                } catch (e) {
+                    console.error("Failed to load game state", e);
+                }
+                return [];
+            });
             const [newPlayerName, setNewPlayerName] = useState('');
             const [confirmWipeoutId, setConfirmWipeoutId] = useState(null);
             const [isResetting, setIsResetting] = useState(false);
@@ -118,6 +127,11 @@
             useEffect(() => {
                 if(inputRef.current) inputRef.current.focus();
             }, []);
+
+            // Save players to local storage whenever they change
+            useEffect(() => {
+                localStorage.setItem('passThePigsPlayers', JSON.stringify(players));
+            }, [players]);
 
             // Clear wipeout confirmation if clicked elsewhere
             useEffect(() => {
