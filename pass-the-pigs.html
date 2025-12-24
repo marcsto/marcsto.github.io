@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pass the Pigs - Multiplayer</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --felt-green: #355e3b;
+            --felt-dark: #2a4b2f;
+            --pig-pink: #ffb6c1;
+            --pig-dark: #ff69b4;
+            --accent: #ffd700;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--felt-green);
+            background-image: radial-gradient(#3a6640 15%, transparent 16%), radial-gradient(#3a6640 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        /* Lobby Styles */
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid var(--felt-dark);
+            background: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: linear-gradient(to bottom, #ffeb3b, #fbc02d);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #3e2723;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #f57f17, 0 5px 10px rgba(0,0,0,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #f57f17, inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to bottom, #eeeeee, #bdbdbd);
+            color: #333;
+            box-shadow: 0 4px 0 #9e9e9e, 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary:active {
+             box-shadow: 0 0 0 #9e9e9e, inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Game Board Styles */
+        #game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .room-code {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .turn-indicator {
+            background: var(--accent);
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        #scoreboard {
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .player-row.active-player {
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .player-row.winner {
+             background: rgba(50, 205, 50, 0.4);
+             font-weight: bold;
+        }
+
+        #play-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #roll-display {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            min-height: 2.5rem;
+            color: var(--accent);
+            text-shadow: 1px 1px 2px black;
+        }
+
+        #last-roll-result {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .pig-visual {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        #round-score-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+        }
+
+        #round-label {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        #controls-area {
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px 20px 0 0;
+            margin: 0 -20px -20px -20px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        #roll-btn {
+            flex: 2;
+            background: linear-gradient(to bottom, #81c784, #4caf50);
+            box-shadow: 0 4px 0 #388e3c, 0 5px 10px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        #roll-btn:active {
+             box-shadow: 0 0 0 #388e3c, inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #bank-btn {
+            flex: 1;
+            background: linear-gradient(to bottom, #64b5f6, #2196f3);
+            box-shadow: 0 4px 0 #1976d2, 0 5px 10px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        #bank-btn:active {
+             box-shadow: 0 0 0 #1976d2, inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .waiting-msg {
+            font-size: 1.2rem;
+            color: #ccc;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        /* Modal */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            color: #d32f2f;
+            margin-bottom: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- LOBBY VIEW -->
+    <div id="lobby-view" class="view active">
+        <h1>Pass The Pigs</h1>
+        <div class="input-group">
+            <label for="room-code">Room Name</label>
+            <input type="text" id="room-code" placeholder="e.g. PICNIC" style="text-transform: uppercase;">
+        </div>
+        <div class="input-group">
+            <label for="player-name">Your Name</label>
+            <input type="text" id="player-name" placeholder="e.g. Dad">
+        </div>
+        <button id="join-btn" class="btn">Join Game</button>
+    </div>
+
+    <!-- GAME VIEW -->
+    <div id="game-view" class="view">
+        <div id="game-header">
+            <div class="room-code" id="display-room-code">ROOM: ----</div>
+            <div class="turn-indicator" id="turn-indicator">Waiting...</div>
+        </div>
+
+        <div id="scoreboard">
+            <!-- Player rows injected here -->
+        </div>
+
+        <div id="play-area">
+            <div id="roll-display">Ready to Roll?</div>
+            <div id="last-roll-result"></div>
+
+            <div id="round-label">Current Round</div>
+            <div id="round-score-display">0</div>
+        </div>
+
+        <div id="controls-area">
+            <div id="active-controls" class="control-row" style="display:none;">
+                <button id="roll-btn" class="btn">ROLL</button>
+                <button id="bank-btn" class="btn">BANK</button>
+            </div>
+            <div id="waiting-controls" style="display:none;">
+                <div class="waiting-msg">Waiting for <span id="waiting-for-name">...</span></div>
+            </div>
+            <div id="game-over-controls" style="display:none;">
+                 <div class="waiting-msg">Game Over! <span id="winner-name"></span> wins!</div>
+                 <button id="new-game-btn" class="btn btn-secondary" style="margin-top:10px;">New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">PIG OUT!</div>
+            <p id="modal-message">You rolled mixed siders. Round score lost.</p>
+            <button class="btn" onclick="document.getElementById('modal').style.display='none'">OK</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            databaseURL: "https://photobookshelf.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // --- GAME CONSTANTS ---
+        const POSITIONS = {
+            SIDER_NO_DOT: { name: "Sider (No Dot)", value: 0, weight: 35 },
+            SIDER_DOT_UP: { name: "Sider (Dot Up)", value: 0, weight: 35 },
+            RAZORBACK: { name: "Razorback", value: 5, weight: 20 },
+            TROTTER: { name: "Trotter", value: 5, weight: 9 },
+            SNOUT: { name: "Snout", value: 10, weight: 3 },
+            JOWLER: { name: "Leaning Jowler", value: 15, weight: 1 }
+        };
+        // Normalize weights sum = 103
+        const TOTAL_WEIGHT = 103;
+
+        // --- STATE ---
+        let state = {
+            roomCode: '',
+            playerName: '',
+            playerIndex: -1, // My index in the players array
+            players: [],
+            currentTurnIndex: 0,
+            roundScore: 0,
+            lastRollDisplay: '',
+            gameStatus: 'waiting' // waiting, active, finished
+        };
+
+        // --- DOM ELEMENTS ---
+        const views = {
+            lobby: document.getElementById('lobby-view'),
+            game: document.getElementById('game-view')
+        };
+
+        const ui = {
+            roomInput: document.getElementById('room-code'),
+            nameInput: document.getElementById('player-name'),
+            joinBtn: document.getElementById('join-btn'),
+            displayRoomCode: document.getElementById('display-room-code'),
+            turnIndicator: document.getElementById('turn-indicator'),
+            scoreboard: document.getElementById('scoreboard'),
+            rollDisplay: document.getElementById('roll-display'),
+            lastRollResult: document.getElementById('last-roll-result'),
+            roundScore: document.getElementById('round-score-display'),
+            activeControls: document.getElementById('active-controls'),
+            waitingControls: document.getElementById('waiting-controls'),
+            waitingName: document.getElementById('waiting-for-name'),
+            gameOverControls: document.getElementById('game-over-controls'),
+            winnerName: document.getElementById('winner-name'),
+            newGameBtn: document.getElementById('new-game-btn'),
+            rollBtn: document.getElementById('roll-btn'),
+            bankBtn: document.getElementById('bank-btn'),
+            modal: document.getElementById('modal'),
+            modalTitle: document.getElementById('modal-title'),
+            modalMsg: document.getElementById('modal-message')
+        };
+
+        // --- HELPERS ---
+        function showView(viewName) {
+            Object.values(views).forEach(v => v.classList.remove('active'));
+            views[viewName].classList.add('active');
+        }
+
+        function showModal(title, msg) {
+            ui.modalTitle.textContent = title;
+            ui.modalMsg.textContent = msg;
+            ui.modal.style.display = 'flex';
+            setTimeout(() => {
+                ui.modal.style.display = 'none';
+            }, 3000);
+        }
+
+        // --- LOGIC: PROBABILITIES & SCORING ---
+
+        function getPigPosition() {
+            const rand = Math.random() * TOTAL_WEIGHT; // 0 to 103
+            let cumulative = 0;
+
+            // Order matters only for accumulation, matches POSITIONS definition order
+            // SIDER_NO_DOT (35)
+            cumulative += POSITIONS.SIDER_NO_DOT.weight;
+            if (rand < cumulative) return 'SIDER_NO_DOT';
+
+            // SIDER_DOT_UP (35)
+            cumulative += POSITIONS.SIDER_DOT_UP.weight;
+            if (rand < cumulative) return 'SIDER_DOT_UP';
+
+            // RAZORBACK (20)
+            cumulative += POSITIONS.RAZORBACK.weight;
+            if (rand < cumulative) return 'RAZORBACK';
+
+            // TROTTER (9)
+            cumulative += POSITIONS.TROTTER.weight;
+            if (rand < cumulative) return 'TROTTER';
+
+            // SNOUT (3)
+            cumulative += POSITIONS.SNOUT.weight;
+            if (rand < cumulative) return 'SNOUT';
+
+            // JOWLER (1)
+            return 'JOWLER';
+        }
+
+        function rollDice() {
+            // 1. Oinker Override Check (0.5%)
+            if (Math.random() < 0.005) {
+                return { type: 'OINKER' };
+            }
+
+            const p1Key = getPigPosition();
+            const p2Key = getPigPosition();
+
+            return {
+                type: 'NORMAL',
+                pig1: p1Key,
+                pig2: p2Key
+            };
+        }
+
+        function calculateResult(roll) {
+            if (roll.type === 'OINKER') {
+                return {
+                    score: 0,
+                    text: "Makin' Bacon! (Oinker)",
+                    effect: 'OINKER' // Reset Total Score, End Turn
+                };
+            }
+
+            const p1 = POSITIONS[roll.pig1];
+            const p2 = POSITIONS[roll.pig2];
+            const p1Key = roll.pig1;
+            const p2Key = roll.pig2;
+
+            let resultScore = 0;
+            let resultText = `${p1.name} + ${p2.name}`;
+            let effect = 'CONTINUE';
+
+            // Check Pig Out (Mixed Siders)
+            const isP1Sider = p1Key === 'SIDER_NO_DOT' || p1Key === 'SIDER_DOT_UP';
+            const isP2Sider = p2Key === 'SIDER_NO_DOT' || p2Key === 'SIDER_DOT_UP';
+
+            if (isP1Sider && isP2Sider && p1Key !== p2Key) {
+                return {
+                    score: 0,
+                    text: "PIG OUT! (Mixed Siders)",
+                    effect: 'PIG_OUT' // Reset Round Score, End Turn
+                };
+            }
+
+            // Check Sider Point (Same Siders)
+            if (isP1Sider && isP2Sider && p1Key === p2Key) {
+                return {
+                    score: 1,
+                    text: "Sider Point! (Double Sider)",
+                    effect: 'CONTINUE'
+                };
+            }
+
+            // Check Double Special
+            if (p1Key === p2Key && !isP1Sider) {
+                const score = (p1.value + p2.value) * 2;
+                return {
+                    score: score,
+                    text: `Double ${p1.name}!`,
+                    effect: 'CONTINUE'
+                };
+            }
+
+            // Mixed
+            resultScore = p1.value + p2.value;
+            return {
+                score: resultScore,
+                text: resultText,
+                effect: 'CONTINUE'
+            };
+        }
+
+        // --- FIREBASE LOGIC ---
+
+        function joinGame() {
+            const roomCode = ui.roomInput.value.trim().toUpperCase();
+            const playerName = ui.nameInput.value.trim();
+
+            if (!roomCode || !playerName) {
+                alert("Please enter a Room Code and your Name.");
+                return;
+            }
+
+            state.roomCode = roomCode;
+            state.playerName = playerName;
+
+            const roomRef = db.ref('rooms/' + roomCode);
+
+            // Check if room exists, join or create
+            roomRef.once('value').then(snapshot => {
+                const data = snapshot.val();
+                let players = [];
+
+                if (data && data.players) {
+                    players = data.players;
+                }
+
+                // Add player
+                const newPlayer = { name: playerName, score: 0 };
+                players.push(newPlayer);
+                state.playerIndex = players.length - 1;
+
+                const updates = {
+                    players: players
+                };
+
+                // Initialize room if new
+                if (!data) {
+                    updates.currentTurnIndex = 0;
+                    updates.roundScore = 0;
+                    updates.lastRollDisplay = 'New Game Started';
+                    updates.gameStatus = 'active';
+                }
+
+                return roomRef.update(updates);
+            }).then(() => {
+                showView('game');
+                ui.displayRoomCode.textContent = 'ROOM: ' + state.roomCode;
+                listenToRoom();
+            }).catch(err => {
+                console.error("Join Error:", err);
+                alert("Error joining room.");
+            });
+        }
+
+        function listenToRoom() {
+            const roomRef = db.ref('rooms/' + state.roomCode);
+            roomRef.on('value', snapshot => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                state.players = data.players || [];
+                state.currentTurnIndex = data.currentTurnIndex || 0;
+                state.roundScore = data.roundScore || 0;
+                state.lastRollDisplay = data.lastRollDisplay || '';
+                state.gameStatus = data.gameStatus || 'active';
+
+                updateUI();
+            });
+        }
+
+        function handleRoll() {
+            const roll = rollDice();
+            const result = calculateResult(roll);
+            const roomRef = db.ref('rooms/' + state.roomCode);
+
+            roomRef.transaction(currentData => {
+                if (!currentData) return;
+
+                let updates = { ...currentData };
+
+                updates.lastRollDisplay = result.text;
+
+                if (result.effect === 'CONTINUE') {
+                    updates.roundScore = (updates.roundScore || 0) + result.score;
+                } else if (result.effect === 'PIG_OUT') {
+                    updates.roundScore = 0;
+                    // Next turn
+                    updates.currentTurnIndex = (updates.currentTurnIndex + 1) % updates.players.length;
+                } else if (result.effect === 'OINKER') {
+                    updates.roundScore = 0;
+                    // Reset Total Score
+                    if (updates.players && updates.players[state.playerIndex]) {
+                        updates.players[state.playerIndex].score = 0;
+                    }
+                    // Next turn
+                    updates.currentTurnIndex = (updates.currentTurnIndex + 1) % updates.players.length;
+                }
+
+                return updates;
+            }).then(() => {
+               if(result.effect === 'PIG_OUT') showModal('PIG OUT!', 'You rolled mixed siders. Turn lost.');
+               if(result.effect === 'OINKER') showModal('MAKIN\' BACON!', 'Oinker! Score reset to 0.');
+            });
+        }
+
+        function handleBank() {
+            const roomRef = db.ref('rooms/' + state.roomCode);
+
+            roomRef.transaction(currentData => {
+                if (!currentData) return;
+
+                let updates = { ...currentData };
+                const idx = state.playerIndex;
+                const rScore = updates.roundScore || 0;
+
+                if (updates.players && updates.players[idx]) {
+                    updates.players[idx].score = (updates.players[idx].score || 0) + rScore;
+                }
+
+                // Check Win Condition
+                if (updates.players[idx].score >= 100) {
+                    updates.gameStatus = 'finished';
+                    updates.winnerName = updates.players[idx].name;
+                }
+
+                updates.roundScore = 0;
+                updates.currentTurnIndex = (updates.currentTurnIndex + 1) % updates.players.length;
+                updates.lastRollDisplay = `${state.playerName} banked ${rScore} points!`;
+
+                return updates;
+            });
+        }
+
+        function resetGame() {
+            const roomRef = db.ref('rooms/' + state.roomCode);
+            roomRef.update({
+                players: state.players.map(p => ({...p, score: 0})),
+                currentTurnIndex: 0,
+                roundScore: 0,
+                lastRollDisplay: 'New Game Started',
+                gameStatus: 'active',
+                winnerName: null
+            });
+        }
+
+        // --- UI UPDATES ---
+
+        function updateUI() {
+            // Update Scoreboard
+            ui.scoreboard.innerHTML = '';
+            // Sort by score desc for display
+            const sortedPlayers = [...state.players].map((p, i) => ({...p, originalIndex: i}))
+                                                    .sort((a, b) => b.score - a.score);
+
+            sortedPlayers.forEach(p => {
+                const div = document.createElement('div');
+                div.className = `player-row ${p.originalIndex === state.currentTurnIndex ? 'active-player' : ''} ${p.score >= 100 ? 'winner' : ''}`;
+                div.innerHTML = `
+                    <span>${p.name} ${p.originalIndex === state.playerIndex ? '(You)' : ''}</span>
+                    <span>${p.score}</span>
+                `;
+                ui.scoreboard.appendChild(div);
+            });
+
+            // Update Displays
+            ui.rollDisplay.textContent = state.lastRollDisplay;
+            ui.roundScore.textContent = state.roundScore;
+
+            // Handle Controls visibility
+            ui.activeControls.style.display = 'none';
+            ui.waitingControls.style.display = 'none';
+            ui.gameOverControls.style.display = 'none';
+
+            if (state.gameStatus === 'finished') {
+                ui.gameOverControls.style.display = 'block';
+                // Check if winner info exists in snapshot, otherwise deduce
+                const winner = state.players.find(p => p.score >= 100);
+                ui.winnerName.textContent = winner ? winner.name : 'Someone';
+            } else {
+                if (state.currentTurnIndex === state.playerIndex) {
+                    ui.activeControls.style.display = 'flex';
+                    ui.turnIndicator.textContent = "YOUR TURN!";
+                    ui.turnIndicator.style.background = "#ffd700";
+                } else {
+                    ui.waitingControls.style.display = 'block';
+                    const currName = state.players[state.currentTurnIndex] ? state.players[state.currentTurnIndex].name : 'Unknown';
+                    ui.waitingName.textContent = currName;
+                    ui.turnIndicator.textContent = `${currName}'s Turn`;
+                    ui.turnIndicator.style.background = "#ddd";
+                }
+            }
+        }
+
+        // --- EVENTS ---
+        ui.joinBtn.addEventListener('click', joinGame);
+        ui.rollBtn.addEventListener('click', handleRoll);
+        ui.bankBtn.addEventListener('click', handleBank);
+        ui.newGameBtn.addEventListener('click', resetGame);
+
+    </script>
+</body>
+</html>
