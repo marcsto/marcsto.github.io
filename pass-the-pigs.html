@@ -353,6 +353,12 @@
             display: inline-block;
         }
 
+        .turn-badge.waiting {
+            display: inline-block;
+            background: #ddd;
+            color: #555;
+        }
+
     </style>
 </head>
 <body>
@@ -647,12 +653,16 @@
 
                         let playerNames = [];
                         let isMyTurn = false;
+                        let turnPlayerName = '';
 
                         if (data && data.players) {
                             playerNames = data.players.map(p => p.name);
-                            if (savedName && data.players[data.currentTurnIndex] &&
-                                data.players[data.currentTurnIndex].name === savedName) {
-                                isMyTurn = true;
+                            const currentPlayer = data.players[data.currentTurnIndex];
+                            if (currentPlayer) {
+                                turnPlayerName = currentPlayer.name;
+                                if (savedName && turnPlayerName === savedName) {
+                                    isMyTurn = true;
+                                }
                             }
                         } else {
                             playerNames = ['Empty / New'];
@@ -669,8 +679,15 @@
                         header.appendChild(codeSpan);
 
                         const badge = document.createElement('span');
-                        badge.className = 'turn-badge' + (isMyTurn ? ' active' : '');
-                        badge.textContent = 'YOUR TURN!';
+                        if (isMyTurn) {
+                            badge.className = 'turn-badge active';
+                            badge.textContent = 'YOUR TURN!';
+                        } else if (turnPlayerName) {
+                            badge.className = 'turn-badge waiting';
+                            badge.textContent = turnPlayerName + "'s Turn";
+                        } else {
+                            badge.className = 'turn-badge';
+                        }
                         header.appendChild(badge);
 
                         // Players List
