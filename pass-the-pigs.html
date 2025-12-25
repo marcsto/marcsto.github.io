@@ -552,14 +552,24 @@
                     players = data.players;
                 }
 
-                // Add player
-                const newPlayer = { name: playerName, score: 0 };
-                players.push(newPlayer);
-                state.playerIndex = players.length - 1;
+                let shouldUpdate = false;
+                const updates = {};
 
-                const updates = {
-                    players: players
-                };
+                // Check if player already exists
+                const existingIndex = players.findIndex(p => p.name === playerName);
+
+                if (existingIndex !== -1) {
+                    // Rejoin as existing player
+                    state.playerIndex = existingIndex;
+                } else {
+                    // Add new player
+                    const newPlayer = { name: playerName, score: 0 };
+                    players.push(newPlayer);
+                    state.playerIndex = players.length - 1;
+
+                    updates.players = players;
+                    shouldUpdate = true;
+                }
 
                 // Initialize room if new
                 if (!data) {
@@ -567,9 +577,15 @@
                     updates.roundScore = 0;
                     updates.lastRollDisplay = 'New Game Started';
                     updates.gameStatus = 'active';
+                    // updates.players is already set above if new room (since existingIndex will be -1)
+                    shouldUpdate = true;
                 }
 
-                return roomRef.update(updates);
+                if (shouldUpdate) {
+                    return roomRef.update(updates);
+                } else {
+                    return Promise.resolve();
+                }
             }).then(() => {
                 showView('game');
                 ui.displayRoomCode.textContent = 'ROOM: ' + state.roomCode;
