@@ -369,6 +369,7 @@
         const db = firebase.database();
 
         // --- GAME CONSTANTS ---
+        const CLIENT_VERSION = 1;
         const POSITIONS = {
             SIDER_NO_DOT: { name: "Sider (No Dot)", value: 0, weight: 35, img: 'images/pigs/sider.png' },
             SIDER_DOT_UP: { name: "Sider (Dot Up)", value: 0, weight: 35, img: 'images/pigs/sider_dot.png' },
@@ -472,6 +473,27 @@
             osc.stop(now + 0.5);
         }
 
+        function playOinkerSound() {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            // Low frequency descent - "Really Bad Sound"
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(80, now);
+            osc.frequency.exponentialRampToValueAtTime(20, now + 0.8);
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.8);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.8);
+        }
+
         function playHappySound() {
             if (!audioCtx) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -481,6 +503,22 @@
             playTone(659.25, 'sine', 0.1, now + 0.1);
             playTone(783.99, 'sine', 0.1, now + 0.2);
             playTone(1046.50, 'sine', 0.3, now + 0.3);
+        }
+
+        function playWinSound() {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            // Fanfare / Fun Sound
+            // C4, E4, G4, C5 sequence with some overlap
+            playTone(523.25, 'triangle', 0.15, now);
+            playTone(659.25, 'triangle', 0.15, now + 0.15);
+            playTone(783.99, 'triangle', 0.15, now + 0.30);
+            playTone(1046.50, 'triangle', 0.6, now + 0.45);
+
+            // Add a little harmony
+            playTone(523.25, 'sine', 0.6, now + 0.45);
         }
 
         function showView(viewName) {
@@ -548,7 +586,7 @@
             if (roll.type === 'OINKER') {
                 return {
                     score: 0,
-                    text: "Makin' Bacon! (Oinker)",
+                    text: "Makin' Bacon! (Touching Pigs)",
                     effect: 'OINKER' // Reset Total Score, End Turn
                 };
             }
@@ -648,7 +686,7 @@
                     state.playerIndex = existingIndex;
                 } else {
                     // Add new player
-                    const newPlayer = { name: playerName, score: 0 };
+                    const newPlayer = { name: playerName, score: 0, version: CLIENT_VERSION };
                     players.push(newPlayer);
                     state.playerIndex = players.length - 1;
 
@@ -808,11 +846,35 @@
                     const result = calculateResult(state.lastRollData);
                     if (result.effect === 'PIG_OUT') {
                         playPigOutSound();
+                    } else if (result.effect === 'OINKER') {
+                        playOinkerSound();
                     } else if (result.score >= 20) {
                         playHappySound();
                     }
                 }
             }
+
+            // Check for Win Sound (Transition to finished)
+            // We use a simple check if gameStatus is finished, but to avoid loop
+            // we should perhaps rely on the transition.
+            // However, rollID updates usually trigger updateUI.
+            // If the game just finished, let's play the sound.
+            if (state.gameStatus === 'finished' && state.lastRollData === null) {
+                // To ensure it plays only once, we can check if we already played it for this "event"
+                // But simplified: checking if we just processed a rollID that led to finish?
+                // Actually, handleBank sets finished and clears lastRollData.
+                // Let's use a flag on the state or similar?
+                // Alternatively, detect change from active/waiting to finished?
+                // Ideally we track previousGameStatus.
+            }
+            // Better approach: handleBank updates rollID too? No, it updates lastRollDisplay.
+            // But listenToRoom triggers updateUI on any change.
+            // Let's add a local tracking variable for gameStatus to detect edge.
+
+            if (state.gameStatus === 'finished' && window.lastGameStatus !== 'finished') {
+                playWinSound();
+            }
+            window.lastGameStatus = state.gameStatus;
 
             // Update Scoreboard
             ui.scoreboard.innerHTML = '';
