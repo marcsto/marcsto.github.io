@@ -387,6 +387,7 @@
             playerIndex: -1, // My index in the players array
             players: [],
             currentTurnIndex: 0,
+            gameStarterIndex: 0,
             roundScore: 0,
             lastRollDisplay: '',
             lastRollData: null,
@@ -658,6 +659,7 @@
                 // Initialize room if new
                 if (!data) {
                     updates.currentTurnIndex = 0;
+                    updates.gameStarterIndex = 0;
                     updates.roundScore = 0;
                     updates.lastRollDisplay = 'New Game Started';
                     updates.gameStatus = 'active';
@@ -688,6 +690,7 @@
 
                 state.players = data.players || [];
                 state.currentTurnIndex = data.currentTurnIndex || 0;
+                state.gameStarterIndex = data.gameStarterIndex || 0;
                 state.roundScore = data.roundScore || 0;
                 state.lastRollDisplay = data.lastRollDisplay || '';
                 state.lastRollData = data.lastRollData || null;
@@ -771,14 +774,26 @@
 
         function resetGame() {
             const roomRef = db.ref('rooms/' + state.roomCode);
-            roomRef.update({
-                players: state.players.map(p => ({...p, score: 0})),
-                currentTurnIndex: 0,
-                roundScore: 0,
-                lastRollDisplay: 'New Game Started',
-                lastRollData: null,
-                gameStatus: 'active',
-                winnerName: null
+            roomRef.transaction(currentData => {
+                if (!currentData) return;
+
+                let updates = { ...currentData };
+
+                // Determine next starter
+                const currentStarter = updates.gameStarterIndex || 0;
+                const numPlayers = (updates.players || []).length;
+                const nextStarter = (currentStarter + 1) % (numPlayers || 1);
+
+                updates.players = (updates.players || []).map(p => ({...p, score: 0}));
+                updates.currentTurnIndex = nextStarter;
+                updates.gameStarterIndex = nextStarter;
+                updates.roundScore = 0;
+                updates.lastRollDisplay = 'New Game Started';
+                updates.lastRollData = null;
+                updates.gameStatus = 'active';
+                updates.winnerName = null;
+
+                return updates;
             });
         }
 
