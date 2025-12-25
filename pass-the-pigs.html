@@ -540,6 +540,15 @@
                 return;
             }
 
+            // Save to LocalStorage
+            localStorage.setItem('ptp_room', roomCode);
+            localStorage.setItem('ptp_name', playerName);
+
+            // Update URL
+            const url = new URL(window.location);
+            url.searchParams.set('room', roomCode);
+            window.history.replaceState({}, '', url);
+
             state.roomCode = roomCode;
             state.playerName = playerName;
 
@@ -742,6 +751,29 @@
         ui.rollBtn.addEventListener('click', handleRoll);
         ui.bankBtn.addEventListener('click', handleBank);
         ui.newGameBtn.addEventListener('click', resetGame);
+
+        // --- INIT ---
+        function init() {
+            // Restore Name
+            const savedName = localStorage.getItem('ptp_name');
+            if (savedName) {
+                ui.nameInput.value = savedName;
+            }
+
+            // Restore Room (URL param > LocalStorage)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlRoom = urlParams.get('room');
+            const savedRoom = localStorage.getItem('ptp_room');
+
+            if (urlRoom) {
+                ui.roomInput.value = urlRoom.toUpperCase();
+            } else if (savedRoom) {
+                ui.roomInput.value = savedRoom;
+            }
+        }
+
+        // Call init on load
+        init();
 
     </script>
 </body>
