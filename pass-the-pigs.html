@@ -49,6 +49,7 @@
             margin: 0 auto;
             padding: 20px;
             text-align: center;
+            overflow-y: auto;
         }
 
         .view.active {
@@ -323,6 +324,26 @@
 
         .recent-room-item:hover {
             background: rgba(0,0,0,0.4);
+        }
+
+        .delete-room-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+            z-index: 10;
+        }
+
+        .delete-room-btn:hover {
+            color: #ff5252;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
         }
 
         .recent-room-header {
@@ -634,12 +655,23 @@
                 recent = recent.filter(r => r.code !== roomCode);
                 // Add to top
                 recent.unshift({ code: roomCode, name: playerName, timestamp: Date.now() });
-                // Limit to 5
-                if (recent.length > 5) recent = recent.slice(0, 5);
+                // Limit to 8
+                if (recent.length > 8) recent = recent.slice(0, 8);
 
                 localStorage.setItem('ptp_recent_rooms', JSON.stringify(recent));
             } catch (e) {
                 console.error("Error saving recent rooms", e);
+            }
+        }
+
+        function deleteRecentRoom(roomCode) {
+             try {
+                let recent = JSON.parse(localStorage.getItem('ptp_recent_rooms') || '[]');
+                recent = recent.filter(r => r.code !== roomCode);
+                localStorage.setItem('ptp_recent_rooms', JSON.stringify(recent));
+                renderRecentRooms();
+            } catch (e) {
+                console.error("Error deleting recent room", e);
             }
         }
 
@@ -671,6 +703,16 @@
                         // Construct item
                         const item = document.createElement('div');
                         item.className = 'recent-room-item';
+
+                        // Delete Button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'delete-room-btn';
+                        deleteBtn.innerHTML = '&times;';
+                        deleteBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            deleteRecentRoom(code);
+                        };
+                        item.appendChild(deleteBtn);
 
                         let playerNames = [];
                         let isMyTurn = false;
