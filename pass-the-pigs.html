@@ -359,6 +359,24 @@
             color: #555;
         }
 
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 10px 0 0;
+            margin-right: 10px;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
     </style>
 </head>
 <body>
@@ -385,7 +403,10 @@
     <!-- GAME VIEW -->
     <div id="game-view" class="view">
         <div id="game-header">
-            <div class="room-code" id="display-room-code">ROOM: ----</div>
+            <div class="header-left">
+                <button id="back-btn" class="back-btn">←</button>
+                <div class="room-code" id="display-room-code">ROOM: ----</div>
+            </div>
             <div class="turn-indicator" id="turn-indicator">Waiting...</div>
         </div>
 
@@ -902,6 +923,21 @@
             });
         }
 
+        function leaveGame() {
+            if (state.roomCode) {
+                const roomRef = db.ref('rooms/' + state.roomCode);
+                roomRef.off();
+            }
+            showView('lobby');
+
+            // Clear URL param so refreshing doesn't auto-fill room if desired,
+            // or keep it. The user said "back to lobby where you can select room".
+            // It's cleaner to remove the param.
+            const url = new URL(window.location);
+            url.searchParams.delete('room');
+            window.history.replaceState({}, '', url);
+        }
+
         function listenToRoom() {
             const roomRef = db.ref('rooms/' + state.roomCode);
             roomRef.on('value', snapshot => {
@@ -1126,6 +1162,7 @@
 
         // --- EVENTS ---
         ui.joinBtn.addEventListener('click', joinGame);
+        document.getElementById('back-btn').addEventListener('click', leaveGame);
         ui.rollBtn.addEventListener('click', handleRoll);
         ui.bankBtn.addEventListener('click', handleBank);
         ui.newGameBtn.addEventListener('click', resetGame);
