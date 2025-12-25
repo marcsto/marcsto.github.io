@@ -172,6 +172,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            min-height: 200px; /* Ensure enough space */
         }
 
         #roll-display {
@@ -186,7 +187,8 @@
         }
 
         .pig-img {
-            height: 60px;
+            height: 120px !important;
+            width: auto;
             margin: 0 10px;
             filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
         }
@@ -388,8 +390,11 @@
             roundScore: 0,
             lastRollDisplay: '',
             lastRollData: null,
+            rollID: 0,
             gameStatus: 'waiting' // waiting, active, finished
         };
+        let lastProcessedRollID = 0;
+        let initialLoad = true;
 
         // --- DOM ELEMENTS ---
         const views = {
@@ -421,6 +426,62 @@
         };
 
         // --- HELPERS ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, startTime) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(startTime);
+
+            gain.gain.setValueAtTime(0.1, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            osc.stop(startTime + duration);
+        }
+
+        function playPigOutSound() {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.5);
+
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        }
+
+        function playHappySound() {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            // C Major Arpeggio
+            playTone(523.25, 'sine', 0.1, now);
+            playTone(659.25, 'sine', 0.1, now + 0.1);
+            playTone(783.99, 'sine', 0.1, now + 0.2);
+            playTone(1046.50, 'sine', 0.3, now + 0.3);
+        }
+
         function showView(viewName) {
             Object.values(views).forEach(v => v.classList.remove('active'));
             views[viewName].classList.add('active');
@@ -543,6 +604,7 @@
         // --- FIREBASE LOGIC ---
 
         function joinGame() {
+            initAudio();
             const roomCode = ui.roomInput.value.trim().toUpperCase();
             const playerName = ui.nameInput.value.trim();
 
@@ -629,7 +691,13 @@
                 state.roundScore = data.roundScore || 0;
                 state.lastRollDisplay = data.lastRollDisplay || '';
                 state.lastRollData = data.lastRollData || null;
+                state.rollID = data.rollID || 0;
                 state.gameStatus = data.gameStatus || 'active';
+
+                if (initialLoad) {
+                    lastProcessedRollID = state.rollID;
+                    initialLoad = false;
+                }
 
                 updateUI();
             });
@@ -647,6 +715,7 @@
 
                 updates.lastRollDisplay = result.text;
                 updates.lastRollData = roll;
+                updates.rollID = Date.now();
 
                 if (result.effect === 'CONTINUE') {
                     updates.roundScore = (updates.roundScore || 0) + result.score;
@@ -716,6 +785,20 @@
         // --- UI UPDATES ---
 
         function updateUI() {
+            // Check for Sound
+            if (state.rollID && state.rollID !== lastProcessedRollID) {
+                lastProcessedRollID = state.rollID;
+
+                if (state.lastRollData) {
+                    const result = calculateResult(state.lastRollData);
+                    if (result.effect === 'PIG_OUT') {
+                        playPigOutSound();
+                    } else if (result.score >= 20) {
+                        playHappySound();
+                    }
+                }
+            }
+
             // Update Scoreboard
             ui.scoreboard.innerHTML = '';
             // Sort by score desc for display
