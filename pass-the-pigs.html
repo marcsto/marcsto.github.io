@@ -1124,7 +1124,8 @@
 
                 updates.roundScore = 0;
                 updates.currentTurnIndex = (updates.currentTurnIndex + 1) % updates.players.length;
-                updates.lastRollDisplay = `${state.playerName} banked ${rScore} points!`;
+                const bankingPlayerName = updates.players[idx] ? updates.players[idx].name : state.playerName;
+                updates.lastRollDisplay = `${bankingPlayerName} banked ${rScore} points!`;
                 updates.lastRollData = null;
 
                 return updates;
