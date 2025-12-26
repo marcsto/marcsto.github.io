@@ -1070,6 +1070,10 @@
             const result = calculateResult(roll);
             const roomRef = db.ref('rooms/' + state.roomCode);
 
+            const currentPlayer = state.players[state.currentTurnIndex];
+            const isMe = state.currentTurnIndex === state.playerIndex;
+            const name = currentPlayer ? currentPlayer.name : 'Unknown';
+
             roomRef.transaction(currentData => {
                 if (!currentData) return;
 
@@ -1097,8 +1101,14 @@
 
                 return updates;
             }).then(() => {
-               if(result.effect === 'PIG_OUT') showModal('PIG OUT!', 'You rolled mixed siders. Turn lost.');
-               if(result.effect === 'OINKER') showModal('MAKIN\' BACON!', 'Oinker! Score reset to 0.');
+               if(result.effect === 'PIG_OUT') {
+                   const msg = isMe ? 'You rolled mixed siders. Turn lost.' : `${name} rolled mixed siders. Turn lost.`;
+                   showModal('PIG OUT!', msg);
+               }
+               if(result.effect === 'OINKER') {
+                   const msg = isMe ? 'Oinker! Score reset to 0.' : `Oinker! ${name}'s score reset to 0.`;
+                   showModal('MAKIN\' BACON!', msg);
+               }
             });
         }
 
