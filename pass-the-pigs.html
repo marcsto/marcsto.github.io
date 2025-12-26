@@ -399,6 +399,34 @@
             align-items: center;
         }
 
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .delete-player-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
+            margin-left: 10px;
+        }
+
+        .delete-player-btn:hover {
+            color: #ff5252;
+        }
     </style>
 </head>
 <body>
@@ -428,6 +456,9 @@
             <div class="header-left">
                 <button id="back-btn" class="back-btn">←</button>
                 <div class="room-code" id="display-room-code">ROOM: ----</div>
+            </div>
+            <div class="header-right">
+                <button id="add-ai-btn" class="header-btn">Add AI</button>
             </div>
         </div>
 
@@ -779,6 +810,35 @@
             }
         }
 
+        // --- LOGIC: AI DRIVER ---
+
+        function isAIDriver() {
+            // Determine if I am responsible for driving the current AI turn
+            const players = state.players;
+            const currentIdx = state.currentTurnIndex;
+
+            // Should not happen if not AI turn
+            if (!players[currentIdx] || !players[currentIdx].isAI) return false;
+
+            // Iterate backwards from current turn
+            let checkerIdx = currentIdx;
+            const count = players.length;
+
+            for (let i = 0; i < count; i++) {
+                checkerIdx = (checkerIdx - 1 + count) % count;
+                const p = players[checkerIdx];
+                if (!p.isAI) {
+                     // Found the nearest preceding human
+                     // If that human is ME, then I am the driver
+                     // We match by name because index might be tricky, but state.playerIndex is maintained.
+                     return checkerIdx === state.playerIndex;
+                }
+            }
+            // If all players are AI? Then nobody drives (or first connection).
+            // Edge case: if I am a spectator (playerIndex -1), I don't drive.
+            return false;
+        }
+
         // --- LOGIC: PROBABILITIES & SCORING ---
 
         function getPigPosition() {
@@ -1028,8 +1088,8 @@
                 } else if (result.effect === 'OINKER') {
                     updates.roundScore = 0;
                     // Reset Total Score
-                    if (updates.players && updates.players[state.playerIndex]) {
-                        updates.players[state.playerIndex].score = 0;
+                    if (updates.players && updates.players[updates.currentTurnIndex]) {
+                        updates.players[updates.currentTurnIndex].score = 0;
                     }
                     // Next turn
                     updates.currentTurnIndex = (updates.currentTurnIndex + 1) % updates.players.length;
@@ -1049,7 +1109,7 @@
                 if (!currentData) return;
 
                 let updates = { ...currentData };
-                const idx = state.playerIndex;
+                const idx = updates.currentTurnIndex;
                 const rScore = updates.roundScore || 0;
 
                 if (updates.players && updates.players[idx]) {
@@ -1057,7 +1117,7 @@
                 }
 
                 // Check Win Condition
-                if (updates.players[idx].score >= 100) {
+                if (updates.players[idx] && updates.players[idx].score >= 100) {
                     updates.gameStatus = 'finished';
                     updates.winnerName = updates.players[idx].name;
                 }
@@ -1137,6 +1197,49 @@
             }
             window.lastGameStatus = state.gameStatus;
 
+            // Trigger AI if needed
+            const currentPlayer = state.players[state.currentTurnIndex];
+            if (currentPlayer && currentPlayer.isAI && state.gameStatus === 'active') {
+                if (isAIDriver()) {
+                    // Avoid multiple triggers using a simplistic lock or check
+                    // But since updateUI is called on snapshot update, and processAITurn does a transactional write,
+                    // we need to be careful not to spam.
+                    // The delay in processAITurn helps.
+                    // We should verify we are not already processing a move for this rollID?
+                    // Actually, just calling it is fine, but we might want to check if the state *just* changed to AI turn?
+                    // Or simply: updateUI is called whenever DB changes.
+                    // If DB is stable and it's AI turn, we queue an action.
+                    // To prevent loop: checking "is action pending?"
+                    if (!window.aiActionPending) {
+                         window.aiActionPending = true;
+                         // We wrap processAITurn to clear flag
+                         const originalProcess = processAITurn;
+                         // Actually let's just put logic here
+
+                         setTimeout(() => {
+                             window.aiActionPending = false;
+                             // Re-check conditions
+                             if (state.gameStatus !== 'active') return;
+                             if (state.currentTurnIndex !== state.players.indexOf(currentPlayer)) return;
+
+                             // Logic again
+                             const aiPlayer = state.players[state.currentTurnIndex];
+                             const currentScore = aiPlayer.score || 0;
+                             const roundScore = state.roundScore || 0;
+                             const totalPotential = currentScore + roundScore;
+
+                             if (totalPotential >= 100) {
+                                 handleBank();
+                             } else if (roundScore < 15) {
+                                 handleRoll();
+                             } else {
+                                 if (Math.random() < 0.5) handleRoll(); else handleBank();
+                             }
+                         }, 1500);
+                    }
+                }
+            }
+
             // Update Scoreboard
             ui.scoreboard.innerHTML = '';
             // Sort by score desc for display
@@ -1146,10 +1249,33 @@
             sortedPlayers.forEach(p => {
                 const div = document.createElement('div');
                 div.className = `player-row ${p.originalIndex === state.currentTurnIndex ? 'active-player' : ''} ${p.score >= 100 ? 'winner' : ''}`;
-                div.innerHTML = `
-                    <span>${p.name} ${p.originalIndex === state.playerIndex ? '(You)' : ''}</span>
-                    <span>${p.score}</span>
-                `;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.innerHTML = `${p.name} ${p.originalIndex === state.playerIndex ? '(You)' : ''}`;
+                if (p.isAI) {
+                     nameSpan.innerHTML += ' 🤖';
+                }
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.textContent = p.score;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-player-btn';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removePlayer(p.originalIndex, p.name);
+                };
+
+                const rightDiv = document.createElement('div');
+                rightDiv.style.display = 'flex';
+                rightDiv.style.alignItems = 'center';
+                rightDiv.appendChild(scoreSpan);
+                rightDiv.appendChild(deleteBtn);
+
+                div.appendChild(nameSpan);
+                div.appendChild(rightDiv);
+
                 ui.scoreboard.appendChild(div);
             });
 
@@ -1203,12 +1329,93 @@
             }
         }
 
+        function addAI() {
+            if (!confirm('Add an AI player to the room?')) return;
+
+            const roomRef = db.ref('rooms/' + state.roomCode);
+            roomRef.transaction(currentData => {
+                if (!currentData) return;
+                let updates = { ...currentData };
+
+                updates.players = updates.players || [];
+                // Create unique name
+                let aiName = 'Bot';
+                let counter = 1;
+                while (updates.players.some(p => p.name === aiName)) {
+                    aiName = `Bot ${counter}`;
+                    counter++;
+                }
+
+                updates.players.push({
+                    name: aiName,
+                    score: 0,
+                    version: CLIENT_VERSION,
+                    isAI: true
+                });
+
+                return updates;
+            });
+        }
+
+        function removePlayer(index, name) {
+            if (!confirm(`Remove ${name} from the room?`)) return;
+
+            const roomRef = db.ref('rooms/' + state.roomCode);
+            roomRef.transaction(currentData => {
+                if (!currentData) return;
+                let updates = { ...currentData };
+
+                if (!updates.players || index < 0 || index >= updates.players.length) return;
+
+                // Remove player
+                updates.players.splice(index, 1);
+
+                // Adjust indices
+                if (updates.players.length === 0) {
+                    updates.currentTurnIndex = 0;
+                    updates.gameStarterIndex = 0;
+                } else {
+                    if (updates.currentTurnIndex > index) {
+                        updates.currentTurnIndex--;
+                    } else if (updates.currentTurnIndex === index) {
+                         // If removing current player, pass turn to next (which is now at 'index')
+                         // Wrap if needed
+                         if (updates.currentTurnIndex >= updates.players.length) {
+                             updates.currentTurnIndex = 0;
+                         }
+                         updates.roundScore = 0;
+                         updates.lastRollDisplay = 'Player Removed';
+                         updates.lastRollData = null;
+                    }
+
+                    if (updates.gameStarterIndex > index) {
+                         updates.gameStarterIndex--;
+                    } else if (updates.gameStarterIndex === index) {
+                         if (updates.gameStarterIndex >= updates.players.length) {
+                             updates.gameStarterIndex = 0;
+                         }
+                    }
+                }
+
+                // If winner removed, reset? Or keep finished state?
+                // If game was finished and we remove winner, game continues?
+                // Let's assume removing a player allows game to continue or reset if empty.
+                if (updates.players.length < 1) {
+                    updates.gameStatus = 'waiting';
+                    updates.winnerName = null;
+                }
+
+                return updates;
+            });
+        }
+
         // --- EVENTS ---
         ui.joinBtn.addEventListener('click', joinGame);
         document.getElementById('back-btn').addEventListener('click', leaveGame);
         ui.rollBtn.addEventListener('click', handleRoll);
         ui.bankBtn.addEventListener('click', handleBank);
         ui.newGameBtn.addEventListener('click', resetGame);
+        document.getElementById('add-ai-btn').addEventListener('click', addAI);
 
         // --- INIT ---
         function init() {
