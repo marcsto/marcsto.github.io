@@ -1102,8 +1102,9 @@
                 return updates;
             }).then(() => {
                if(result.effect === 'PIG_OUT') {
-                   const msg = isMe ? 'You rolled mixed siders. Turn lost.' : `${name} rolled mixed siders. Turn lost.`;
-                   showModal('PIG OUT!', msg);
+                   // Modal removed as per request
+                   // const msg = isMe ? 'You rolled mixed siders. Turn lost.' : `${name} rolled mixed siders. Turn lost.`;
+                   // showModal('PIG OUT!', msg);
                }
                if(result.effect === 'OINKER') {
                    const msg = isMe ? 'Oinker! Score reset to 0.' : `Oinker! ${name}'s score reset to 0.`;
