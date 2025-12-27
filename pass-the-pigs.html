@@ -664,6 +664,11 @@
             playTone(523.25, 'sine', 0.6, now + 0.45);
         }
 
+        function playBankSound() {
+            const audio = new Audio('images/pigs/oink-40664.mp3');
+            audio.play().catch(e => console.error("Error playing bank sound", e));
+        }
+
         function showView(viewName) {
             Object.values(views).forEach(v => v.classList.remove('active'));
             views[viewName].classList.add('active');
@@ -1138,6 +1143,7 @@
                 const bankingPlayerName = updates.players[idx] ? updates.players[idx].name : state.playerName;
                 updates.lastRollDisplay = `${bankingPlayerName} banked ${rScore} points!`;
                 updates.lastRollData = null;
+                updates.rollID = Date.now();
 
                 return updates;
             });
@@ -1184,6 +1190,8 @@
                     } else if (result.score >= 20) {
                         playHappySound();
                     }
+                } else if (state.lastRollDisplay && state.lastRollDisplay.includes('banked')) {
+                    playBankSound();
                 }
             }
 
