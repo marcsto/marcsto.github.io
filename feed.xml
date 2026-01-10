@@ -3,7 +3,7 @@
     <title>Marc.ai</title>
     <link href="https://marc.ai/feed.xml" rel="self" />
     <link href="https://marc.ai" />
-    <updated>2024-07-07T08:27:53-07:00</updated>
+    <updated>2026-01-09T16:40:15-08:00</updated>
     <author>
         <name>Marc Stogaitis</name>
     </author>
@@ -18,18 +18,18 @@
         <id>https://marc.ai/probabilistic-chess.html</id>
         <media:content url="https://marc.ai/media/posts/10/android-chrome-192x192.png" medium="image" />
 
-        <updated>2024-07-07T08:27:53-07:00</updated>
+        <updated>2024-07-06T18:30:47-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/10/android-chrome-192x192.png" alt="Probabilistic Chess" />
-                    Introducing Probabilistic Chess An exciting new variant of chess that you can play at marc.ai/probchess. By adding success probabilities to each move, the game becomes a blend of strategy and excitement, making every decision critical and unpredictable. For example, if you attempt to move a&hellip;
+                    Introducing Probabilistic Chess An exciting new variant of chess that you can play at marc.ai/probchess. For example, if you attempt to move a pawn from e2 to e4 and e4 has a 60% success probability, you will see a dice roll animation. The dice will&hellip;
                 ]]>
             </summary>
         <content type="html">
             <![CDATA[
                     <p><img src="https://marc.ai/media/posts/10/android-chrome-192x192.png" class="type:primaryImage" alt="Probabilistic Chess" /></p>
                 <h3>Introducing Probabilistic Chess</h3>
-<p>An exciting new variant of chess that you can play at <a rel="noreferrer" target="_new" href="https://marc.ai/probchess"></a><a href="https://marc.ai/probchess" target="_new">marc.ai/probchess</a>.  By adding success probabilities to each move, the game becomes a blend of strategy and excitement, making every decision critical and unpredictable.</p>
+<p>An exciting new variant of chess that you can play at <a rel="noreferrer" target="_new" href="https://marc.ai/probchess"></a><a href="https://marc.ai/probchess" target="_new">marc.ai/probchess</a>.</p>
 <h3>The Rules:</h3>
 <ul>
 <li><strong>Movement Probability</strong>: Each square on the board has a probability of successfully moving to it.</li>
@@ -53,8 +53,8 @@
 <h3>All Games End in a Win</h3>
 <p>Due to the probabilistic nature of the board, traditional draw scenarios do not apply. Stalemates are impossible because the king can always attempt to escape, and the opponent might fail to capture it. Even with only two kings left, they can capture each other by moving to low probability squares. If one king tries to capture and fails, the other can succeed.</p>
 <p>This rule change is similar to modifications in professional sports to eliminate draws, like hockey's overtime and shootouts or the NBA's continual overtimes until a winner is declared.</p>
-<p>Always having a game end in a win is really enjoyable, eliminates the frustration of stalemates and perpetual checks and ensures a thrilling conclusion every time. It also means that victory is always within reach: even if you fall behind, the a lucky roll of the dice means you always have a chance to come back.</p>
-<p>In case players decide to prolong the game indefinitely (e.g. with two kings avoiding each other instead of doing the honorable thing of thing of trying to capture each other in a final showdown), I'm considering adding a "shrinking board" variation where the board gradually gets smaller, forcing the kings toward each other. Feedback on handling these scenarios is welcome.</p>
+<p>Always having a game end in a win is enjoyable. However, it may need adjustment if players can prolong the game indefinitely, such as with two kings avoiding each other. A potential solution could be a "shrinking board" algorithm where the board gradually gets smaller, forcing the kings toward each other.</p>
+<p>Feedback on handling these scenarios or reintroducing draws is welcome.</p>
 <h3>Variants</h3>
 <p>While I like the simplicity of the default rules, we're testing out different variants of the game based on our experience playing it. You can try these out in the 'Variants' drop-down section of the site.</p>
 <ul>
@@ -66,17 +66,17 @@
 <h4>Board Probabilities Setup</h4>
 <ul>
 <li><strong>Random Initialization</strong>: Probabilities are randomly set at the start of each game.</li>
-<li><strong>King Square</strong>: Starts with a probability of at least 20%. This lowers the chances of having the king start on an almost uncapturable square.</li>
-<li><strong>Minimum Probability</strong>: 5% for any square.</li>
+<li><strong>King Square</strong>: Starts with a probability of at least 10%. This lowers the chances of having the king start on an almost uncapturable square.</li>
+<li><strong>Minimum Probability</strong>: 2% for any square.</li>
 <li><strong>Maximum Probability</strong>: 99% for any square.</li>
 </ul>
 <p><em>Note: These rules may change as the game evolves.</em></p>
 <h4>Client-Side Implementation</h4>
 <p>The game is implemented purely in HTML, CSS, and JavaScript to run without a server. This approach ensures fast loading times and low server costs but poses challenges for creating a performant chess AI.</p>
-<h3>Chess AI Opponent</h3>
-<p>Creating a chess AI for Probabilistic Chess is a fun project. It needs to both understand chess and think probabilistically. The AI combines chess.js and stockfish.js.</p>
+<h3>Chess AI</h3>
+<p>Creating a chess AI for Probabilistic Chess is a fun project. The AI combines chess.js and stockfish.js.</p>
 <h4>Stockfish AI (Moderate)</h4>
-<p>This simple AI uses Stockfish to determine the best move. While Stockfish is a strong chess program, it does not account for probabilities, resulting in occasional poor decisions, like repeatedly attempting moves to low probability squares.</p>
+<p>This AI uses Stockfish to determine the best move. While Stockfish is a strong chess program, it does not account for probabilities, resulting in occasional poor decisions, like repeatedly attempting moves to low probability squares.</p>
 <h4>Alpha-Beta with Expectation-Maximization (Hard and Expert)</h4>
 <p>This is the primary AI for the game, incorporating an alpha-beta search algorithm and the expectation-maximization algorithm to consider board probabilities. It calculates:</p>
 <ul>
@@ -95,8 +95,6 @@
 </ul>
 <h4>Monte Carlo Simulation</h4>
 <p>This earlier algorithm ran several simulations using Stockfish's top moves to determine the best move based on average scores. It worked decently but was slow and is no longer actively developed.</p>
-<h3>Status</h3>
-<p>This is an experimental 'alpha' version of the game. Please expect changes along the way and feedback is welcome.</p>
 <h3>Conclusion</h3>
 <p>Developing Probabilistic Chess has been a lot of fun. My dad and I have spent over 30 years working on programming projects together and a big part of that was focused on ML and applying it to chess so building a new variant of chess together has been great.</p>
 <h3>Credits</h3>
@@ -125,7 +123,7 @@
         <link href="https://marc.ai/full-research-papers-on-youtube.html"/>
         <id>https://marc.ai/full-research-papers-on-youtube.html</id>
 
-        <updated>2020-05-25T19:22:02-07:00</updated>
+        <updated>2020-05-25T19:16:11-07:00</updated>
             <summary>
                 <![CDATA[
                     Reading research papers takes a lot of time. On top of that, I personally prefer to consume content through audio + video rather than through reading alone. To make it easier to read more papers, I'm doing an experiment where I make&nbsp;videos that show the&hellip;
@@ -193,7 +191,7 @@
         <id>https://marc.ai/punch-corona-frequently-asked-questions.html</id>
         <media:content url="https://marc.ai/media/posts/7/Screenshot-from-2020-05-06-16-36-53.png" medium="image" />
 
-        <updated>2020-05-09T12:46:41-07:00</updated>
+        <updated>2020-05-09T12:29:16-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/7/Screenshot-from-2020-05-06-16-36-53.png" alt="" />
@@ -293,7 +291,7 @@
         <id>https://marc.ai/introducing-punch-corona-alpha-release.html</id>
         <media:content url="https://marc.ai/media/posts/1/punch-corona-1.png" medium="image" />
 
-        <updated>2020-05-06T17:36:34-07:00</updated>
+        <updated>2020-05-06T17:30:00-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/1/punch-corona-1.png" alt="" />
@@ -344,7 +342,7 @@
         <id>https://marc.ai/dont-touch-face.html</id>
         <media:content url="https://marc.ai/media/posts/2/appicon.png" medium="image" />
 
-        <updated>2020-05-06T19:51:56-07:00</updated>
+        <updated>2020-05-06T17:16:39-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/2/appicon.png" alt="" />
@@ -395,7 +393,7 @@
         <link href="https://marc.ai/celebrity-look-alike-for-android.html"/>
         <id>https://marc.ai/celebrity-look-alike-for-android.html</id>
 
-        <updated>2020-05-06T21:23:28-07:00</updated>
+        <updated>2020-05-03T19:02:00-07:00</updated>
             <summary>
                 <![CDATA[
                     Celebrity Look-alike is a fun little Android app that determines which celebrities look like you. It uses machine learning based on a deep neural network to search through a database of over 20 000 celebrities. It's remarkably accurate! You can enter a picture by: The&hellip;
@@ -436,7 +434,7 @@
         <id>https://marc.ai/doodlecast-for-chromecast-android-app.html</id>
         <media:content url="https://marc.ai/media/posts/4/doodlecast-bird.png" medium="image" />
 
-        <updated>2020-05-06T21:22:51-07:00</updated>
+        <updated>2020-05-02T19:18:00-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/4/doodlecast-bird.png" alt="" />
@@ -484,7 +482,7 @@
         <id>https://marc.ai/piclearn-helps-you-learn-chinese-and-french.html</id>
         <media:content url="https://marc.ai/media/posts/5/piclearn-audio-recognition.png" medium="image" />
 
-        <updated>2020-05-06T21:22:19-07:00</updated>
+        <updated>2020-05-01T19:27:00-07:00</updated>
             <summary>
                 <![CDATA[
                         <img src="https://marc.ai/media/posts/5/piclearn-audio-recognition.png" alt="" />
@@ -542,10 +540,10 @@
         <link href="https://marc.ai/about-marc-stogaitis.html"/>
         <id>https://marc.ai/about-marc-stogaitis.html</id>
 
-        <updated>2020-05-09T13:39:53-07:00</updated>
+        <updated>2020-04-30T20:04:00-07:00</updated>
             <summary>
                 <![CDATA[
-                    I like to work on personal projects on weekends for fun and to learn new things. That's what this site is about.&nbsp; Machine Learning Android Apps Work I'm a Principal Software Engineer at Google.&nbsp;I'm on the Android team and work on the following projects: Talks&hellip;
+                    I like to work on personal projects on weekends for fun and to learn new things. That's what this site is about.&nbsp; Machine Learning Android Apps Web Apps Work I'm a Principal Software Engineer at Google.&nbsp;I'm on the Android team and lead the Android Sensing&hellip;
                 ]]>
             </summary>
         <content type="html">
@@ -565,7 +563,7 @@
   </p>
 
   <ul>
-    <li>My dad and I have spent the last 22 years learning about machine learning by applying it to different games, focusing on chess. It started out as vb6 &amp; c++. These days, it focuses Java and TensorFlow in python. For example, I've been implementing a version of Alpha Zero for chess.</li><li><a href="https://github.com/marcsto/rl">Github link</a> with some small experiments applying reinforcement learning to OpenAi Gym (sorry, most of my code is in a private repository but I do try to post interesting bits in the public github from time to time).</li>
+    <li>My dad and I have spent the last 30 years learning about machine learning by applying it to different games, focusing on chess. It started out as vb6 &amp; c++. These days, it focuses Java and TensorFlow in python. For example, I've been implementing a version of Alpha Zero for chess.</li><li><a href="https://github.com/marcsto/rl">Github link</a> with some small experiments applying reinforcement learning to OpenAi Gym (sorry, most of my code is in a private repository but I do try to post interesting bits in the public github from time to time).</li>
   </ul>
 
   <p>
@@ -573,7 +571,15 @@
   </p>
 
   <ul>
-    <li><a href="https://marc.ai/punch-corona/index.html" target="_blank">Punch Corona (Alpha)</a>: A workout game where you get to beat up the corona virus. It uses machine learning to track your movements using your computer's camera. No data ever leaves your device to preserve your privacy.</li><li><a href="https://DontTouchFace.com" target="_blank">DontTouchFace.com</a>:&nbsp;Combines the front-facing camera on your computer or phone with machine learning to warn you when you touch your face.</li><li><a href="https://play.google.com/store/apps/details?id=ai.marc.lookalike" target="_blank" class="">Celebrity Look-alike</a>: Find out which celebrities look like you.</li><li><a href="https://play.google.com/store/apps/details?id=net.mimisun.doodlecast" target="_blank">Doodlecast for Chromecast</a>: A fun drawing game for your Chromecast that you can play as a group.</li><li><a href="http://www.gmote.org" target="_blank" class="">Gmote</a>: Turns your phone into a remote control for your computer, allowing you to start and control movies and music at a distance.</li><li><a href="https://play.google.com/store/apps/details?id=com.piclearn.client.french" target="_blank">PicLearn French</a> and <a href="https://play.google.com/store/apps/details?id=com.piclearn.client.chinese.free" target="_blank">PicLearn Chinese</a>:  Helps you learn french and Mandarin Chinese in a fun and visual way. Learn new words with pictures and sounds. Perfect your pronunciation through the use of voice recognition.<br></li>
+    <li><a href="https://marc.ai/punch-corona/index.html" target="_blank">Punch Corona (Alpha)</a>: A workout game where you get to beat up the corona virus. It uses machine learning to track your movements using your computer's camera. No data ever leaves your device to preserve your privacy.</li><li><a href="https://DontTouchFace.com" target="_blank">DontTouchFace.com</a>:&nbsp;Combines the front-facing camera on your computer or phone with machine learning to warn you when you touch your face.</li><li><a href="https://play.google.com/store/apps/details?id=ai.marc.lookalike" target="_blank" class="">Celebrity Look-alike</a>: Find out which celebrities look like you.</li><li><a href="https://play.google.com/store/apps/details?id=net.mimisun.doodlecast" target="_blank">Doodlecast for Chromecast</a>: A fun drawing game for your Chromecast that you can play as a group.</li><li><a href="http://www.gmote.org" target="_blank" class="">Gmote</a>: Turns your phone into a remote control for your computer, allowing you to start and control movies and music at a distance.</li><li><a href="https://play.google.com/store/apps/details?id=com.piclearn.client.french" target="_blank">PicLearn French</a> and <a href="https://play.google.com/store/apps/details?id=com.piclearn.client.chinese.free" target="_blank">PicLearn Chinese</a>:  Helps you learn french and Mandarin Chinese in a fun and visual way. Learn new words with pictures and sounds. Perfect your pronunciation through the use of voice recognition.</li>
+  </ul>
+
+  <p>
+    <b>Web Apps</b>
+  </p>
+
+  <ul>
+    <li><a href="https://marc.ai/probchess/">Probabilistic Chess</a>: A new variant of chess where&nbsp;every move has a percentage chance of success determined by the destination square, and the game is won by capturing the king rather than checkmate.</li><li><a href="https://www.play20questions.com/#/">Play20Questions.com</a>: Guess the animal the AI is thinking.</li><li><a href="https://www.freecaptions.org">FreeCaptions.org</a>: Create stunning, viral-style captions for your videos with AI-powered transcription.<br></li>
   </ul>
 <hr class="separator separator--dots" />
 
@@ -582,11 +588,11 @@
   </p>
 
   <p>
-    I'm a Principal Software Engineer at Google.&nbsp;I'm on the Android team and work on the following projects:
+    I'm a Principal Software Engineer at Google.&nbsp;I'm on the Android team and lead the <b>Android Sensing and Safety Teams</b>. This includes:
   </p>
 
   <ul>
-    <li><a href="https://developers.google.com/location-context/fused-location-provider/">Fused Location</a></li><li><a href="https://developers.google.com/location-context/activity-recognition/">Activity Recognition</a></li><li><a href="https://developer.android.com/guide/topics/sensors/sensors_overview.html">Android Sensors</a></li><li><a href="https://www.androidpolice.com/2015/09/29/the-new-android-sensor-hub-will-significantly-improve-idle-battery-life-while-doing-more-with-sensor-data/">Android Sensor Hub</a></li><li><a href="https://www.theverge.com/2019/10/1/20892875/google-pixel-personal-safety-app-car-crash-detection">Car Crash Detection</a></li>
+    <li><a href="https://developers.google.com/location-context/fused-location-provider/">Fused Location</a></li><li><a href="https://developers.google.com/location-context/activity-recognition/">Activity Recognition</a></li><li><a href="https://developer.android.com/guide/topics/sensors/sensors_overview.html">Android Sensors</a></li><li><a href="https://www.androidpolice.com/2015/09/29/the-new-android-sensor-hub-will-significantly-improve-idle-battery-life-while-doing-more-with-sensor-data/">Android Sensor Hub</a></li><li><a href="https://www.theverge.com/2019/10/1/20892875/google-pixel-personal-safety-app-car-crash-detection">Car Crash Detection</a></li><li><a href="https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/">Android Earthquake Alerts</a></li><li><a href="https://developer.android.com/reference/android/speech/SpeechRecognizer">Android Speech Recognition and Text To Speech</a></li><li><a href="https://support.google.com/android/answer/15146908?hl=en">Android Theft Detection</a></li><li><a href="https://support.google.com/android/answer/13658562?hl=en">Unknown Tracker Alerts</a></li><li><a href="https://support.google.com/android/answer/9069335?hl=en">Driving Do Not Disturb</a></li><li><a href="https://developers.google.com/location-context/sleep">Android Sleep Detection</a></li>
   </ul>
 
   <p>
