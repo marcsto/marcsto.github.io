@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migraine Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Dark mode overrides/defaults */
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .dark-card {
+            background-color: #1e1e1e;
+        }
+        .dark-input {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #fff;
+        }
+        input[type="range"] {
+            accent-color: #bb86fc;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-2xl">
+        <header class="mb-6 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-purple-400">Migraine Tracker</h1>
+            <button id="exportBtn" class="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded text-gray-400">Export JSON</button>
+        </header>
+
+        <!-- Current Status / Actions -->
+        <div id="statusSection" class="mb-8">
+            <!-- Injected by JS -->
+        </div>
+
+        <!-- Form Modal / Section (Hidden by default) -->
+        <div id="logFormSection" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex justify-center items-center p-4 overflow-y-auto">
+            <div class="dark-card p-6 rounded-lg w-full max-w-lg shadow-2xl relative max-h-full overflow-y-auto">
+                <button id="closeFormBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+                <h2 id="formTitle" class="text-2xl font-bold mb-4 text-purple-300">Log Migraine</h2>
+
+                <form id="migraineForm" class="space-y-4">
+                    <input type="hidden" id="entryId">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Start Time</label>
+                            <input type="datetime-local" id="startTime" required class="dark-input w-full rounded p-2 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">End Time</label>
+                            <input type="datetime-local" id="endTime" class="dark-input w-full rounded p-2 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <button type="button" id="endNowBtn" class="text-xs text-blue-400 hover:text-blue-300 mt-1">Set to Now</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Severity: <span id="severityVal" class="text-purple-400 font-bold">5</span></label>
+                        <input type="range" id="severity" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Mild</span>
+                            <span>Moderate</span>
+                            <span>Severe</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Medication</label>
+                        <div id="medsContainer" class="flex flex-wrap gap-2 mb-2">
+                            <!-- Checkboxes injected here -->
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="newMedInput" placeholder="Add custom med..." class="dark-input flex-1 rounded p-1 text-sm">
+                            <button type="button" id="addMedBtn" class="bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">+</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Covariates / Triggers</label>
+                        <div id="covariatesContainer" class="flex flex-wrap gap-2 mb-2">
+                            <!-- Checkboxes injected here -->
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="newCovInput" placeholder="Add custom covariate..." class="dark-input flex-1 rounded p-1 text-sm">
+                            <button type="button" id="addCovBtn" class="bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">+</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Notes</label>
+                        <textarea id="notes" rows="3" class="dark-input w-full rounded p-2 focus:outline-none focus:ring-1 focus:ring-purple-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" id="deleteEntryBtn" class="hidden text-red-400 hover:text-red-300 mr-auto">Delete</button>
+                        <button type="button" id="cancelBtn" class="px-4 py-2 rounded hover:bg-gray-700">Cancel</button>
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded font-bold">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div>
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">History</h2>
+            <div id="historyList" class="space-y-3">
+                <!-- Injected JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- State Management ---
+        const defaultMeds = ["1 Advil", "2 Advil", "1 Excedrin", "Sumatriptan", "Tylenol"];
+        const defaultCovariates = ["Contacts", "Lack of Sleep", "Stress", "Screen Time", "Dehydration", "Alcohol", "Weather Change"];
+
+        let state = {
+            logs: [],
+            customMeds: [],
+            customCovariates: [],
+            activeId: null
+        };
+
+        // --- Init ---
+        function init() {
+            const saved = localStorage.getItem('migraine_tracker_data');
+            if (saved) {
+                state = JSON.parse(saved);
+            }
+            render();
+        }
+
+        function save() {
+            localStorage.setItem('migraine_tracker_data', JSON.stringify(state));
+            render();
+        }
+
+        // --- Renderers ---
+        function render() {
+            renderStatus();
+            renderHistory();
+        }
+
+        function renderStatus() {
+            const container = document.getElementById('statusSection');
+            container.innerHTML = '';
+
+            if (state.activeId) {
+                const activeLog = state.logs.find(l => l.id === state.activeId);
+                if (!activeLog) {
+                    state.activeId = null;
+                    save();
+                    return;
+                }
+
+                const startTime = new Date(activeLog.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const duration = getDurationString(activeLog.startTime, new Date());
+
+                container.innerHTML = `
+                    <div class="dark-card p-6 rounded-lg border-l-4 border-purple-500 shadow-lg animate-pulse-slow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-xl font-bold text-white mb-1">Migraine Active</h2>
+                                <p class="text-gray-400 text-sm">Started at ${startTime} (${duration})</p>
+                            </div>
+                            <button onclick="endMigraineNow()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded shadow text-sm font-bold">End Now</button>
+                        </div>
+                        <div class="mt-4 flex gap-3">
+                            <button onclick="openEditForm(${activeLog.id})" class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-gray-200">Update Details</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="startMigraineNow()" class="bg-red-900/50 hover:bg-red-900/70 border border-red-800 text-red-100 p-6 rounded-lg shadow transition transform hover:scale-[1.02] flex flex-col items-center justify-center gap-2">
+                            <span class="text-3xl">⚡</span>
+                            <span class="font-bold text-lg">Start Migraine Now</span>
+                        </button>
+                        <button onclick="openNewLogForm()" class="dark-card hover:bg-gray-800 border border-gray-700 text-gray-200 p-6 rounded-lg shadow transition transform hover:scale-[1.02] flex flex-col items-center justify-center gap-2">
+                            <span class="text-3xl">📝</span>
+                            <span class="font-bold text-lg">Log Past Migraine</span>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+
+            const sortedLogs = [...state.logs].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+            if (sortedLogs.length === 0) {
+                list.innerHTML = '<p class="text-gray-600 text-center italic mt-4">No logs yet.</p>';
+                return;
+            }
+
+            sortedLogs.forEach(log => {
+                const start = new Date(log.startTime);
+                const end = log.endTime ? new Date(log.endTime) : null;
+                const isActive = log.id === state.activeId;
+
+                const dateStr = start.toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
+                const timeStr = start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const endTimeStr = end ? end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Ongoing';
+
+                const severityColor = log.severity >= 8 ? 'text-red-400' : (log.severity >= 5 ? 'text-yellow-400' : 'text-green-400');
+
+                const item = document.createElement('div');
+                item.className = `dark-card p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-800 transition ${isActive ? 'border border-purple-500/50' : ''}`;
+                item.onclick = (e) => {
+                    // Prevent click if clicking inner buttons
+                    if(e.target.tagName === 'BUTTON') return;
+                    openEditForm(log.id);
+                };
+
+                let medsBadges = log.meds.map(m => `<span class="text-xs bg-gray-700 px-1.5 py-0.5 rounded text-gray-300">${m}</span>`).join('');
+
+                item.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="font-bold text-gray-200">${dateStr}</span>
+                            <span class="text-sm text-gray-500">${timeStr} - ${endTimeStr}</span>
+                            ${isActive ? '<span class="text-xs bg-purple-900 text-purple-200 px-1.5 rounded">ACTIVE</span>' : ''}
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-bold ${severityColor}">Sev: ${log.severity}</span>
+                            <div class="flex flex-wrap gap-1">${medsBadges}</div>
+                        </div>
+                        ${log.notes ? `<p class="text-xs text-gray-500 mt-1 truncate max-w-md">${log.notes}</p>` : ''}
+                    </div>
+                    <div class="text-gray-500 hover:text-white px-2">
+                        ✎
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function renderMeds(selectedMeds = []) {
+            const container = document.getElementById('medsContainer');
+            container.innerHTML = '';
+            const allMeds = [...new Set([...defaultMeds, ...state.customMeds])];
+
+            allMeds.forEach(med => {
+                const label = document.createElement('label');
+                label.className = `cursor-pointer text-xs border border-gray-600 rounded px-2 py-1 select-none transition ${selectedMeds.includes(med) ? 'bg-purple-600 border-purple-500 text-white' : 'hover:bg-gray-700 text-gray-400'}`;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'hidden';
+                checkbox.value = med;
+                checkbox.checked = selectedMeds.includes(med);
+                checkbox.onchange = (e) => {
+                     if(e.target.checked) {
+                         label.classList.add('bg-purple-600', 'border-purple-500', 'text-white');
+                         label.classList.remove('hover:bg-gray-700', 'text-gray-400');
+                     } else {
+                         label.classList.remove('bg-purple-600', 'border-purple-500', 'text-white');
+                         label.classList.add('hover:bg-gray-700', 'text-gray-400');
+                     }
+                };
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(med));
+                container.appendChild(label);
+            });
+        }
+
+        function renderCovariates(selectedCovs = []) {
+            const container = document.getElementById('covariatesContainer');
+            container.innerHTML = '';
+            const allCovs = [...new Set([...defaultCovariates, ...state.customCovariates])];
+
+            allCovs.forEach(cov => {
+                const label = document.createElement('label');
+                label.className = `cursor-pointer text-xs border border-gray-600 rounded px-2 py-1 select-none transition ${selectedCovs.includes(cov) ? 'bg-blue-600 border-blue-500 text-white' : 'hover:bg-gray-700 text-gray-400'}`;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'hidden';
+                checkbox.value = cov;
+                checkbox.checked = selectedCovs.includes(cov);
+                checkbox.onchange = (e) => {
+                     if(e.target.checked) {
+                         label.classList.add('bg-blue-600', 'border-blue-500', 'text-white');
+                         label.classList.remove('hover:bg-gray-700', 'text-gray-400');
+                     } else {
+                         label.classList.remove('bg-blue-600', 'border-blue-500', 'text-white');
+                         label.classList.add('hover:bg-gray-700', 'text-gray-400');
+                     }
+                };
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(cov));
+                container.appendChild(label);
+            });
+        }
+
+        // --- Actions ---
+
+        function startMigraineNow() {
+            const id = Date.now();
+            const newLog = {
+                id: id,
+                startTime: new Date().toISOString(),
+                endTime: null,
+                severity: 5,
+                meds: [],
+                covariates: [],
+                notes: ''
+            };
+            state.logs.push(newLog);
+            state.activeId = id;
+            save();
+            openEditForm(id); // Immediately let them add details
+        }
+
+        function endMigraineNow() {
+            if (!state.activeId) return;
+            const log = state.logs.find(l => l.id === state.activeId);
+            if (log) {
+                log.endTime = new Date().toISOString();
+                state.activeId = null;
+                save();
+            }
+        }
+
+        function openNewLogForm() {
+            resetForm();
+            // Default start time to now
+            document.getElementById('startTime').value = toLocalISO(new Date());
+            document.getElementById('entryId').value = '';
+            document.getElementById('formTitle').textContent = 'Log Past Migraine';
+            document.getElementById('deleteEntryBtn').classList.add('hidden');
+            renderMeds([]);
+            renderCovariates([]);
+            showForm();
+        }
+
+        function openEditForm(id) {
+            const log = state.logs.find(l => l.id === id);
+            if (!log) return;
+
+            document.getElementById('entryId').value = log.id;
+            document.getElementById('startTime').value = toLocalISO(new Date(log.startTime));
+            document.getElementById('endTime').value = log.endTime ? toLocalISO(new Date(log.endTime)) : '';
+            document.getElementById('severity').value = log.severity;
+            document.getElementById('severityVal').textContent = log.severity;
+            document.getElementById('notes').value = log.notes;
+            document.getElementById('formTitle').textContent = 'Edit Migraine Log';
+
+            renderMeds(log.meds);
+            renderCovariates(log.covariates);
+
+            const deleteBtn = document.getElementById('deleteEntryBtn');
+            deleteBtn.classList.remove('hidden');
+            deleteBtn.onclick = () => {
+                if(confirm("Delete this log?")) {
+                    state.logs = state.logs.filter(l => l.id !== id);
+                    if(state.activeId === id) state.activeId = null;
+                    save();
+                    hideForm();
+                }
+            };
+
+            showForm();
+        }
+
+        // --- Form Handling ---
+
+        const formModal = document.getElementById('logFormSection');
+        const form = document.getElementById('migraineForm');
+
+        function showForm() {
+            formModal.classList.remove('hidden');
+        }
+
+        function hideForm() {
+            formModal.classList.add('hidden');
+        }
+
+        function resetForm() {
+            form.reset();
+            document.getElementById('severityVal').textContent = '5';
+        }
+
+        document.getElementById('closeFormBtn').onclick = hideForm;
+        document.getElementById('cancelBtn').onclick = hideForm;
+
+        document.getElementById('severity').oninput = (e) => {
+            document.getElementById('severityVal').textContent = e.target.value;
+        };
+
+        document.getElementById('endNowBtn').onclick = () => {
+            document.getElementById('endTime').value = toLocalISO(new Date());
+        };
+
+        // Custom Inputs
+        document.getElementById('addMedBtn').onclick = () => {
+            const input = document.getElementById('newMedInput');
+            const val = input.value.trim();
+            if (val) {
+                if (!state.customMeds.includes(val) && !defaultMeds.includes(val)) {
+                    state.customMeds.push(val);
+                }
+                // Check it in the UI
+                renderMeds([...getSelectedValues('medsContainer'), val]);
+                input.value = '';
+            }
+        };
+
+        document.getElementById('addCovBtn').onclick = () => {
+            const input = document.getElementById('newCovInput');
+            const val = input.value.trim();
+            if (val) {
+                if (!state.customCovariates.includes(val) && !defaultCovariates.includes(val)) {
+                    state.customCovariates.push(val);
+                }
+                renderCovariates([...getSelectedValues('covariatesContainer'), val]);
+                input.value = '';
+            }
+        };
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const idVal = document.getElementById('entryId').value;
+            const startTime = document.getElementById('startTime').value; // already local ISO-ish
+            const endTime = document.getElementById('endTime').value;
+            const severity = parseInt(document.getElementById('severity').value);
+            const notes = document.getElementById('notes').value;
+
+            const meds = getSelectedValues('medsContainer');
+            const covariates = getSelectedValues('covariatesContainer');
+
+            // Format dates back to ISO string for storage (which is usually UTC, but let's just keep strings for simplicity or convert)
+            // `startTime` from input is "yyyy-MM-ddThh:mm". We should probably store as full ISO with timezone or just string.
+            // new Date("yyyy-MM-ddThh:mm") uses local time.
+
+            const startISO = new Date(startTime).toISOString();
+            const endISO = endTime ? new Date(endTime).toISOString() : null;
+
+            if (idVal) {
+                // Update existing
+                const id = parseInt(idVal);
+                const log = state.logs.find(l => l.id === id);
+                if (log) {
+                    log.startTime = startISO;
+                    log.endTime = endISO;
+                    log.severity = severity;
+                    log.notes = notes;
+                    log.meds = meds;
+                    log.covariates = covariates;
+
+                    // Logic: If we set an end time for the active migraine, it's no longer active
+                    if (state.activeId === id && endISO) {
+                        state.activeId = null;
+                    }
+                    // Logic: If we clear end time for active, it remains active?
+                    // If we clear end time for a PAST one, does it become active?
+                    // Let's assume manual toggle via "End Now" handles active state mostly,
+                    // but if they manually clear end time on the active log, it stays active.
+                    // If they manually clear end time on a historical log, it effectively becomes "ongoing" but maybe not "Active" in the header unless we force it.
+                    // For simplicity: If editing the *active* log, respect end time.
+                }
+            } else {
+                // Create new (Log Past)
+                const newLog = {
+                    id: Date.now(),
+                    startTime: startISO,
+                    endTime: endISO,
+                    severity: severity,
+                    notes: notes,
+                    meds: meds,
+                    covariates: covariates
+                };
+                state.logs.push(newLog);
+            }
+
+            save();
+            hideForm();
+        };
+
+        // Export
+        document.getElementById('exportBtn').onclick = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "migraine_logs_" + new Date().toISOString().split('T')[0] + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        };
+
+        // Helpers
+        function toLocalISO(date) {
+            // datetime-local expects "yyyy-MM-ddThh:mm"
+            const pad = num => num.toString().padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        function getDurationString(startISO, endObj) {
+            const start = new Date(startISO);
+            const end = endObj || new Date();
+            const diffMs = end - start;
+            const diffMins = Math.floor(diffMs / 60000);
+            const hrs = Math.floor(diffMins / 60);
+            const mins = diffMins % 60;
+            return `${hrs}h ${mins}m`;
+        }
+
+        function getSelectedValues(containerId) {
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // Run
+        init();
+
+    </script>
+</body>
+</html>
