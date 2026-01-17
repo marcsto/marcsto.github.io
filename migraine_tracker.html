@@ -60,10 +60,10 @@
                 <form id="migraineForm" class="space-y-4">
                     <input type="hidden" id="entryId">
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div id="migraineTimeFields" class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm text-gray-400 mb-1">Start Time</label>
-                            <input type="datetime-local" id="startTime" required class="dark-input w-full rounded p-2 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                            <input type="datetime-local" id="startTime" class="dark-input w-full rounded p-2 focus:outline-none focus:ring-1 focus:ring-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm text-gray-400 mb-1">End Time</label>
@@ -72,7 +72,12 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div id="dailyDateFields" class="hidden">
+                        <label class="block text-sm text-gray-400 mb-1">Date</label>
+                        <input type="date" id="logDate" class="dark-input w-full rounded p-2 focus:outline-none focus:ring-1 focus:ring-purple-500">
+                    </div>
+
+                    <div id="severityContainer">
                         <label class="block text-sm text-gray-400 mb-1">Severity: <span id="severityVal" class="text-purple-400 font-bold">5</span></label>
                         <input type="range" id="severity" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
@@ -135,16 +140,21 @@
 
         let state = {
             logs: [],
+            dailyLogs: [],
             customMeds: [],
             customCovariates: [],
             activeId: null
         };
 
+        let currentFormMode = 'migraine'; // 'migraine' or 'daily'
+
         // --- Init ---
         function init() {
             const saved = localStorage.getItem('migraine_tracker_data');
             if (saved) {
-                state = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                state = { ...state, ...parsed };
+                if (!state.dailyLogs) state.dailyLogs = [];
             }
             render();
         }
@@ -185,7 +195,7 @@
                             <button onclick="endMigraineNow()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded shadow text-sm font-bold">End Now</button>
                         </div>
                         <div class="mt-4 flex gap-3">
-                            <button onclick="openEditForm(${activeLog.id})" class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-gray-200">Update Details</button>
+                            <button onclick="openEditForm(${activeLog.id}, 'migraine')" class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-gray-200">Update Details</button>
                         </div>
                     </div>
                 `;
@@ -200,6 +210,10 @@
                             <span class="text-3xl">📝</span>
                             <span class="font-bold text-lg">Log Past Migraine</span>
                         </button>
+                        <button onclick="openDailyLogForm()" class="col-span-2 dark-card hover:bg-gray-800 border border-gray-700 text-purple-300 p-4 rounded-lg shadow transition transform hover:scale-[1.01] flex items-center justify-center gap-2">
+                            <span class="text-xl">📅</span>
+                            <span class="font-bold">Log Daily Check-in</span>
+                        </button>
                     </div>
                 `;
             }
@@ -209,52 +223,84 @@
             const list = document.getElementById('historyList');
             list.innerHTML = '';
 
-            const sortedLogs = [...state.logs].sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            const migraineLogs = state.logs.map(l => ({...l, type: 'migraine'}));
+            const dailyLogs = (state.dailyLogs || []).map(l => ({...l, type: 'daily'}));
 
-            if (sortedLogs.length === 0) {
+            const allLogs = [...migraineLogs, ...dailyLogs].sort((a, b) => {
+                const timeA = a.type === 'migraine' ? new Date(a.startTime) : new Date(a.date);
+                const timeB = b.type === 'migraine' ? new Date(b.startTime) : new Date(b.date);
+                return timeB - timeA;
+            });
+
+            if (allLogs.length === 0) {
                 list.innerHTML = '<p class="text-gray-600 text-center italic mt-4">No logs yet.</p>';
                 return;
             }
 
-            sortedLogs.forEach(log => {
-                const start = new Date(log.startTime);
-                const end = log.endTime ? new Date(log.endTime) : null;
-                const isActive = log.id === state.activeId;
+            allLogs.forEach(log => {
+                if (log.type === 'migraine') {
+                    const start = new Date(log.startTime);
+                    const end = log.endTime ? new Date(log.endTime) : null;
+                    const isActive = log.id === state.activeId;
 
-                const dateStr = start.toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
-                const timeStr = start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const endTimeStr = end ? end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Ongoing';
+                    const dateStr = start.toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'});
+                    const timeStr = start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const endTimeStr = end ? end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Ongoing';
 
-                const severityColor = log.severity >= 8 ? 'text-red-400' : (log.severity >= 5 ? 'text-yellow-400' : 'text-green-400');
+                    const severityColor = log.severity >= 8 ? 'text-red-400' : (log.severity >= 5 ? 'text-yellow-400' : 'text-green-400');
 
-                const item = document.createElement('div');
-                item.className = `dark-card p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-800 transition ${isActive ? 'border border-purple-500/50' : ''}`;
-                item.onclick = (e) => {
-                    // Prevent click if clicking inner buttons
-                    if(e.target.tagName === 'BUTTON') return;
-                    openEditForm(log.id);
-                };
+                    const item = document.createElement('div');
+                    item.className = `dark-card p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-800 transition ${isActive ? 'border border-purple-500/50' : ''}`;
+                    item.onclick = (e) => {
+                        if(e.target.tagName === 'BUTTON') return;
+                        openEditForm(log.id, 'migraine');
+                    };
 
-                let medsBadges = log.meds.map(m => `<span class="text-xs bg-gray-700 px-1.5 py-0.5 rounded text-gray-300">${m}</span>`).join('');
+                    let medsBadges = (log.meds || []).map(m => `<span class="text-xs bg-gray-700 px-1.5 py-0.5 rounded text-gray-300">${m}</span>`).join('');
 
-                item.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-baseline gap-2 mb-1">
-                            <span class="font-bold text-gray-200">${dateStr}</span>
-                            <span class="text-sm text-gray-500">${timeStr} - ${endTimeStr}</span>
-                            ${isActive ? '<span class="text-xs bg-purple-900 text-purple-200 px-1.5 rounded">ACTIVE</span>' : ''}
+                    item.innerHTML = `
+                        <div class="flex-1">
+                            <div class="flex items-baseline gap-2 mb-1">
+                                <span class="font-bold text-gray-200">${dateStr}</span>
+                                <span class="text-sm text-gray-500">${timeStr} - ${endTimeStr}</span>
+                                ${isActive ? '<span class="text-xs bg-purple-900 text-purple-200 px-1.5 rounded">ACTIVE</span>' : ''}
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-bold ${severityColor}">Sev: ${log.severity}</span>
+                                <div class="flex flex-wrap gap-1">${medsBadges}</div>
+                            </div>
+                            ${log.notes ? `<p class="text-xs text-gray-500 mt-1 truncate max-w-md">${log.notes}</p>` : ''}
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm font-bold ${severityColor}">Sev: ${log.severity}</span>
-                            <div class="flex flex-wrap gap-1">${medsBadges}</div>
+                        <div class="text-gray-500 hover:text-white px-2">✎</div>
+                    `;
+                    list.appendChild(item);
+                } else {
+                    // Daily Log
+                    const item = document.createElement('div');
+                    item.className = `dark-card p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-800 transition border-l-4 border-blue-500`;
+                    item.onclick = (e) => {
+                        if(e.target.tagName === 'BUTTON') return;
+                        openEditForm(log.id, 'daily');
+                    };
+
+                    let medsBadges = (log.meds || []).map(m => `<span class="text-xs bg-gray-700 px-1.5 py-0.5 rounded text-gray-300">${m}</span>`).join('');
+                    let covBadges = (log.covariates || []).map(c => `<span class="text-xs bg-blue-900/50 text-blue-200 px-1.5 py-0.5 rounded">${c}</span>`).join('');
+
+                    item.innerHTML = `
+                        <div class="flex-1">
+                                <div class="flex items-baseline gap-2 mb-1">
+                                <span class="font-bold text-gray-200">${log.date}</span>
+                                <span class="text-xs bg-blue-900 text-blue-200 px-1.5 rounded">DAILY CHECK-IN</span>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mb-1">
+                                ${medsBadges} ${covBadges}
+                                </div>
+                                ${log.notes ? `<p class="text-xs text-gray-500 mt-1 truncate max-w-md">${log.notes}</p>` : ''}
                         </div>
-                        ${log.notes ? `<p class="text-xs text-gray-500 mt-1 truncate max-w-md">${log.notes}</p>` : ''}
-                    </div>
-                    <div class="text-gray-500 hover:text-white px-2">
-                        ✎
-                    </div>
-                `;
-                list.appendChild(item);
+                        <div class="text-gray-500 hover:text-white px-2">✎</div>
+                    `;
+                    list.appendChild(item);
+                }
             });
         }
 
@@ -334,7 +380,7 @@
             state.logs.push(newLog);
             state.activeId = id;
             save();
-            openEditForm(id); // Immediately let them add details
+            openEditForm(id, 'migraine'); // Immediately let them add details
         }
 
         function endMigraineNow() {
@@ -349,28 +395,63 @@
 
         function openNewLogForm() {
             resetForm();
+            currentFormMode = 'migraine';
             // Default start time to now
             document.getElementById('startTime').value = toLocalISO(new Date());
             document.getElementById('entryId').value = '';
             document.getElementById('formTitle').textContent = 'Log Past Migraine';
             document.getElementById('deleteEntryBtn').classList.add('hidden');
+            toggleFormFields();
             renderMeds([]);
             renderCovariates([]);
             showForm();
         }
 
-        function openEditForm(id) {
-            const log = state.logs.find(l => l.id === id);
+        function openDailyLogForm() {
+            resetForm();
+            currentFormMode = 'daily';
+            document.getElementById('formTitle').textContent = 'Daily Check-in';
+            document.getElementById('entryId').value = '';
+            document.getElementById('deleteEntryBtn').classList.add('hidden');
+
+            toggleFormFields();
+
+            // Default date to today
+            const now = new Date();
+            const pad = n => n.toString().padStart(2, '0');
+            document.getElementById('logDate').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+
+            renderMeds([]);
+            renderCovariates([]);
+            showForm();
+        }
+
+        function openEditForm(id, type = 'migraine') {
+            currentFormMode = type;
+            let log;
+            if (type === 'daily') {
+                log = state.dailyLogs.find(l => l.id === id);
+            } else {
+                log = state.logs.find(l => l.id === id);
+            }
             if (!log) return;
 
-            document.getElementById('entryId').value = log.id;
-            document.getElementById('startTime').value = toLocalISO(new Date(log.startTime));
-            document.getElementById('endTime').value = log.endTime ? toLocalISO(new Date(log.endTime)) : '';
-            document.getElementById('severity').value = log.severity;
-            document.getElementById('severityVal').textContent = log.severity;
-            document.getElementById('notes').value = log.notes;
-            document.getElementById('formTitle').textContent = 'Edit Migraine Log';
+            toggleFormFields();
 
+            document.getElementById('entryId').value = log.id;
+
+            if (type === 'migraine') {
+                document.getElementById('startTime').value = toLocalISO(new Date(log.startTime));
+                document.getElementById('endTime').value = log.endTime ? toLocalISO(new Date(log.endTime)) : '';
+                document.getElementById('severity').value = log.severity;
+                document.getElementById('severityVal').textContent = log.severity;
+                document.getElementById('formTitle').textContent = 'Edit Migraine Log';
+            } else {
+                document.getElementById('logDate').value = log.date;
+                document.getElementById('formTitle').textContent = 'Edit Daily Log';
+            }
+
+            document.getElementById('notes').value = log.notes;
             renderMeds(log.meds);
             renderCovariates(log.covariates);
 
@@ -378,8 +459,12 @@
             deleteBtn.classList.remove('hidden');
             deleteBtn.onclick = () => {
                 if(confirm("Delete this log?")) {
-                    state.logs = state.logs.filter(l => l.id !== id);
-                    if(state.activeId === id) state.activeId = null;
+                    if (type === 'daily') {
+                        state.dailyLogs = state.dailyLogs.filter(l => l.id !== id);
+                    } else {
+                        state.logs = state.logs.filter(l => l.id !== id);
+                        if(state.activeId === id) state.activeId = null;
+                    }
                     save();
                     hideForm();
                 }
@@ -404,6 +489,19 @@
         function resetForm() {
             form.reset();
             document.getElementById('severityVal').textContent = '5';
+        }
+
+        function toggleFormFields() {
+            const isMigraine = currentFormMode === 'migraine';
+            if (isMigraine) {
+                document.getElementById('migraineTimeFields').classList.remove('hidden');
+                document.getElementById('dailyDateFields').classList.add('hidden');
+                document.getElementById('severityContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('migraineTimeFields').classList.add('hidden');
+                document.getElementById('dailyDateFields').classList.remove('hidden');
+                document.getElementById('severityContainer').classList.add('hidden');
+            }
         }
 
         document.getElementById('closeFormBtn').onclick = hideForm;
@@ -446,56 +544,70 @@
         form.onsubmit = (e) => {
             e.preventDefault();
             const idVal = document.getElementById('entryId').value;
-            const startTime = document.getElementById('startTime').value; // already local ISO-ish
-            const endTime = document.getElementById('endTime').value;
-            const severity = parseInt(document.getElementById('severity').value);
             const notes = document.getElementById('notes').value;
-
             const meds = getSelectedValues('medsContainer');
             const covariates = getSelectedValues('covariatesContainer');
 
-            // Format dates back to ISO string for storage (which is usually UTC, but let's just keep strings for simplicity or convert)
-            // `startTime` from input is "yyyy-MM-ddThh:mm". We should probably store as full ISO with timezone or just string.
-            // new Date("yyyy-MM-ddThh:mm") uses local time.
+            if (currentFormMode === 'migraine') {
+                const startTime = document.getElementById('startTime').value;
+                if(!startTime) { alert("Start time required"); return; }
+                const endTime = document.getElementById('endTime').value;
+                const severity = parseInt(document.getElementById('severity').value);
 
-            const startISO = new Date(startTime).toISOString();
-            const endISO = endTime ? new Date(endTime).toISOString() : null;
+                const startISO = new Date(startTime).toISOString();
+                const endISO = endTime ? new Date(endTime).toISOString() : null;
 
-            if (idVal) {
-                // Update existing
-                const id = parseInt(idVal);
-                const log = state.logs.find(l => l.id === id);
-                if (log) {
-                    log.startTime = startISO;
-                    log.endTime = endISO;
-                    log.severity = severity;
-                    log.notes = notes;
-                    log.meds = meds;
-                    log.covariates = covariates;
+                if (idVal) {
+                    const id = parseInt(idVal);
+                    const log = state.logs.find(l => l.id === id);
+                    if (log) {
+                        log.startTime = startISO;
+                        log.endTime = endISO;
+                        log.severity = severity;
+                        log.notes = notes;
+                        log.meds = meds;
+                        log.covariates = covariates;
 
-                    // Logic: If we set an end time for the active migraine, it's no longer active
-                    if (state.activeId === id && endISO) {
-                        state.activeId = null;
+                        if (state.activeId === id && endISO) {
+                            state.activeId = null;
+                        }
                     }
-                    // Logic: If we clear end time for active, it remains active?
-                    // If we clear end time for a PAST one, does it become active?
-                    // Let's assume manual toggle via "End Now" handles active state mostly,
-                    // but if they manually clear end time on the active log, it stays active.
-                    // If they manually clear end time on a historical log, it effectively becomes "ongoing" but maybe not "Active" in the header unless we force it.
-                    // For simplicity: If editing the *active* log, respect end time.
+                } else {
+                    const newLog = {
+                        id: Date.now(),
+                        startTime: startISO,
+                        endTime: endISO,
+                        severity: severity,
+                        notes: notes,
+                        meds: meds,
+                        covariates: covariates
+                    };
+                    state.logs.push(newLog);
                 }
             } else {
-                // Create new (Log Past)
-                const newLog = {
-                    id: Date.now(),
-                    startTime: startISO,
-                    endTime: endISO,
-                    severity: severity,
-                    notes: notes,
-                    meds: meds,
-                    covariates: covariates
-                };
-                state.logs.push(newLog);
+                // Daily Check-in
+                const dateVal = document.getElementById('logDate').value;
+                if (!dateVal) { alert("Date required"); return; }
+
+                if (idVal) {
+                    const id = parseInt(idVal);
+                    const log = state.dailyLogs.find(l => l.id === id);
+                    if (log) {
+                        log.date = dateVal;
+                        log.notes = notes;
+                        log.meds = meds;
+                        log.covariates = covariates;
+                    }
+                } else {
+                    const newLog = {
+                        id: Date.now(),
+                        date: dateVal,
+                        notes: notes,
+                        meds: meds,
+                        covariates: covariates
+                    };
+                    state.dailyLogs.push(newLog);
+                }
             }
 
             save();
