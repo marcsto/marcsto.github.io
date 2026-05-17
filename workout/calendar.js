@@ -231,25 +231,9 @@ function summarizeExercise(exerciseName, sets) {
   const exerciseStyle = getExerciseStyle(exerciseName);
   const shortName = abbreviateExercise(exerciseName);
   const isDuration = isDurationExerciseName(exerciseName);
-  const reps = sets.map((set) => set.reps);
-  const weights = sets.map((set) => set.weight);
-  const uniqueReps = uniqueValues(reps);
-  const uniqueWeights = uniqueValues(weights);
-  let detail;
+  const detail = isDuration ? formatDurationSets(sets) : formatWeightedSets(sets);
 
-  if (isDuration) {
-    detail = summarizeDurations(reps);
-  } else if (uniqueReps.length === 1 && uniqueWeights.length === 1) {
-    detail = `${sets.length}x${formatNumber(uniqueReps[0])}@${formatNumber(uniqueWeights[0])}`;
-  } else if (uniqueWeights.length === 1) {
-    detail = `${sets.length}s ${compactSequence(reps, formatNumber)}@${formatNumber(uniqueWeights[0])}`;
-  } else if (uniqueReps.length === 1) {
-    detail = `${sets.length}x${formatNumber(uniqueReps[0])}@${compactSequence(weights, formatNumber)}`;
-  } else {
-    detail = `${sets.length}s ${compactSetPairs(sets)}`;
-  }
-
-  const shortText = `${shortName} ${detail}`;
+  const shortText = `${shortName}${sets.length} ${detail}`;
   return {
     shortText,
     fullText: isDuration
@@ -260,59 +244,16 @@ function summarizeExercise(exerciseName, sets) {
   };
 }
 
-function summarizeDurations(minutes) {
-  const uniqueMinutes = uniqueValues(minutes);
-
-  if (minutes.length === 1) {
-    return `${formatNumber(minutes[0])}m`;
-  }
-
-  if (uniqueMinutes.length === 1) {
-    return `${minutes.length}x${formatNumber(uniqueMinutes[0])}m`;
-  }
-
-  return `${minutes.length}s ${compactSequence(minutes, (value) => `${formatNumber(value)}m`)}`;
+function formatWeightedSets(sets) {
+  return sets
+    .map((set) => `${formatNumber(set.reps)}@${formatNumber(set.weight)}`)
+    .join(" ");
 }
 
-function compactSequence(values, formatter) {
-  const runs = [];
-
-  values.forEach((value) => {
-    const lastRun = runs[runs.length - 1];
-    if (lastRun && lastRun.value === value) {
-      lastRun.count += 1;
-      return;
-    }
-
-    runs.push({ value, count: 1 });
-  });
-
-  return runs
-    .map((run) => (run.count > 1 ? `${run.count}x${formatter(run.value)}` : formatter(run.value)))
-    .join("/");
-}
-
-function compactSetPairs(sets) {
-  const runs = [];
-
-  sets.forEach((set) => {
-    const value = `${formatNumber(set.reps)}@${formatNumber(set.weight)}`;
-    const lastRun = runs[runs.length - 1];
-    if (lastRun && lastRun.value === value) {
-      lastRun.count += 1;
-      return;
-    }
-
-    runs.push({ value, count: 1 });
-  });
-
-  return runs
-    .map((run) => (run.count > 1 ? `${run.count}x${run.value}` : run.value))
-    .join("/");
-}
-
-function uniqueValues(values) {
-  return Array.from(new Set(values));
+function formatDurationSets(sets) {
+  return sets
+    .map((set) => `${formatNumber(set.reps)}m`)
+    .join(" ");
 }
 
 function setStatus(message, tone) {
