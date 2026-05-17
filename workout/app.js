@@ -332,6 +332,7 @@ function handleSave() {
   };
 
   updateExerciseCache(row);
+  appendLocalWorkoutRow(row);
   renderHome();
   updateLastLogged();
   setEntryStatus(`Saved ${formatTime(row.timestamp)}`, "ok");
@@ -345,6 +346,31 @@ function updateExerciseCache(row) {
     timestamp: row.timestamp
   };
   writeJson(STORAGE_KEYS.exerciseCache, state.exerciseCache);
+}
+
+function appendLocalWorkoutRow(row) {
+  const rows = readJson(STORAGE_KEYS.workoutRows, []);
+  const normalizedRow = normalizeWorkoutRowForStorage(row);
+  const exists = rows.some((storedRow) => (
+    storedRow.date === normalizedRow.date
+    && storedRow.exercise === normalizedRow.exercise
+    && storedRow.reps === normalizedRow.reps
+    && storedRow.weight === normalizedRow.weight
+  ));
+
+  if (!exists) {
+    rows.push(normalizedRow);
+    writeJson(STORAGE_KEYS.workoutRows, rows);
+  }
+}
+
+function normalizeWorkoutRowForStorage(row) {
+  return {
+    date: row.timestamp,
+    exercise: row.exerciseName,
+    reps: row.reps,
+    weight: row.weight
+  };
 }
 
 function updateLastLogged() {

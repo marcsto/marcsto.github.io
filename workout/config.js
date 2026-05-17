@@ -22,6 +22,7 @@ const STORAGE_PREFIX = "workoutTracker.v1.";
 const STORAGE_KEYS = {
   spreadsheetId: `${STORAGE_PREFIX}spreadsheetId`,
   exerciseCache: `${STORAGE_PREFIX}exerciseCache`,
+  workoutRows: `${STORAGE_PREFIX}workoutRows`,
   pendingRows: `${STORAGE_PREFIX}pendingRows`,
   hasGoogleGrant: `${STORAGE_PREFIX}hasGoogleGrant`,
   accessToken: `${STORAGE_PREFIX}accessToken`,
