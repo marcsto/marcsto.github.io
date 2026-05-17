@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#101820">
+    <title>Workout History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0">
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" defer></script>
+    <script src="calendar.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell calendar-shell">
+      <header class="topbar">
+        <div class="title-block">
+          <span class="kicker">Workout</span>
+          <h1>History</h1>
+        </div>
+        <div class="sync-block">
+          <a class="icon-text-button compact-link" href="index.html">
+            <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+            <span>Log</span>
+          </a>
+          <span id="calendarStatus" class="sync-status" aria-live="polite">Loading</span>
+          <button id="signInButton" class="icon-text-button" type="button">
+            <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>
+            <span>Sync</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="main-stage calendar-stage">
+        <section class="calendar-panel" aria-labelledby="calendarHeading">
+          <div class="calendar-summary">
+            <div>
+              <h2 id="calendarHeading">Last 4 weeks</h2>
+              <span id="dateRangeLabel" class="calendar-range"></span>
+            </div>
+            <button id="refreshButton" class="icon-text-button refresh-button" type="button">
+              <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <div class="weekday-row" aria-hidden="true">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+
+          <div id="calendarGrid" class="workout-calendar" role="grid" aria-label="Workout history"></div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

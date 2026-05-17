@@ -1,33 +1,3 @@
-const CLIENT_ID = "239257173932-1s7jhkik7k1iadtp1ak96s7l9eop9ubv.apps.googleusercontent.com";
-const API_KEY = "AIzaSyAoWx24hAws1Fm-wNP2p_HjgHXtOqfl8ow";
-
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-const SPREADSHEET_NAME = "Workout Tracker Data";
-const SHEET_NAME = "Workout Log";
-const SHEET_HEADERS = ["Timestamp", "Exercise Name", "Reps", "Weight"];
-
-const DEFAULT_EXERCISES = [
-  { name: "Benchpress", icon: "fitness_center" },
-  { name: "Deadlift", icon: "exercise" },
-  { name: "Squats", icon: "accessibility_new" },
-  { name: "Lunges", icon: "directions_run" },
-  { name: "Overhead Press", icon: "exercise" },
-  { name: "Rows", icon: "rowing" }
-];
-
-const STORAGE_PREFIX = "workoutTracker.v1.";
-const STORAGE_KEYS = {
-  spreadsheetId: `${STORAGE_PREFIX}spreadsheetId`,
-  exerciseCache: `${STORAGE_PREFIX}exerciseCache`,
-  pendingRows: `${STORAGE_PREFIX}pendingRows`,
-  hasGoogleGrant: `${STORAGE_PREFIX}hasGoogleGrant`,
-  accessToken: `${STORAGE_PREFIX}accessToken`,
-  tokenExpiresAt: `${STORAGE_PREFIX}tokenExpiresAt`
-};
-
-const SHEETS_API = "https://sheets.googleapis.com/v4";
-const DRIVE_API = "https://www.googleapis.com/drive/v3";
-
 const DEFAULT_REPS = 8;
 const MIN_REPS = 1;
 const MAX_REPS = 30;
@@ -142,7 +112,7 @@ function hasClientId() {
 
 function updateAuthUi() {
   els.signInButton.disabled = !hasClientId();
-  els.signInButton.title = hasClientId() ? "Sync with Google" : "Add CLIENT_ID in app.js";
+  els.signInButton.title = hasClientId() ? "Sync with Google" : "Add CLIENT_ID in config.js";
 
   const label = els.signInButton.querySelector("span:last-child");
   if (label) {
@@ -327,7 +297,7 @@ async function persistWorkoutRow(row, options = {}) {
   enqueuePendingRow(row);
 
   if (!hasClientId()) {
-    setEntryStatus("Saved locally. Add CLIENT_ID to sync.", "error");
+    setEntryStatus("Saved locally. Add CLIENT_ID in config.js to sync.", "error");
     setSyncStatus(`Queued ${state.pendingRows.length}`, "error");
     return;
   }
