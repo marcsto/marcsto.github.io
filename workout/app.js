@@ -1,3 +1,12 @@
+import { DEFAULT_EXERCISES, isDurationExercise, isDurationExerciseName } from "./config.js";
+import {
+  addWorkoutSet,
+  getFirestorePersistenceStatus,
+  signInWithGoogle,
+  subscribeWorkouts,
+  watchAuth
+} from "./firebase.js";
+
 const DEFAULT_REPS = 8;
 const MIN_REPS = 1;
 const MAX_REPS = 30;
@@ -11,22 +20,11 @@ const DEFAULT_MAX_WEIGHT = 500;
 const WEIGHT_STEP = 2.5;
 
 const state = {
-  tokenClient: null,
-  accessToken: getStoredAccessToken(),
-  tokenExpiresAt: getStoredTokenExpiresAt(),
-  tokenPromise: null,
-  tokenPromiseSilentOnly: false,
-  tokenReject: null,
-  spreadsheetId: localStorage.getItem(STORAGE_KEYS.spreadsheetId) || "",
-  databaseReady: false,
-  databasePromise: null,
-  flushPromise: null,
-  hasGoogleGrant: localStorage.getItem(STORAGE_KEYS.hasGoogleGrant) === "1"
-    || Boolean(localStorage.getItem(STORAGE_KEYS.spreadsheetId))
-    || Boolean(getStoredAccessToken()),
-  exerciseCache: readJson(STORAGE_KEYS.exerciseCache, {}),
-  pendingRows: readJson(STORAGE_KEYS.pendingRows, []),
-  activeExercise: null
+  user: null,
+  activeExercise: null,
+  workouts: [],
+  exerciseCache: {},
+  unsubscribeWorkouts: null
 };
 
 const els = {};
@@ -36,13 +34,9 @@ document.addEventListener("DOMContentLoaded", initApp);
 function initApp() {
   cacheElements();
   bindEvents();
-  if (state.accessToken && !isTokenFresh()) {
-    clearAccessToken();
-  }
   renderHome();
-  updateAuthUi();
-  setSyncStatus(initialSyncText(), state.pendingRows.length ? "error" : "");
-  restoreAuthenticatedSession();
+  setSyncStatus("Loading", "");
+  watchAuth(handleAuthState);
 }
 
 function cacheElements() {
@@ -61,7 +55,6 @@ function cacheElements() {
   els.repsUp = document.getElementById("repsUp");
   els.weightControl = document.getElementById("weightControl");
   els.weightSlider = document.getElementById("weightSlider");
-  els.weightLabel = document.getElementById("weightLabel");
   els.weightValue = document.getElementById("weightValue");
   els.weightDown = document.getElementById("weightDown");
   els.weightUp = document.getElementById("weightUp");
@@ -79,52 +72,85 @@ function bindEvents() {
   els.weightDown.addEventListener("click", () => setWeight(getWeight() - WEIGHT_STEP));
   els.weightUp.addEventListener("click", () => setWeight(getWeight() + WEIGHT_STEP));
   els.saveButton.addEventListener("click", handleSave);
-
-  window.addEventListener("online", () => {
-    if (state.accessToken && state.spreadsheetId) {
-      flushPendingRows();
-    }
-  });
-
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted && state.hasGoogleGrant && !isTokenFresh()) {
-      restoreAuthenticatedSession();
-    }
-  });
 }
 
-function initialSyncText() {
-  if (!hasClientId()) {
-    return "Set CLIENT_ID";
+async function handleAuthState(user) {
+  state.user = user;
+  updateAuthUi();
+
+  if (state.unsubscribeWorkouts) {
+    state.unsubscribeWorkouts();
+    state.unsubscribeWorkouts = null;
   }
 
-  if (state.pendingRows.length) {
-    return `Queued ${state.pendingRows.length}`;
+  if (!user) {
+    state.workouts = [];
+    state.exerciseCache = {};
+    renderHome();
+    setSyncStatus("Sign in", "");
+    return;
   }
 
-  if (isTokenFresh()) {
-    return "Synced";
+  setSyncStatus("Loading", "");
+  try {
+    state.unsubscribeWorkouts = await subscribeWorkouts(user.uid, (workouts) => {
+      state.workouts = workouts;
+      state.exerciseCache = buildExerciseCache(workouts);
+      renderHome();
+      updateLastLogged();
+      setSyncStatus(getReadyStatus(), "ok");
+    }, (error) => {
+      setSyncStatus("Sync error", "error");
+      setEntryStatus(error.message || "Could not load workouts.", "error");
+    });
+  } catch (error) {
+    setSyncStatus("Sync error", "error");
+    setEntryStatus(error.message || "Could not start Firestore.", "error");
   }
-
-  if (state.hasGoogleGrant) {
-    return "Restoring";
-  }
-
-  return state.spreadsheetId ? "Local + sheet" : "Local";
 }
 
-function hasClientId() {
-  return Boolean(CLIENT_ID.trim());
+async function handleSignIn() {
+  if (state.user) {
+    setSyncStatus(getReadyStatus(), "ok");
+    return;
+  }
+
+  try {
+    setSyncStatus("Signing in", "");
+    await signInWithGoogle();
+  } catch (error) {
+    setSyncStatus("Sign-in failed", "error");
+    setEntryStatus(error.message || "Sign-in failed.", "error");
+  }
 }
 
 function updateAuthUi() {
-  els.signInButton.disabled = !hasClientId();
-  els.signInButton.title = hasClientId() ? "Sync with Google" : "Add CLIENT_ID in config.js";
-
   const label = els.signInButton.querySelector("span:last-child");
   if (label) {
-    label.textContent = isTokenFresh() ? "Synced" : state.hasGoogleGrant ? "Sync" : "Sign in";
+    label.textContent = state.user ? "Signed in" : "Sign in";
   }
+
+  els.signInButton.title = state.user ? `Signed in as ${state.user.email || "Google user"}` : "Sign in with Google";
+}
+
+function getReadyStatus() {
+  const persistenceStatus = getFirestorePersistenceStatus();
+  return persistenceStatus === "unavailable" ? "Online" : "Synced";
+}
+
+function buildExerciseCache(workouts) {
+  return workouts.reduce((cache, workout) => {
+    const current = cache[workout.exerciseName];
+    if (!current || workout.timestamp > current.timestamp) {
+      cache[workout.exerciseName] = {
+        reps: workout.reps,
+        weight: workout.weight,
+        timestamp: workout.timestamp
+      };
+    }
+
+    return cache;
+  }, {});
 }
 
 function renderHome() {
@@ -136,7 +162,7 @@ function renderHome() {
     tile.type = "button";
     tile.className = "exercise-tile";
     tile.style.setProperty("--exercise-color", exercise.color || "#157a55");
-    tile.style.setProperty("--exercise-bg", exercise.tint || "#eaf3ed");
+    tile.style.setProperty("--exercise-bg", exercise.tint || "#13281f");
     tile.setAttribute("aria-label", `Open ${exercise.name}`);
     tile.addEventListener("click", () => openExercise(exercise));
 
@@ -174,19 +200,7 @@ function getSortedExercises() {
 
 function getExerciseTime(exerciseName) {
   const timestamp = state.exerciseCache[exerciseName]?.timestamp;
-  return timestamp ? Date.parse(timestamp) || 0 : 0;
-}
-
-function getExerciseByName(exerciseName) {
-  return DEFAULT_EXERCISES.find((exercise) => exercise.name.toLowerCase() === String(exerciseName).toLowerCase());
-}
-
-function isDurationExercise(exercise) {
-  return exercise?.type === "duration";
-}
-
-function isDurationExerciseName(exerciseName) {
-  return isDurationExercise(getExerciseByName(exerciseName));
+  return timestamp ? timestamp.getTime() : 0;
 }
 
 function getTileMeta(exerciseName) {
@@ -211,13 +225,14 @@ function openExercise(exercise) {
   els.exerciseTitle.textContent = exercise.name;
   configureEntryControls(exercise);
   setReps(reps);
+
   if (!isDurationExercise(exercise)) {
     ensureWeightRange(weight);
     setWeight(weight);
   }
+
   updateLastLogged();
   setEntryStatus("", "");
-
   els.homeView.hidden = true;
   els.entryView.hidden = false;
 }
@@ -318,64 +333,53 @@ function getWeightMax() {
   return toNumber(els.weightSlider.max, DEFAULT_MAX_WEIGHT);
 }
 
-function handleSave() {
+async function handleSave() {
   if (!state.activeExercise) {
     return;
   }
 
+  if (!state.user) {
+    await handleSignIn();
+    if (!state.user) {
+      return;
+    }
+  }
+
   const isDuration = isDurationExercise(state.activeExercise);
-  const row = {
-    timestamp: new Date().toISOString(),
+  const workout = {
     exerciseName: state.activeExercise.name,
     reps: getReps(),
-    weight: isDuration ? "" : getWeight()
+    weight: isDuration ? 0 : getWeight(),
+    timestamp: new Date()
   };
 
-  updateExerciseCache(row);
-  appendLocalWorkoutRow(row);
+  updateExerciseCache(workout);
   renderHome();
   updateLastLogged();
-  setEntryStatus(`Saved ${formatTime(row.timestamp)}`, "ok");
-  persistWorkoutRow(row, { interactive: true });
-}
+  setEntryStatus(`Saved ${formatTime(workout.timestamp)}`, "ok");
+  setSyncStatus("Saving", "");
 
-function updateExerciseCache(row) {
-  state.exerciseCache[row.exerciseName] = {
-    reps: row.reps,
-    weight: row.weight,
-    timestamp: row.timestamp
-  };
-  writeJson(STORAGE_KEYS.exerciseCache, state.exerciseCache);
-}
-
-function appendLocalWorkoutRow(row) {
-  const rows = readJson(STORAGE_KEYS.workoutRows, []);
-  const normalizedRow = normalizeWorkoutRowForStorage(row);
-  const exists = rows.some((storedRow) => (
-    storedRow.date === normalizedRow.date
-    && storedRow.exercise === normalizedRow.exercise
-    && storedRow.reps === normalizedRow.reps
-    && storedRow.weight === normalizedRow.weight
-  ));
-
-  if (!exists) {
-    rows.push(normalizedRow);
-    writeJson(STORAGE_KEYS.workoutRows, rows);
+  try {
+    await addWorkoutSet(state.user.uid, workout);
+    setSyncStatus(getReadyStatus(), "ok");
+  } catch (error) {
+    setSyncStatus("Queued", "error");
+    setEntryStatus(error.message || "Saved locally. Will sync when possible.", "error");
   }
 }
 
-function normalizeWorkoutRowForStorage(row) {
-  return {
-    date: row.timestamp,
-    exercise: row.exerciseName,
-    reps: row.reps,
-    weight: row.weight
+function updateExerciseCache(workout) {
+  state.exerciseCache[workout.exerciseName] = {
+    reps: workout.reps,
+    weight: workout.weight,
+    timestamp: workout.timestamp
   };
 }
 
 function updateLastLogged() {
   const exerciseName = state.activeExercise?.name;
   const cached = exerciseName ? state.exerciseCache[exerciseName] : null;
+
   if (cached && isDurationExerciseName(exerciseName)) {
     els.lastLogged.textContent = `Last ${formatNumber(cached.reps)} min, ${formatDateTime(cached.timestamp)}`;
     return;
@@ -384,443 +388,6 @@ function updateLastLogged() {
   els.lastLogged.textContent = cached
     ? `Last ${formatWeight(cached.weight)} lb x ${cached.reps}, ${formatDateTime(cached.timestamp)}`
     : "";
-}
-
-async function handleSignIn() {
-  if (!hasClientId()) {
-    setSyncStatus("Set CLIENT_ID", "error");
-    return;
-  }
-
-  try {
-    setSyncStatus("Signing in", "");
-    await ensureAccessToken({ interactive: true, forceConsent: !state.hasGoogleGrant });
-    await initializeDatabase();
-    await flushPendingRows();
-    syncCacheFromSheet();
-  } catch (error) {
-    reportSyncError(error);
-  }
-}
-
-async function persistWorkoutRow(row, options = {}) {
-  enqueuePendingRow(row);
-
-  if (!hasClientId()) {
-    setEntryStatus("Saved locally. Add CLIENT_ID in config.js to sync.", "error");
-    setSyncStatus(`Queued ${state.pendingRows.length}`, "error");
-    return;
-  }
-
-  setSyncStatus("Syncing", "");
-
-  try {
-    await ensureAccessToken({ interactive: Boolean(options.interactive), silent: state.hasGoogleGrant });
-    await initializeDatabase();
-    await flushPendingRows();
-    setSyncStatus(state.pendingRows.length ? `Queued ${state.pendingRows.length}` : "Synced", state.pendingRows.length ? "error" : "ok");
-    setEntryStatus(`Synced ${formatTime(row.timestamp)}`, "ok");
-  } catch (error) {
-    reportSyncError(error);
-  }
-}
-
-async function restoreAuthenticatedSession() {
-  if (!hasClientId() || !state.hasGoogleGrant) {
-    return;
-  }
-
-  try {
-    setSyncStatus("Restoring", "");
-    if (!isTokenFresh()) {
-      await waitForGoogleIdentity();
-      await ensureAccessToken({ silent: true });
-    }
-    await initializeDatabase();
-    await flushPendingRows();
-    syncCacheFromSheet();
-  } catch {
-    setSyncStatus(state.pendingRows.length ? `Queued ${state.pendingRows.length}` : "Tap sign in", state.pendingRows.length ? "error" : "");
-  }
-}
-
-async function flushPendingRows() {
-  if (state.flushPromise) {
-    return state.flushPromise;
-  }
-
-  if (!state.pendingRows.length) {
-    setSyncStatus("Synced", "ok");
-    return;
-  }
-
-  state.flushPromise = (async () => {
-    while (state.pendingRows.length) {
-      setSyncStatus(`Syncing ${state.pendingRows.length}`, "");
-      await appendWorkoutRow(state.pendingRows[0]);
-      state.pendingRows.shift();
-      writeJson(STORAGE_KEYS.pendingRows, state.pendingRows);
-    }
-
-    setSyncStatus("Synced", "ok");
-  })();
-
-  try {
-    return await state.flushPromise;
-  } finally {
-    state.flushPromise = null;
-  }
-}
-
-function enqueuePendingRow(row) {
-  const exists = state.pendingRows.some((pending) => (
-    pending.timestamp === row.timestamp
-    && pending.exerciseName === row.exerciseName
-    && pending.reps === row.reps
-    && pending.weight === row.weight
-  ));
-
-  if (!exists) {
-    state.pendingRows.push(row);
-    writeJson(STORAGE_KEYS.pendingRows, state.pendingRows);
-  }
-}
-
-function initTokenClient() {
-  if (state.tokenClient) {
-    return state.tokenClient;
-  }
-
-  if (!window.google?.accounts?.oauth2) {
-    throw new Error("Google Identity Services did not load.");
-  }
-
-  state.tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: DRIVE_SCOPE,
-    callback: () => {},
-    error_callback: (error) => {
-      if (state.tokenReject) {
-        state.tokenReject(new Error(error?.type || "Google sign-in failed."));
-      }
-    }
-  });
-
-  return state.tokenClient;
-}
-
-function ensureAccessToken(options = {}) {
-  if (isTokenFresh()) {
-    return Promise.resolve(state.accessToken);
-  }
-
-  if (state.tokenPromise) {
-    if (options.interactive && state.tokenPromiseSilentOnly) {
-      return state.tokenPromise.catch(() => {
-        state.tokenPromise = null;
-        state.tokenPromiseSilentOnly = false;
-        return ensureAccessToken(options);
-      });
-    }
-
-    return state.tokenPromise;
-  }
-
-  if (!options.interactive && !options.silent) {
-    return Promise.reject(new Error("Sign in to sync."));
-  }
-
-  state.tokenPromise = requestGoogleToken(getTokenPrompt(options))
-    .catch((error) => {
-      if (options.interactive && options.silent) {
-        return requestGoogleToken(getTokenPrompt({ ...options, silent: false }));
-      }
-
-      throw error;
-    })
-    .finally(() => {
-      state.tokenPromise = null;
-      state.tokenPromiseSilentOnly = false;
-    });
-  state.tokenPromiseSilentOnly = Boolean(options.silent && !options.interactive);
-
-  return state.tokenPromise;
-}
-
-function requestGoogleToken(prompt) {
-  const tokenClient = initTokenClient();
-
-  return new Promise((resolve, reject) => {
-    state.tokenReject = reject;
-    tokenClient.callback = (response) => {
-      state.tokenReject = null;
-
-      if (response?.error) {
-        reject(new Error(response.error_description || response.error));
-        return;
-      }
-
-      storeAccessToken(response);
-      state.hasGoogleGrant = true;
-      localStorage.setItem(STORAGE_KEYS.hasGoogleGrant, "1");
-      updateAuthUi();
-      resolve(state.accessToken);
-    };
-
-    tokenClient.requestAccessToken({ prompt });
-  });
-}
-
-function getTokenPrompt(options) {
-  if (options.silent) {
-    return "none";
-  }
-
-  if (options.forceConsent) {
-    return "consent";
-  }
-
-  return state.hasGoogleGrant ? "" : "consent";
-}
-
-function isTokenFresh() {
-  return Boolean(state.accessToken && Date.now() < state.tokenExpiresAt - 60000);
-}
-
-function storeAccessToken(response) {
-  state.accessToken = response.access_token;
-  state.tokenExpiresAt = Date.now() + (toNumber(response.expires_in, 3600) * 1000);
-  storeAccessTokenForTabs(state.accessToken, state.tokenExpiresAt);
-}
-
-function clearAccessToken() {
-  state.accessToken = "";
-  state.tokenExpiresAt = 0;
-  clearAccessTokenForTabs();
-
-  if (els.signInButton) {
-    updateAuthUi();
-  }
-}
-
-function waitForGoogleIdentity(timeoutMs = 5000) {
-  if (window.google?.accounts?.oauth2) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve, reject) => {
-    const startedAt = Date.now();
-    const timerId = window.setInterval(() => {
-      if (window.google?.accounts?.oauth2) {
-        window.clearInterval(timerId);
-        resolve();
-        return;
-      }
-
-      if (Date.now() - startedAt >= timeoutMs) {
-        window.clearInterval(timerId);
-        reject(new Error("Google Identity Services did not load."));
-      }
-    }, 100);
-  });
-}
-
-async function initializeDatabase() {
-  if (state.databaseReady && state.spreadsheetId) {
-    return state.spreadsheetId;
-  }
-
-  if (state.databasePromise) {
-    return state.databasePromise;
-  }
-
-  state.databasePromise = (async () => {
-    setSyncStatus("Finding sheet", "");
-    const file = await findSpreadsheet();
-
-    if (file?.id) {
-      state.spreadsheetId = file.id;
-      state.databaseReady = true;
-      localStorage.setItem(STORAGE_KEYS.spreadsheetId, file.id);
-      setSyncStatus("Sheet ready", "ok");
-      return file.id;
-    }
-
-    setSyncStatus("Creating sheet", "");
-    const spreadsheet = await createSpreadsheet();
-    state.spreadsheetId = spreadsheet.spreadsheetId;
-    state.databaseReady = true;
-    localStorage.setItem(STORAGE_KEYS.spreadsheetId, state.spreadsheetId);
-    setSyncStatus("Sheet ready", "ok");
-    return state.spreadsheetId;
-  })();
-
-  try {
-    return await state.databasePromise;
-  } finally {
-    state.databasePromise = null;
-  }
-}
-
-async function findSpreadsheet() {
-  const query = [
-    `name = '${escapeDriveQuery(SPREADSHEET_NAME)}'`,
-    "mimeType = 'application/vnd.google-apps.spreadsheet'",
-    "trashed = false"
-  ].join(" and ");
-
-  const params = new URLSearchParams({
-    q: query,
-    spaces: "drive",
-    pageSize: "10",
-    orderBy: "modifiedTime desc",
-    fields: "files(id,name,modifiedTime)"
-  });
-
-  const response = await googleFetch(`${DRIVE_API}/files?${params}`);
-  return response.files?.[0] || null;
-}
-
-async function createSpreadsheet() {
-  const response = await googleFetch(`${SHEETS_API}/spreadsheets?fields=spreadsheetId,spreadsheetUrl`, {
-    method: "POST",
-    body: JSON.stringify({
-      properties: {
-        title: SPREADSHEET_NAME
-      },
-      sheets: [
-        {
-          properties: {
-            title: SHEET_NAME,
-            gridProperties: {
-              rowCount: 1000,
-              columnCount: SHEET_HEADERS.length
-            }
-          }
-        }
-      ]
-    })
-  });
-
-  await writeHeaderRow(response.spreadsheetId);
-  return response;
-}
-
-async function writeHeaderRow(spreadsheetId) {
-  const range = encodeURIComponent(a1Range("A1:D1"));
-  await googleFetch(`${SHEETS_API}/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=RAW`, {
-    method: "PUT",
-    body: JSON.stringify({
-      values: [SHEET_HEADERS]
-    })
-  });
-}
-
-async function appendWorkoutRow(row) {
-  const range = encodeURIComponent(a1Range("A:D"));
-  await googleFetch(`${SHEETS_API}/spreadsheets/${state.spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
-    method: "POST",
-    body: JSON.stringify({
-      values: [[row.timestamp, row.exerciseName, row.reps, row.weight]]
-    })
-  });
-}
-
-async function syncCacheFromSheet() {
-  try {
-    if (!state.spreadsheetId || !isTokenFresh()) {
-      return;
-    }
-
-    setSyncStatus("Refreshing", "");
-    const range = encodeURIComponent(a1Range("A2:D"));
-    const response = await googleFetch(`${SHEETS_API}/spreadsheets/${state.spreadsheetId}/values/${range}?majorDimension=ROWS`);
-    const rows = response.values || [];
-    let changed = false;
-
-    rows.forEach((values) => {
-      const [timestamp, exerciseName, reps, weight] = values;
-      if (!timestamp || !exerciseName) {
-        return;
-      }
-
-      const incomingTime = Date.parse(timestamp) || 0;
-      const currentTime = getExerciseTime(exerciseName);
-
-      if (incomingTime > currentTime) {
-        state.exerciseCache[exerciseName] = {
-          reps: toNumber(reps, isDurationExerciseName(exerciseName) ? DEFAULT_DURATION_MINUTES : DEFAULT_REPS),
-          weight: isDurationExerciseName(exerciseName) ? "" : toNumber(weight, DEFAULT_WEIGHT),
-          timestamp
-        };
-        changed = true;
-      }
-    });
-
-    if (changed) {
-      writeJson(STORAGE_KEYS.exerciseCache, state.exerciseCache);
-      renderHome();
-      if (state.activeExercise) {
-        updateLastLogged();
-      }
-    }
-
-    setSyncStatus(state.pendingRows.length ? `Queued ${state.pendingRows.length}` : "Synced", state.pendingRows.length ? "error" : "ok");
-  } catch (error) {
-    reportSyncError(error);
-  }
-}
-
-async function googleFetch(url, options = {}) {
-  const headers = new Headers(options.headers || {});
-  headers.set("Authorization", `Bearer ${state.accessToken}`);
-
-  if (options.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const response = await fetch(addApiKey(url), {
-    ...options,
-    headers
-  });
-
-  if (response.status === 401) {
-    clearAccessToken();
-  }
-
-  const text = await response.text();
-  const data = text ? parseJson(text) : {};
-
-  if (!response.ok) {
-    throw new Error(getGoogleErrorMessage(data) || `Google API request failed (${response.status}).`);
-  }
-
-  return data;
-}
-
-function addApiKey(url) {
-  if (!API_KEY.trim()) {
-    return url;
-  }
-
-  const apiUrl = new URL(url);
-  apiUrl.searchParams.set("key", API_KEY.trim());
-  return apiUrl.toString();
-}
-
-function a1Range(range) {
-  const escapedSheetName = SHEET_NAME.replace(/'/g, "''");
-  return `'${escapedSheetName}'!${range}`;
-}
-
-function escapeDriveQuery(value) {
-  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-}
-
-function reportSyncError(error) {
-  const message = error?.message || "Sync failed.";
-  setSyncStatus(state.pendingRows.length ? `Queued ${state.pendingRows.length}` : "Sync failed", "error");
-  setEntryStatus(message, "error");
 }
 
 function setSyncStatus(message, tone) {
@@ -835,31 +402,6 @@ function setEntryStatus(message, tone) {
   els.entryStatus.classList.toggle("is-error", tone === "error");
 }
 
-function readJson(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function parseJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return {};
-  }
-}
-
-function getGoogleErrorMessage(data) {
-  return data?.error?.message || data?.error_description || data?.error || "";
-}
-
 function toNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
@@ -870,8 +412,7 @@ function clamp(value, min, max) {
 }
 
 function formatWeight(weight) {
-  const number = toNumber(weight, DEFAULT_WEIGHT);
-  return Number.isInteger(number) ? String(number) : number.toFixed(1);
+  return formatNumber(toNumber(weight, DEFAULT_WEIGHT));
 }
 
 function formatNumber(value) {
@@ -879,24 +420,14 @@ function formatNumber(value) {
   return Number.isInteger(number) ? String(number) : number.toFixed(1);
 }
 
-function formatTime(timestamp) {
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
+function formatTime(date) {
   return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit"
   }).format(date);
 }
 
-function formatDateTime(timestamp) {
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
+function formatDateTime(date) {
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",

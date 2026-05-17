@@ -1,12 +1,4 @@
-const CLIENT_ID = "239257173932-1s7jhkik7k1iadtp1ak96s7l9eop9ubv.apps.googleusercontent.com";
-const API_KEY = "AIzaSyAoWx24hAws1Fm-wNP2p_HjgHXtOqfl8ow";
-
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-const SPREADSHEET_NAME = "Workout Tracker Data";
-const SHEET_NAME = "Workout Log";
-const SHEET_HEADERS = ["Timestamp", "Exercise Name", "Reps", "Weight"];
-
-const DEFAULT_EXERCISES = [
+export const DEFAULT_EXERCISES = [
   { name: "Benchpress", icon: "fitness_center", shortName: "BP", color: "#4dc6d8", tint: "#102e34" },
   { name: "Deadlift", icon: "exercise", shortName: "DL", color: "#d9975f", tint: "#382416" },
   { name: "Squats", icon: "accessibility_new", shortName: "SQ", color: "#47d296", tint: "#143326" },
@@ -18,44 +10,50 @@ const DEFAULT_EXERCISES = [
   { name: "Biking", icon: "directions_bike", shortName: "BIKE", type: "duration", color: "#7bdc7b", tint: "#1b351e" }
 ];
 
-const STORAGE_PREFIX = "workoutTracker.v1.";
-const STORAGE_KEYS = {
-  spreadsheetId: `${STORAGE_PREFIX}spreadsheetId`,
-  exerciseCache: `${STORAGE_PREFIX}exerciseCache`,
-  workoutRows: `${STORAGE_PREFIX}workoutRows`,
-  pendingRows: `${STORAGE_PREFIX}pendingRows`,
-  hasGoogleGrant: `${STORAGE_PREFIX}hasGoogleGrant`,
-  accessToken: `${STORAGE_PREFIX}accessToken`,
-  tokenExpiresAt: `${STORAGE_PREFIX}tokenExpiresAt`
-};
-
-const SHEETS_API = "https://sheets.googleapis.com/v4";
-const DRIVE_API = "https://www.googleapis.com/drive/v3";
-
-function getStoredAccessToken() {
-  return sessionStorage.getItem(STORAGE_KEYS.accessToken)
-    || localStorage.getItem(STORAGE_KEYS.accessToken)
-    || "";
+export function getExerciseByName(exerciseName) {
+  return DEFAULT_EXERCISES.find((exercise) => exercise.name.toLowerCase() === String(exerciseName).toLowerCase());
 }
 
-function getStoredTokenExpiresAt() {
-  const value = sessionStorage.getItem(STORAGE_KEYS.tokenExpiresAt)
-    || localStorage.getItem(STORAGE_KEYS.tokenExpiresAt)
-    || "0";
-  const expiresAt = Number(value);
-  return Number.isFinite(expiresAt) ? expiresAt : 0;
+export function isDurationExercise(exercise) {
+  return exercise?.type === "duration";
 }
 
-function storeAccessTokenForTabs(accessToken, expiresAt) {
-  sessionStorage.setItem(STORAGE_KEYS.accessToken, accessToken);
-  sessionStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(expiresAt));
-  localStorage.setItem(STORAGE_KEYS.accessToken, accessToken);
-  localStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(expiresAt));
+export function isDurationExerciseName(exerciseName) {
+  return isDurationExercise(getExerciseByName(exerciseName));
 }
 
-function clearAccessTokenForTabs() {
-  sessionStorage.removeItem(STORAGE_KEYS.accessToken);
-  sessionStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
-  localStorage.removeItem(STORAGE_KEYS.accessToken);
-  localStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
+export function abbreviateExercise(exerciseName) {
+  const match = getExerciseByName(exerciseName);
+  if (match?.shortName) {
+    return match.shortName;
+  }
+
+  return String(exerciseName)
+    .split(/\s+/)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 4)
+    .toUpperCase();
+}
+
+export function getExerciseStyle(exerciseName) {
+  const match = getExerciseByName(exerciseName);
+  if (match?.color && match?.tint) {
+    return {
+      color: match.color,
+      tint: match.tint
+    };
+  }
+
+  const hue = hashString(String(exerciseName)) % 360;
+  return {
+    color: `hsl(${hue} 58% 62%)`,
+    tint: `hsl(${hue} 45% 16%)`
+  };
+}
+
+function hashString(value) {
+  return Array.from(value).reduce((hash, character) => (
+    ((hash << 5) - hash + character.charCodeAt(0)) >>> 0
+  ), 0);
 }
