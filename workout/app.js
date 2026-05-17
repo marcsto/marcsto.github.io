@@ -1,6 +1,10 @@
 const DEFAULT_REPS = 8;
 const MIN_REPS = 1;
 const MAX_REPS = 30;
+const DEFAULT_DURATION_MINUTES = 30;
+const MIN_DURATION_MINUTES = 5;
+const MAX_DURATION_MINUTES = 180;
+const DURATION_STEP_MINUTES = 5;
 const DEFAULT_WEIGHT = 0;
 const MIN_WEIGHT = 0;
 const DEFAULT_MAX_WEIGHT = 500;
@@ -51,10 +55,13 @@ function cacheElements() {
   els.exerciseTitle = document.getElementById("exerciseTitle");
   els.lastLogged = document.getElementById("lastLogged");
   els.repsSlider = document.getElementById("repsSlider");
+  els.repsLabel = document.getElementById("repsLabel");
   els.repsValue = document.getElementById("repsValue");
   els.repsDown = document.getElementById("repsDown");
   els.repsUp = document.getElementById("repsUp");
+  els.weightControl = document.getElementById("weightControl");
   els.weightSlider = document.getElementById("weightSlider");
+  els.weightLabel = document.getElementById("weightLabel");
   els.weightValue = document.getElementById("weightValue");
   els.weightDown = document.getElementById("weightDown");
   els.weightUp = document.getElementById("weightUp");
@@ -67,8 +74,8 @@ function bindEvents() {
   els.backButton.addEventListener("click", showHome);
   els.repsSlider.addEventListener("input", () => setReps(els.repsSlider.value));
   els.weightSlider.addEventListener("input", () => setWeight(els.weightSlider.value));
-  els.repsDown.addEventListener("click", () => setReps(getReps() - 1));
-  els.repsUp.addEventListener("click", () => setReps(getReps() + 1));
+  els.repsDown.addEventListener("click", () => setReps(getReps() - getPrimaryStep()));
+  els.repsUp.addEventListener("click", () => setReps(getReps() + getPrimaryStep()));
   els.weightDown.addEventListener("click", () => setWeight(getWeight() - WEIGHT_STEP));
   els.weightUp.addEventListener("click", () => setWeight(getWeight() + WEIGHT_STEP));
   els.saveButton.addEventListener("click", handleSave);
@@ -128,6 +135,8 @@ function renderHome() {
     const tile = document.createElement("button");
     tile.type = "button";
     tile.className = "exercise-tile";
+    tile.style.setProperty("--exercise-color", exercise.color || "#157a55");
+    tile.style.setProperty("--exercise-bg", exercise.tint || "#eaf3ed");
     tile.setAttribute("aria-label", `Open ${exercise.name}`);
     tile.addEventListener("click", () => openExercise(exercise));
 
@@ -168,10 +177,26 @@ function getExerciseTime(exerciseName) {
   return timestamp ? Date.parse(timestamp) || 0 : 0;
 }
 
+function getExerciseByName(exerciseName) {
+  return DEFAULT_EXERCISES.find((exercise) => exercise.name.toLowerCase() === String(exerciseName).toLowerCase());
+}
+
+function isDurationExercise(exercise) {
+  return exercise?.type === "duration";
+}
+
+function isDurationExerciseName(exerciseName) {
+  return isDurationExercise(getExerciseByName(exerciseName));
+}
+
 function getTileMeta(exerciseName) {
   const cached = state.exerciseCache[exerciseName];
   if (!cached) {
     return "";
+  }
+
+  if (isDurationExerciseName(exerciseName)) {
+    return `${formatNumber(cached.reps)} min`;
   }
 
   return `${formatWeight(cached.weight)} lb x ${cached.reps}`;
@@ -180,13 +205,16 @@ function getTileMeta(exerciseName) {
 function openExercise(exercise) {
   state.activeExercise = exercise;
   const cached = state.exerciseCache[exercise.name] || {};
-  const reps = toNumber(cached.reps, DEFAULT_REPS);
+  const reps = toNumber(cached.reps, getDefaultPrimaryValue(exercise));
   const weight = toNumber(cached.weight, DEFAULT_WEIGHT);
 
   els.exerciseTitle.textContent = exercise.name;
-  ensureWeightRange(weight);
+  configureEntryControls(exercise);
   setReps(reps);
-  setWeight(weight);
+  if (!isDurationExercise(exercise)) {
+    ensureWeightRange(weight);
+    setWeight(weight);
+  }
   updateLastLogged();
   setEntryStatus("", "");
 
@@ -201,10 +229,56 @@ function showHome() {
   renderHome();
 }
 
+function configureEntryControls(exercise) {
+  const isDuration = isDurationExercise(exercise);
+  els.repsLabel.textContent = isDuration ? "Minutes" : "Reps";
+  els.repsDown.textContent = isDuration ? `-${DURATION_STEP_MINUTES}` : "-1";
+  els.repsUp.textContent = isDuration ? `+${DURATION_STEP_MINUTES}` : "+1";
+  els.repsSlider.min = String(isDuration ? MIN_DURATION_MINUTES : MIN_REPS);
+  els.repsSlider.max = String(isDuration ? MAX_DURATION_MINUTES : MAX_REPS);
+  els.repsSlider.step = String(isDuration ? DURATION_STEP_MINUTES : 1);
+  els.weightControl.hidden = isDuration;
+  els.weightSlider.disabled = isDuration;
+  els.weightDown.disabled = isDuration;
+  els.weightUp.disabled = isDuration;
+  els.entryStatus.parentElement.classList.toggle("is-duration-entry", isDuration);
+}
+
+function getPrimaryStep() {
+  return isDurationExercise(state.activeExercise) ? DURATION_STEP_MINUTES : 1;
+}
+
+function getPrimaryBounds() {
+  if (isDurationExercise(state.activeExercise)) {
+    return {
+      min: MIN_DURATION_MINUTES,
+      max: MAX_DURATION_MINUTES,
+      step: DURATION_STEP_MINUTES,
+      defaultValue: DEFAULT_DURATION_MINUTES
+    };
+  }
+
+  return {
+    min: MIN_REPS,
+    max: MAX_REPS,
+    step: 1,
+    defaultValue: DEFAULT_REPS
+  };
+}
+
+function getDefaultPrimaryValue(exercise) {
+  return isDurationExercise(exercise) ? DEFAULT_DURATION_MINUTES : DEFAULT_REPS;
+}
+
 function setReps(value) {
-  const reps = clamp(Math.round(toNumber(value, DEFAULT_REPS)), MIN_REPS, MAX_REPS);
+  const bounds = getPrimaryBounds();
+  const rawValue = toNumber(value, bounds.defaultValue);
+  const rounded = isDurationExercise(state.activeExercise)
+    ? snapToStep(rawValue, bounds.step)
+    : Math.round(rawValue);
+  const reps = clamp(rounded, bounds.min, bounds.max);
   els.repsSlider.value = String(reps);
-  els.repsValue.textContent = String(reps);
+  els.repsValue.textContent = isDurationExercise(state.activeExercise) ? `${formatNumber(reps)} min` : String(reps);
 }
 
 function getReps() {
@@ -227,6 +301,10 @@ function snapWeight(value) {
   return clamp(Number(snapped.toFixed(1)), MIN_WEIGHT, getWeightMax());
 }
 
+function snapToStep(value, step) {
+  return Math.round(value / step) * step;
+}
+
 function ensureWeightRange(weight) {
   if (weight <= getWeightMax()) {
     return;
@@ -245,11 +323,12 @@ function handleSave() {
     return;
   }
 
+  const isDuration = isDurationExercise(state.activeExercise);
   const row = {
     timestamp: new Date().toISOString(),
     exerciseName: state.activeExercise.name,
     reps: getReps(),
-    weight: getWeight()
+    weight: isDuration ? "" : getWeight()
   };
 
   updateExerciseCache(row);
@@ -271,6 +350,11 @@ function updateExerciseCache(row) {
 function updateLastLogged() {
   const exerciseName = state.activeExercise?.name;
   const cached = exerciseName ? state.exerciseCache[exerciseName] : null;
+  if (cached && isDurationExerciseName(exerciseName)) {
+    els.lastLogged.textContent = `Last ${formatNumber(cached.reps)} min, ${formatDateTime(cached.timestamp)}`;
+    return;
+  }
+
   els.lastLogged.textContent = cached
     ? `Last ${formatWeight(cached.weight)} lb x ${cached.reps}, ${formatDateTime(cached.timestamp)}`
     : "";
@@ -641,8 +725,8 @@ async function syncCacheFromSheet() {
 
       if (incomingTime > currentTime) {
         state.exerciseCache[exerciseName] = {
-          reps: toNumber(reps, DEFAULT_REPS),
-          weight: toNumber(weight, DEFAULT_WEIGHT),
+          reps: toNumber(reps, isDurationExerciseName(exerciseName) ? DEFAULT_DURATION_MINUTES : DEFAULT_REPS),
+          weight: isDurationExerciseName(exerciseName) ? "" : toNumber(weight, DEFAULT_WEIGHT),
           timestamp
         };
         changed = true;
@@ -763,6 +847,11 @@ function clamp(value, min, max) {
 
 function formatWeight(weight) {
   const number = toNumber(weight, DEFAULT_WEIGHT);
+  return Number.isInteger(number) ? String(number) : number.toFixed(1);
+}
+
+function formatNumber(value) {
+  const number = toNumber(value, 0);
   return Number.isInteger(number) ? String(number) : number.toFixed(1);
 }
 

@@ -169,6 +169,10 @@ h1 {
   display: none;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .exercise-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -191,6 +195,7 @@ h1 {
   min-width: 0;
   aspect-ratio: 1;
   border: 1px solid var(--line);
+  border-top: 4px solid var(--exercise-color, var(--green));
   border-radius: 8px;
   background: var(--surface);
   box-shadow: 0 8px 18px rgba(16, 24, 32, 0.07);
@@ -219,8 +224,8 @@ h1 {
   width: 52px;
   height: 52px;
   border-radius: 8px;
-  background: #eaf3ed;
-  color: var(--green-dark);
+  background: var(--exercise-bg, #eaf3ed);
+  color: var(--exercise-color, var(--green-dark));
 }
 
 .tile-icon .material-symbols-rounded {
@@ -288,6 +293,10 @@ h1 {
   min-height: 0;
   gap: 10px;
   grid-template-rows: minmax(92px, 1fr) minmax(92px, 1fr) 66px 28px;
+}
+
+.entry-controls.is-duration-entry {
+  grid-template-rows: minmax(118px, 1fr) 66px 28px;
 }
 
 .metric-control {
@@ -542,15 +551,21 @@ input[type="range"]::-moz-range-thumb {
 .workout-line {
   min-width: 0;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  border-left: 3px solid var(--exercise-color, var(--green));
+  border-radius: 5px;
+  background: var(--exercise-bg, #e8f5ef);
   color: var(--ink);
   font-size: 0.64rem;
   font-weight: 900;
-  line-height: 1.08;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.12;
+  padding: 2px 3px;
+  white-space: normal;
 }
 
 .more-line {
+  border-left-color: transparent;
+  background: transparent;
   color: var(--muted);
   font-weight: 800;
 }
@@ -621,6 +636,10 @@ input[type="range"]::-moz-range-thumb {
   .entry-controls {
     gap: 8px;
     grid-template-rows: minmax(82px, 1fr) minmax(82px, 1fr) 58px 24px;
+  }
+
+  .entry-controls.is-duration-entry {
+    grid-template-rows: minmax(96px, 1fr) 58px 24px;
   }
 
   .metric-control {

@@ -206,6 +206,8 @@ function renderCalendar(days, workoutsByDate) {
     summaries.slice(0, VISIBLE_WORKOUT_LINES).forEach((summary) => {
       const line = document.createElement("div");
       line.className = "workout-line";
+      line.style.setProperty("--exercise-color", summary.color);
+      line.style.setProperty("--exercise-bg", summary.tint);
       line.textContent = summary.shortText;
       line.title = summary.fullText;
       lines.append(line);
@@ -265,7 +267,7 @@ function parseWorkoutRow(values) {
     date,
     exerciseName,
     reps: toNumber(reps, 0),
-    weight: toNumber(weight, 0)
+    weight: isDurationExerciseName(exerciseName) ? "" : toNumber(weight, 0)
   };
 }
 
@@ -284,14 +286,18 @@ function summarizeDay(rows) {
 }
 
 function summarizeExercise(exerciseName, sets) {
+  const exerciseStyle = getExerciseStyle(exerciseName);
   const shortName = abbreviateExercise(exerciseName);
+  const isDuration = isDurationExerciseName(exerciseName);
   const reps = sets.map((set) => set.reps);
   const weights = sets.map((set) => set.weight);
   const uniqueReps = uniqueValues(reps);
   const uniqueWeights = uniqueValues(weights);
   let detail;
 
-  if (uniqueReps.length === 1 && uniqueWeights.length === 1) {
+  if (isDuration) {
+    detail = summarizeDurations(reps);
+  } else if (uniqueReps.length === 1 && uniqueWeights.length === 1) {
     detail = `${sets.length}x${formatNumber(uniqueReps[0])}@${formatNumber(uniqueWeights[0])}`;
   } else if (uniqueWeights.length === 1) {
     detail = `${sets.length}s ${compactSequence(reps, formatNumber)}@${formatNumber(uniqueWeights[0])}`;
@@ -303,13 +309,31 @@ function summarizeExercise(exerciseName, sets) {
 
   const shortText = `${shortName} ${detail}`;
   return {
-    shortText: shortText.length > 29 ? `${shortName} ${sets.length} sets` : shortText,
-    fullText: `${exerciseName}: ${sets.map((set) => `${formatNumber(set.reps)} reps at ${formatNumber(set.weight)} lb`).join(", ")}`
+    shortText,
+    fullText: isDuration
+      ? `${exerciseName}: ${sets.map((set) => `${formatNumber(set.reps)} minutes`).join(", ")}`
+      : `${exerciseName}: ${sets.map((set) => `${formatNumber(set.reps)} reps at ${formatNumber(set.weight)} lb`).join(", ")}`,
+    color: exerciseStyle.color,
+    tint: exerciseStyle.tint
   };
 }
 
+function summarizeDurations(minutes) {
+  const uniqueMinutes = uniqueValues(minutes);
+
+  if (minutes.length === 1) {
+    return `${formatNumber(minutes[0])}m`;
+  }
+
+  if (uniqueMinutes.length === 1) {
+    return `${minutes.length}x${formatNumber(uniqueMinutes[0])}m`;
+  }
+
+  return `${minutes.length}s ${compactSequence(minutes, (value) => `${formatNumber(value)}m`)}`;
+}
+
 function abbreviateExercise(exerciseName) {
-  const match = DEFAULT_EXERCISES.find((exercise) => exercise.name.toLowerCase() === exerciseName.toLowerCase());
+  const match = getExerciseByName(exerciseName);
   if (match?.shortName) {
     return match.shortName;
   }
@@ -320,6 +344,36 @@ function abbreviateExercise(exerciseName) {
     .join("")
     .slice(0, 4)
     .toUpperCase();
+}
+
+function getExerciseStyle(exerciseName) {
+  const match = getExerciseByName(exerciseName);
+  if (match?.color && match?.tint) {
+    return {
+      color: match.color,
+      tint: match.tint
+    };
+  }
+
+  const hue = hashString(exerciseName) % 360;
+  return {
+    color: `hsl(${hue} 58% 36%)`,
+    tint: `hsl(${hue} 62% 94%)`
+  };
+}
+
+function getExerciseByName(exerciseName) {
+  return DEFAULT_EXERCISES.find((exercise) => exercise.name.toLowerCase() === String(exerciseName).toLowerCase());
+}
+
+function isDurationExerciseName(exerciseName) {
+  return getExerciseByName(exerciseName)?.type === "duration";
+}
+
+function hashString(value) {
+  return Array.from(value).reduce((hash, character) => (
+    ((hash << 5) - hash + character.charCodeAt(0)) >>> 0
+  ), 0);
 }
 
 function compactSequence(values, formatter) {

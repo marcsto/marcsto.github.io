@@ -56,7 +56,7 @@
               <button id="repsDown" class="step-button" type="button">-1</button>
               <label class="slider-block" for="repsSlider">
                 <span class="metric-label">
-                  <span>Reps</span>
+                  <span id="repsLabel">Reps</span>
                   <output id="repsValue" for="repsSlider">8</output>
                 </span>
                 <input id="repsSlider" type="range" min="1" max="30" step="1" value="8">
@@ -64,11 +64,11 @@
               <button id="repsUp" class="step-button" type="button">+1</button>
             </div>
 
-            <div class="metric-control">
+            <div id="weightControl" class="metric-control">
               <button id="weightDown" class="step-button wide-step" type="button">-2.5 lbs</button>
               <label class="slider-block" for="weightSlider">
                 <span class="metric-label">
-                  <span>Weight</span>
+                  <span id="weightLabel">Weight</span>
                   <output id="weightValue" for="weightSlider">0 lb</output>
                 </span>
                 <input id="weightSlider" type="range" min="0" max="500" step="2.5" value="0">

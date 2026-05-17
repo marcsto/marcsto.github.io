@@ -7,12 +7,15 @@ const SHEET_NAME = "Workout Log";
 const SHEET_HEADERS = ["Timestamp", "Exercise Name", "Reps", "Weight"];
 
 const DEFAULT_EXERCISES = [
-  { name: "Benchpress", icon: "fitness_center", shortName: "BP" },
-  { name: "Deadlift", icon: "exercise", shortName: "DL" },
-  { name: "Squats", icon: "accessibility_new", shortName: "SQ" },
-  { name: "Lunges", icon: "directions_run", shortName: "LG" },
-  { name: "Overhead Press", icon: "exercise", shortName: "OHP" },
-  { name: "Rows", icon: "rowing", shortName: "ROW" }
+  { name: "Benchpress", icon: "fitness_center", shortName: "BP", color: "#1f7a8c", tint: "#e8f5f7" },
+  { name: "Deadlift", icon: "exercise", shortName: "DL", color: "#8a4f2a", tint: "#f7eee6" },
+  { name: "Squats", icon: "accessibility_new", shortName: "SQ", color: "#157a55", tint: "#e8f5ef" },
+  { name: "Lunges", icon: "directions_run", shortName: "LG", color: "#b7433f", tint: "#fbecec" },
+  { name: "Overhead Press", icon: "exercise", shortName: "OHP", color: "#6b4fa3", tint: "#f0edf8" },
+  { name: "Rows", icon: "rowing", shortName: "ROW", color: "#245a8d", tint: "#e9f0f7" },
+  { name: "Abs", icon: "self_improvement", shortName: "ABS", color: "#c78322", tint: "#fff4df" },
+  { name: "VR", icon: "sports_esports", shortName: "VR", type: "duration", color: "#8b3f9f", tint: "#f5eafa" },
+  { name: "Biking", icon: "directions_bike", shortName: "BIKE", type: "duration", color: "#2f7d32", tint: "#eaf6ea" }
 ];
 
 const STORAGE_PREFIX = "workoutTracker.v1.";
