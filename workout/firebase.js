@@ -11,6 +11,8 @@ import {
   Timestamp,
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   enableIndexedDbPersistence,
   enableMultiTabIndexedDbPersistence,
   getDocs,
@@ -84,6 +86,11 @@ export async function addWorkoutSet(userId, workout) {
     weight: Number(workout.weight) || 0,
     timestamp: Timestamp.fromDate(workout.timestamp || new Date())
   });
+}
+
+export async function deleteWorkoutSet(userId, workoutId) {
+  await firestoreReady;
+  return deleteDoc(doc(db, "users", userId, "workouts", workoutId));
 }
 
 export async function subscribeWorkouts(userId, onNext, onError) {

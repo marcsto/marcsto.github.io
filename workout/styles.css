@@ -221,7 +221,8 @@ h1 {
 .icon-text-button:focus-visible,
 .back-button:focus-visible,
 .step-button:focus-visible,
-.save-button:focus-visible {
+.save-button:focus-visible,
+.delete-set-button:focus-visible {
   outline: 3px solid rgba(36, 90, 141, 0.35);
   outline-offset: 2px;
 }
@@ -301,12 +302,12 @@ h1 {
   min-height: 0;
   gap: 10px;
   align-content: start;
-  grid-template-rows: 64px minmax(84px, auto) minmax(84px, auto) minmax(24px, auto);
+  grid-template-rows: 64px minmax(84px, auto) minmax(84px, auto) minmax(24px, auto) minmax(0, 1fr);
   overflow: hidden;
 }
 
 .entry-controls.is-duration-entry {
-  grid-template-rows: 64px minmax(92px, auto) minmax(24px, auto);
+  grid-template-rows: 64px minmax(92px, auto) minmax(24px, auto) minmax(0, 1fr);
 }
 
 .metric-control {
@@ -439,6 +440,110 @@ input[type="range"]::-moz-range-thumb {
 .entry-status.is-ok,
 .sync-status.is-ok {
   color: var(--green-dark);
+}
+
+.recent-sets {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.recent-sets-header {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 10px;
+}
+
+.recent-sets-header h3 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.recent-set-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 5px;
+  overflow: auto;
+  padding: 6px;
+  scrollbar-width: none;
+}
+
+.recent-set-list::-webkit-scrollbar {
+  display: none;
+}
+
+.recent-set-row {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 44px;
+}
+
+.recent-set-details {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 8px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  padding: 9px 10px;
+}
+
+.recent-set-summary {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: 0.98rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.recent-set-time {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-empty {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 10px 6px;
+  text-align: center;
+}
+
+.delete-set-button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid rgba(255, 123, 114, 0.26);
+  border-radius: 8px;
+  background: rgba(255, 123, 114, 0.1);
+  color: var(--red);
+}
+
+.delete-set-button:active {
+  transform: translateY(1px);
 }
 
 .calendar-stage {
@@ -712,11 +817,11 @@ input[type="range"]::-moz-range-thumb {
 
   .entry-controls {
     gap: 8px;
-    grid-template-rows: 56px minmax(74px, auto) minmax(74px, auto) minmax(20px, auto);
+    grid-template-rows: 56px minmax(74px, auto) minmax(74px, auto) minmax(20px, auto) minmax(0, 1fr);
   }
 
   .entry-controls.is-duration-entry {
-    grid-template-rows: 56px minmax(82px, auto) minmax(20px, auto);
+    grid-template-rows: 56px minmax(82px, auto) minmax(20px, auto) minmax(0, 1fr);
   }
 
   .metric-control {
@@ -738,5 +843,24 @@ input[type="range"]::-moz-range-thumb {
 
   .save-button {
     min-height: 56px;
+  }
+
+  .recent-sets-header {
+    min-height: 26px;
+  }
+
+  .recent-set-list {
+    gap: 4px;
+    padding: 5px;
+  }
+
+  .recent-set-row {
+    min-height: 40px;
+    grid-template-columns: minmax(0, 1fr) 40px;
+  }
+
+  .delete-set-button {
+    min-width: 40px;
+    min-height: 40px;
   }
 }

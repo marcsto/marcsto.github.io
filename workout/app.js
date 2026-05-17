@@ -1,6 +1,7 @@
 import { DEFAULT_EXERCISES, isDurationExercise, isDurationExerciseName } from "./config.js";
 import {
   addWorkoutSet,
+  deleteWorkoutSet,
   getFirestorePersistenceStatus,
   signInWithGoogle,
   subscribeWorkouts,
@@ -60,6 +61,7 @@ function cacheElements() {
   els.weightUp = document.getElementById("weightUp");
   els.saveButton = document.getElementById("saveButton");
   els.entryStatus = document.getElementById("entryStatus");
+  els.recentSetList = document.getElementById("recentSetList");
 }
 
 function bindEvents() {
@@ -98,6 +100,7 @@ async function handleAuthState(user) {
       state.exerciseCache = buildExerciseCache(workouts);
       renderHome();
       updateLastLogged();
+      renderRecentSets();
       setSyncStatus(getReadyStatus(), "ok");
     }, (error) => {
       setSyncStatus("Sync error", "error");
@@ -232,6 +235,7 @@ function openExercise(exercise) {
   }
 
   updateLastLogged();
+  renderRecentSets();
   setEntryStatus("", "");
   els.homeView.hidden = true;
   els.entryView.hidden = false;
@@ -241,6 +245,7 @@ function showHome() {
   els.entryView.hidden = true;
   els.homeView.hidden = false;
   state.activeExercise = null;
+  renderRecentSets();
   renderHome();
 }
 
@@ -356,6 +361,7 @@ async function handleSave() {
   updateExerciseCache(workout);
   renderHome();
   updateLastLogged();
+  renderRecentSets();
   setEntryStatus(`Saved ${formatTime(workout.timestamp)}`, "ok");
   setSyncStatus("Saving", "");
 
@@ -366,6 +372,95 @@ async function handleSave() {
     setSyncStatus("Queued", "error");
     setEntryStatus(error.message || "Saved locally. Will sync when possible.", "error");
   }
+}
+
+async function handleDeleteSet(workout) {
+  if (!state.user || !workout?.id) {
+    return;
+  }
+
+  state.workouts = state.workouts.filter((candidate) => candidate.id !== workout.id);
+  state.exerciseCache = buildExerciseCache(state.workouts);
+  renderHome();
+  updateLastLogged();
+  renderRecentSets();
+  setEntryStatus(`Deleted ${formatSetSummary(workout)}`, "ok");
+  setSyncStatus("Deleting", "");
+
+  try {
+    await deleteWorkoutSet(state.user.uid, workout.id);
+    setSyncStatus(getReadyStatus(), "ok");
+  } catch (error) {
+    if (!state.workouts.some((candidate) => candidate.id === workout.id)) {
+      state.workouts = [workout, ...state.workouts];
+      state.exerciseCache = buildExerciseCache(state.workouts);
+      renderHome();
+      updateLastLogged();
+      renderRecentSets();
+    }
+
+    setSyncStatus("Delete failed", "error");
+    setEntryStatus(error.message || "Could not delete set.", "error");
+  }
+}
+
+function renderRecentSets() {
+  if (!els.recentSetList) {
+    return;
+  }
+
+  els.recentSetList.replaceChildren();
+
+  if (!state.activeExercise) {
+    return;
+  }
+
+  const recentSets = state.workouts
+    .filter((workout) => workout.exerciseName === state.activeExercise.name)
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, 12);
+
+  if (!recentSets.length) {
+    const empty = document.createElement("p");
+    empty.className = "recent-empty";
+    empty.textContent = "No sets yet.";
+    els.recentSetList.append(empty);
+    return;
+  }
+
+  recentSets.forEach((workout) => {
+    const row = document.createElement("div");
+    row.className = "recent-set-row";
+
+    const details = document.createElement("div");
+    details.className = "recent-set-details";
+
+    const summary = document.createElement("span");
+    summary.className = "recent-set-summary";
+    summary.textContent = formatSetSummary(workout);
+
+    const timestamp = document.createElement("span");
+    timestamp.className = "recent-set-time";
+    timestamp.textContent = formatRelativeDateTime(workout.timestamp);
+
+    details.append(summary, timestamp);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete-set-button";
+    deleteButton.setAttribute("aria-label", `Delete ${formatSetSummary(workout)} from ${formatRelativeDateTime(workout.timestamp)}`);
+    deleteButton.title = "Delete set";
+    deleteButton.addEventListener("click", () => handleDeleteSet(workout));
+
+    const deleteIcon = document.createElement("span");
+    deleteIcon.className = "material-symbols-rounded";
+    deleteIcon.setAttribute("aria-hidden", "true");
+    deleteIcon.textContent = "delete";
+    deleteButton.append(deleteIcon);
+
+    row.append(details, deleteButton);
+    els.recentSetList.append(row);
+  });
 }
 
 function updateExerciseCache(workout) {
@@ -434,4 +529,23 @@ function formatDateTime(date) {
     hour: "numeric",
     minute: "2-digit"
   }).format(date);
+}
+
+function formatRelativeDateTime(date) {
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  if (isToday) {
+    return `Today ${formatTime(date)}`;
+  }
+
+  return formatDateTime(date);
+}
+
+function formatSetSummary(workout) {
+  if (isDurationExerciseName(workout.exerciseName)) {
+    return `${formatNumber(workout.reps)} min`;
+  }
+
+  return `${formatNumber(workout.reps)}@${formatWeight(workout.weight)}`;
 }
