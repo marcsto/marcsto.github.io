@@ -19,13 +19,15 @@ const DEFAULT_WEIGHT = 0;
 const MIN_WEIGHT = 0;
 const DEFAULT_MAX_WEIGHT = 500;
 const WEIGHT_STEP = 2.5;
+const SAVE_COOLDOWN_MS = 1000;
 
 const state = {
   user: null,
   activeExercise: null,
   workouts: [],
   exerciseCache: {},
-  unsubscribeWorkouts: null
+  unsubscribeWorkouts: null,
+  saveCooldownTimer: null
 };
 
 const els = {};
@@ -339,9 +341,15 @@ function getWeightMax() {
 }
 
 async function handleSave() {
+  if (els.saveButton.disabled) {
+    return;
+  }
+
   if (!state.activeExercise) {
     return;
   }
+
+  startSaveCooldown();
 
   if (!state.user) {
     await handleSignIn();
@@ -372,6 +380,15 @@ async function handleSave() {
     setSyncStatus("Queued", "error");
     setEntryStatus(error.message || "Saved locally. Will sync when possible.", "error");
   }
+}
+
+function startSaveCooldown() {
+  window.clearTimeout(state.saveCooldownTimer);
+  els.saveButton.disabled = true;
+  state.saveCooldownTimer = window.setTimeout(() => {
+    els.saveButton.disabled = false;
+    state.saveCooldownTimer = null;
+  }, SAVE_COOLDOWN_MS);
 }
 
 async function handleDeleteSet(workout) {

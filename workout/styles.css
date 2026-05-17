@@ -546,6 +546,98 @@ input[type="range"]::-moz-range-thumb {
   transform: translateY(1px);
 }
 
+.is-fullscreen .app-shell {
+  padding-top: max(6px, env(safe-area-inset-top));
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+}
+
+.is-fullscreen .topbar {
+  min-height: 42px;
+}
+
+.is-fullscreen .entry-view {
+  gap: 6px;
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+}
+
+.is-fullscreen .entry-header {
+  min-height: 40px;
+}
+
+.is-fullscreen .entry-controls {
+  gap: 6px;
+  grid-template-rows: 48px minmax(64px, auto) minmax(64px, auto) minmax(18px, auto) minmax(0, 1fr);
+}
+
+.is-fullscreen .entry-controls.is-duration-entry {
+  grid-template-rows: 48px minmax(68px, auto) minmax(18px, auto) minmax(0, 1fr);
+}
+
+.is-fullscreen .metric-control {
+  min-height: 64px;
+  gap: 6px;
+  grid-template-columns: 62px minmax(0, 1fr) 62px;
+}
+
+.is-fullscreen .slider-block {
+  padding: 6px 10px 5px;
+}
+
+.is-fullscreen .metric-label {
+  font-size: 0.78rem;
+}
+
+.is-fullscreen .metric-label output {
+  font-size: 1.14rem;
+}
+
+.is-fullscreen input[type="range"] {
+  height: 28px;
+  margin-top: 2px;
+}
+
+.is-fullscreen .step-button {
+  min-height: 54px;
+  font-size: 0.95rem;
+}
+
+.is-fullscreen .wide-step {
+  font-size: 0.7rem;
+}
+
+.is-fullscreen .save-button {
+  min-height: 48px;
+  font-size: 1.04rem;
+}
+
+.is-fullscreen .entry-status {
+  min-height: 18px;
+  font-size: 0.76rem;
+}
+
+.is-fullscreen .recent-sets-header {
+  min-height: 24px;
+}
+
+.is-fullscreen .recent-set-list {
+  gap: 4px;
+  padding: 4px;
+}
+
+.is-fullscreen .recent-set-row {
+  min-height: 38px;
+  grid-template-columns: minmax(0, 1fr) 38px;
+}
+
+.is-fullscreen .recent-set-details {
+  padding: 7px 9px;
+}
+
+.is-fullscreen .delete-set-button {
+  min-width: 38px;
+  min-height: 38px;
+}
+
 .calendar-stage {
   display: flex;
   min-height: 0;

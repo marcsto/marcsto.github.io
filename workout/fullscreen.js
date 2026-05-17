@@ -90,6 +90,7 @@ function updateFullscreenButton() {
   const isFullscreen = Boolean(document.fullscreenElement);
   const isAwake = Boolean(fullscreenState.wakeLock);
 
+  document.documentElement.classList.toggle("is-fullscreen", isFullscreen);
   fullscreenState.button?.classList.toggle("is-active", isFullscreen);
 
   if (fullscreenState.icon) {
