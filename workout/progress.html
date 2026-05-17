@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js" defer></script>
     <script type="module" src="progress.js"></script>
+    <script type="module" src="fullscreen.js"></script>
   </head>
   <body>
     <div class="app-shell progress-shell">
@@ -28,6 +29,10 @@
             <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
             <span>History</span>
           </a>
+          <button id="fullscreenButton" class="icon-text-button compact-link fullscreen-button" type="button">
+            <span class="material-symbols-rounded fullscreen-icon" aria-hidden="true">fullscreen</span>
+            <span class="fullscreen-label">Full</span>
+          </button>
           <span id="progressStatus" class="sync-status" aria-live="polite">Loading</span>
           <button id="signInButton" class="icon-text-button" type="button">
             <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>

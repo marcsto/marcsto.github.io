@@ -158,6 +158,11 @@ h1 {
   white-space: nowrap;
 }
 
+.fullscreen-button.is-active {
+  border-color: var(--green);
+  color: var(--green-dark);
+}
+
 .main-stage {
   position: relative;
   flex: 1 1 auto;
