@@ -261,7 +261,7 @@ h1 {
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
-  padding-top: 4px;
+  padding: 4px 0 calc(6px + env(safe-area-inset-bottom));
 }
 
 .entry-header {
@@ -300,18 +300,20 @@ h1 {
   flex: 1 1 auto;
   min-height: 0;
   gap: 10px;
-  grid-template-rows: minmax(92px, 1fr) minmax(92px, 1fr) 66px 28px;
+  align-content: start;
+  grid-template-rows: 64px minmax(84px, auto) minmax(84px, auto) minmax(24px, auto);
+  overflow: hidden;
 }
 
 .entry-controls.is-duration-entry {
-  grid-template-rows: minmax(118px, 1fr) 66px 28px;
+  grid-template-rows: 64px minmax(92px, auto) minmax(24px, auto);
 }
 
 .metric-control {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) 72px;
   align-items: stretch;
-  min-height: 92px;
+  min-height: 84px;
   gap: 8px;
 }
 
@@ -402,7 +404,7 @@ input[type="range"]::-moz-range-thumb {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 66px;
+  min-height: 64px;
   gap: 8px;
   border-radius: 8px;
   background: var(--green);
@@ -710,18 +712,31 @@ input[type="range"]::-moz-range-thumb {
 
   .entry-controls {
     gap: 8px;
-    grid-template-rows: minmax(82px, 1fr) minmax(82px, 1fr) 58px 24px;
+    grid-template-rows: 56px minmax(74px, auto) minmax(74px, auto) minmax(20px, auto);
   }
 
   .entry-controls.is-duration-entry {
-    grid-template-rows: minmax(96px, 1fr) 58px 24px;
+    grid-template-rows: 56px minmax(82px, auto) minmax(20px, auto);
   }
 
   .metric-control {
-    min-height: 82px;
+    min-height: 74px;
+  }
+
+  .slider-block {
+    padding: 7px 10px 6px;
+  }
+
+  input[type="range"] {
+    margin-top: 4px;
+  }
+
+  .entry-status {
+    min-height: 20px;
+    font-size: 0.78rem;
   }
 
   .save-button {
-    min-height: 58px;
+    min-height: 56px;
   }
 }
