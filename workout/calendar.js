@@ -134,7 +134,7 @@ async function restoreAndLoadCalendar() {
     setStatus("Loading", "");
     if (!isTokenFresh()) {
       await waitForGoogleIdentity();
-      await ensureAccessToken({ silent: true });
+      await ensureAccessToken({ silent: true, fallbackToGrantedPrompt: true });
     }
     await initializeDatabase();
     await flushPendingRows();
@@ -597,6 +597,10 @@ function ensureAccessToken(options = {}) {
     .catch((error) => {
       if (options.interactive && options.silent) {
         return requestGoogleToken(getTokenPrompt({ ...options, silent: false }));
+      }
+
+      if (options.fallbackToGrantedPrompt && options.silent && calendarState.hasGoogleGrant) {
+        return requestGoogleToken("");
       }
 
       throw error;
