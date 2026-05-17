@@ -8,8 +8,8 @@ const CHART_GRID_COLOR = "rgba(167, 179, 188, 0.16)";
 const progressState = {
   chart: null,
   tokenClient: null,
-  accessToken: sessionStorage.getItem(STORAGE_KEYS.accessToken) || "",
-  tokenExpiresAt: toNumber(sessionStorage.getItem(STORAGE_KEYS.tokenExpiresAt), 0),
+  accessToken: getStoredAccessToken(),
+  tokenExpiresAt: getStoredTokenExpiresAt(),
   tokenPromise: null,
   tokenPromiseSilentOnly: false,
   tokenReject: null,
@@ -19,7 +19,7 @@ const progressState = {
   flushPromise: null,
   hasGoogleGrant: localStorage.getItem(STORAGE_KEYS.hasGoogleGrant) === "1"
     || Boolean(localStorage.getItem(STORAGE_KEYS.spreadsheetId))
-    || Boolean(sessionStorage.getItem(STORAGE_KEYS.accessToken)),
+    || Boolean(getStoredAccessToken()),
   pendingRows: readJson(STORAGE_KEYS.pendingRows, [])
 };
 
@@ -633,15 +633,13 @@ function isTokenFresh() {
 function storeAccessToken(response) {
   progressState.accessToken = response.access_token;
   progressState.tokenExpiresAt = Date.now() + (toNumber(response.expires_in, 3600) * 1000);
-  sessionStorage.setItem(STORAGE_KEYS.accessToken, progressState.accessToken);
-  sessionStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(progressState.tokenExpiresAt));
+  storeAccessTokenForTabs(progressState.accessToken, progressState.tokenExpiresAt);
 }
 
 function clearAccessToken() {
   progressState.accessToken = "";
   progressState.tokenExpiresAt = 0;
-  sessionStorage.removeItem(STORAGE_KEYS.accessToken);
-  sessionStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
+  clearAccessTokenForTabs();
 
   if (progressEls.signInButton) {
     updateAuthUi();

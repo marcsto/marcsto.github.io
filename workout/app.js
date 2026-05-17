@@ -12,8 +12,8 @@ const WEIGHT_STEP = 2.5;
 
 const state = {
   tokenClient: null,
-  accessToken: sessionStorage.getItem(STORAGE_KEYS.accessToken) || "",
-  tokenExpiresAt: toNumber(sessionStorage.getItem(STORAGE_KEYS.tokenExpiresAt), 0),
+  accessToken: getStoredAccessToken(),
+  tokenExpiresAt: getStoredTokenExpiresAt(),
   tokenPromise: null,
   tokenPromiseSilentOnly: false,
   tokenReject: null,
@@ -23,7 +23,7 @@ const state = {
   flushPromise: null,
   hasGoogleGrant: localStorage.getItem(STORAGE_KEYS.hasGoogleGrant) === "1"
     || Boolean(localStorage.getItem(STORAGE_KEYS.spreadsheetId))
-    || Boolean(sessionStorage.getItem(STORAGE_KEYS.accessToken)),
+    || Boolean(getStoredAccessToken()),
   exerciseCache: readJson(STORAGE_KEYS.exerciseCache, {}),
   pendingRows: readJson(STORAGE_KEYS.pendingRows, []),
   activeExercise: null
@@ -590,15 +590,13 @@ function isTokenFresh() {
 function storeAccessToken(response) {
   state.accessToken = response.access_token;
   state.tokenExpiresAt = Date.now() + (toNumber(response.expires_in, 3600) * 1000);
-  sessionStorage.setItem(STORAGE_KEYS.accessToken, state.accessToken);
-  sessionStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(state.tokenExpiresAt));
+  storeAccessTokenForTabs(state.accessToken, state.tokenExpiresAt);
 }
 
 function clearAccessToken() {
   state.accessToken = "";
   state.tokenExpiresAt = 0;
-  sessionStorage.removeItem(STORAGE_KEYS.accessToken);
-  sessionStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
+  clearAccessTokenForTabs();
 
   if (els.signInButton) {
     updateAuthUi();

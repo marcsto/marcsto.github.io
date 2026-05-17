@@ -31,3 +31,31 @@ const STORAGE_KEYS = {
 
 const SHEETS_API = "https://sheets.googleapis.com/v4";
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
+
+function getStoredAccessToken() {
+  return sessionStorage.getItem(STORAGE_KEYS.accessToken)
+    || localStorage.getItem(STORAGE_KEYS.accessToken)
+    || "";
+}
+
+function getStoredTokenExpiresAt() {
+  const value = sessionStorage.getItem(STORAGE_KEYS.tokenExpiresAt)
+    || localStorage.getItem(STORAGE_KEYS.tokenExpiresAt)
+    || "0";
+  const expiresAt = Number(value);
+  return Number.isFinite(expiresAt) ? expiresAt : 0;
+}
+
+function storeAccessTokenForTabs(accessToken, expiresAt) {
+  sessionStorage.setItem(STORAGE_KEYS.accessToken, accessToken);
+  sessionStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(expiresAt));
+  localStorage.setItem(STORAGE_KEYS.accessToken, accessToken);
+  localStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(expiresAt));
+}
+
+function clearAccessTokenForTabs() {
+  sessionStorage.removeItem(STORAGE_KEYS.accessToken);
+  sessionStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
+  localStorage.removeItem(STORAGE_KEYS.accessToken);
+  localStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
+}

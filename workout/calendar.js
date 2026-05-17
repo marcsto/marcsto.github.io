@@ -5,8 +5,8 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const calendarState = {
   tokenClient: null,
-  accessToken: sessionStorage.getItem(STORAGE_KEYS.accessToken) || "",
-  tokenExpiresAt: toNumber(sessionStorage.getItem(STORAGE_KEYS.tokenExpiresAt), 0),
+  accessToken: getStoredAccessToken(),
+  tokenExpiresAt: getStoredTokenExpiresAt(),
   tokenPromise: null,
   tokenPromiseSilentOnly: false,
   tokenReject: null,
@@ -16,7 +16,7 @@ const calendarState = {
   flushPromise: null,
   hasGoogleGrant: localStorage.getItem(STORAGE_KEYS.hasGoogleGrant) === "1"
     || Boolean(localStorage.getItem(STORAGE_KEYS.spreadsheetId))
-    || Boolean(sessionStorage.getItem(STORAGE_KEYS.accessToken)),
+    || Boolean(getStoredAccessToken()),
   pendingRows: readJson(STORAGE_KEYS.pendingRows, [])
 };
 
@@ -134,7 +134,7 @@ async function restoreAndLoadCalendar() {
     setStatus("Loading", "");
     if (!isTokenFresh()) {
       await waitForGoogleIdentity();
-      await ensureAccessToken({ silent: true, fallbackToGrantedPrompt: true });
+      await ensureAccessToken({ silent: true });
     }
     await initializeDatabase();
     await flushPendingRows();
@@ -599,10 +599,6 @@ function ensureAccessToken(options = {}) {
         return requestGoogleToken(getTokenPrompt({ ...options, silent: false }));
       }
 
-      if (options.fallbackToGrantedPrompt && options.silent && calendarState.hasGoogleGrant) {
-        return requestGoogleToken("");
-      }
-
       throw error;
     })
     .finally(() => {
@@ -684,15 +680,13 @@ function isTokenFresh() {
 function storeAccessToken(response) {
   calendarState.accessToken = response.access_token;
   calendarState.tokenExpiresAt = Date.now() + (toNumber(response.expires_in, 3600) * 1000);
-  sessionStorage.setItem(STORAGE_KEYS.accessToken, calendarState.accessToken);
-  sessionStorage.setItem(STORAGE_KEYS.tokenExpiresAt, String(calendarState.tokenExpiresAt));
+  storeAccessTokenForTabs(calendarState.accessToken, calendarState.tokenExpiresAt);
 }
 
 function clearAccessToken() {
   calendarState.accessToken = "";
   calendarState.tokenExpiresAt = 0;
-  sessionStorage.removeItem(STORAGE_KEYS.accessToken);
-  sessionStorage.removeItem(STORAGE_KEYS.tokenExpiresAt);
+  clearAccessTokenForTabs();
 
   if (calendarEls.signInButton) {
     updateAuthUi();
