@@ -1,16 +1,19 @@
 :root {
-  color-scheme: light;
-  --ink: #101820;
-  --muted: #5d6670;
-  --paper: #f7f8f4;
-  --surface: #ffffff;
-  --line: #d8ddd6;
-  --green: #157a55;
-  --green-dark: #0f5f42;
-  --blue: #245a8d;
-  --amber: #c78322;
-  --red: #b7433f;
-  --shadow: 0 14px 30px rgba(16, 24, 32, 0.12);
+  color-scheme: dark;
+  --ink: #f4f7f8;
+  --muted: #a7b3bc;
+  --paper: #070b10;
+  --surface: #111922;
+  --surface-raised: #162231;
+  --line: #2a3846;
+  --green: #31c48d;
+  --green-dark: #78e0b8;
+  --blue: #62a8ea;
+  --amber: #f4b85e;
+  --red: #ff7b72;
+  --future: #0c1219;
+  --workout-cell: #101f1a;
+  --shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
 }
 
 * {
@@ -198,7 +201,7 @@ h1 {
   border-top: 4px solid var(--exercise-color, var(--green));
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 8px 18px rgba(16, 24, 32, 0.07);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
   color: var(--ink);
   padding: 12px 8px;
   text-align: center;
@@ -224,7 +227,7 @@ h1 {
   width: 52px;
   height: 52px;
   border-radius: 8px;
-  background: var(--exercise-bg, #eaf3ed);
+  background: var(--exercise-bg, #13281f);
   color: var(--exercise-color, var(--green-dark));
 }
 
@@ -363,7 +366,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 999px;
   appearance: none;
   background: var(--amber);
-  box-shadow: 0 4px 12px rgba(16, 24, 32, 0.24);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 input[type="range"]::-moz-range-thumb {
@@ -372,15 +375,15 @@ input[type="range"]::-moz-range-thumb {
   border: 3px solid var(--surface);
   border-radius: 999px;
   background: var(--amber);
-  box-shadow: 0 4px 12px rgba(16, 24, 32, 0.24);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 .step-button {
   min-width: 0;
   min-height: 64px;
   border-radius: 8px;
-  background: var(--ink);
-  color: #ffffff;
+  background: var(--surface-raised);
+  color: var(--ink);
   font-size: 1.05rem;
   font-weight: 950;
   line-height: 1;
@@ -398,7 +401,7 @@ input[type="range"]::-moz-range-thumb {
   gap: 8px;
   border-radius: 8px;
   background: var(--green);
-  color: #ffffff;
+  color: #06110d;
   box-shadow: var(--shadow);
   font-size: 1.22rem;
   font-weight: 950;
@@ -502,8 +505,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .calendar-cell.has-workout {
-  border-color: rgba(21, 122, 85, 0.36);
-  background: #fbfffc;
+  border-color: rgba(49, 196, 141, 0.38);
+  background: var(--workout-cell);
 }
 
 .calendar-cell.is-today {
@@ -512,8 +515,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .calendar-cell.is-future {
-  background: #eef1ed;
-  color: rgba(16, 24, 32, 0.48);
+  background: var(--future);
+  color: rgba(244, 247, 248, 0.34);
 }
 
 .cell-date {
@@ -554,7 +557,7 @@ input[type="range"]::-moz-range-thumb {
   overflow-wrap: anywhere;
   border-left: 3px solid var(--exercise-color, var(--green));
   border-radius: 5px;
-  background: var(--exercise-bg, #e8f5ef);
+  background: var(--exercise-bg, #13281f);
   color: var(--ink);
   font-size: 0.64rem;
   font-weight: 900;

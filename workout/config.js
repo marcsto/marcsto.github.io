@@ -7,15 +7,15 @@ const SHEET_NAME = "Workout Log";
 const SHEET_HEADERS = ["Timestamp", "Exercise Name", "Reps", "Weight"];
 
 const DEFAULT_EXERCISES = [
-  { name: "Benchpress", icon: "fitness_center", shortName: "BP", color: "#1f7a8c", tint: "#e8f5f7" },
-  { name: "Deadlift", icon: "exercise", shortName: "DL", color: "#8a4f2a", tint: "#f7eee6" },
-  { name: "Squats", icon: "accessibility_new", shortName: "SQ", color: "#157a55", tint: "#e8f5ef" },
-  { name: "Lunges", icon: "directions_run", shortName: "LG", color: "#b7433f", tint: "#fbecec" },
-  { name: "Overhead Press", icon: "exercise", shortName: "OHP", color: "#6b4fa3", tint: "#f0edf8" },
-  { name: "Rows", icon: "rowing", shortName: "ROW", color: "#245a8d", tint: "#e9f0f7" },
-  { name: "Abs", icon: "self_improvement", shortName: "ABS", color: "#c78322", tint: "#fff4df" },
-  { name: "VR", icon: "sports_esports", shortName: "VR", type: "duration", color: "#8b3f9f", tint: "#f5eafa" },
-  { name: "Biking", icon: "directions_bike", shortName: "BIKE", type: "duration", color: "#2f7d32", tint: "#eaf6ea" }
+  { name: "Benchpress", icon: "fitness_center", shortName: "BP", color: "#4dc6d8", tint: "#102e34" },
+  { name: "Deadlift", icon: "exercise", shortName: "DL", color: "#d9975f", tint: "#382416" },
+  { name: "Squats", icon: "accessibility_new", shortName: "SQ", color: "#47d296", tint: "#143326" },
+  { name: "Lunges", icon: "directions_run", shortName: "LG", color: "#f07b75", tint: "#3b1f21" },
+  { name: "Overhead Press", icon: "exercise", shortName: "OHP", color: "#b39afa", tint: "#281f43" },
+  { name: "Rows", icon: "rowing", shortName: "ROW", color: "#78bdf4", tint: "#142b43" },
+  { name: "Abs", icon: "self_improvement", shortName: "ABS", color: "#f4c56f", tint: "#3a2b13" },
+  { name: "VR", icon: "sports_esports", shortName: "VR", type: "duration", color: "#d785ef", tint: "#351a42" },
+  { name: "Biking", icon: "directions_bike", shortName: "BIKE", type: "duration", color: "#7bdc7b", tint: "#1b351e" }
 ];
 
 const STORAGE_PREFIX = "workoutTracker.v1.";

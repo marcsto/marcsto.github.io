@@ -1,7 +1,9 @@
 const PROGRESS_LIMIT_DAYS = 30;
-const STRENGTH_LINE_COLOR = "#157a55";
-const VOLUME_BAR_COLOR = "rgba(36, 90, 141, 0.22)";
-const VOLUME_BAR_BORDER = "rgba(36, 90, 141, 0.38)";
+const STRENGTH_LINE_COLOR = "#31c48d";
+const VOLUME_BAR_COLOR = "rgba(98, 168, 234, 0.22)";
+const VOLUME_BAR_BORDER = "rgba(98, 168, 234, 0.48)";
+const CHART_TEXT_COLOR = "#a7b3bc";
+const CHART_GRID_COLOR = "rgba(167, 179, 188, 0.16)";
 
 const progressState = {
   chart: null,
@@ -224,6 +226,7 @@ function renderWorkoutProgressComboChart(canvas, rawLocalStorageData, selectedEx
       plugins: {
         legend: {
           labels: {
+            color: CHART_TEXT_COLOR,
             boxWidth: 12,
             font: {
               weight: "bold"
@@ -231,6 +234,11 @@ function renderWorkoutProgressComboChart(canvas, rawLocalStorageData, selectedEx
           }
         },
         tooltip: {
+          backgroundColor: "#111922",
+          borderColor: "#2a3846",
+          borderWidth: 1,
+          titleColor: "#f4f7f8",
+          bodyColor: "#f4f7f8",
           callbacks: {
             title: (items) => items[0]?.label || "",
             label: (context) => (
@@ -244,6 +252,7 @@ function renderWorkoutProgressComboChart(canvas, rawLocalStorageData, selectedEx
       scales: {
         x: {
           ticks: {
+            color: CHART_TEXT_COLOR,
             maxRotation: 0,
             autoSkip: true,
             maxTicksLimit: 6
@@ -258,10 +267,15 @@ function renderWorkoutProgressComboChart(canvas, rawLocalStorageData, selectedEx
           position: "left",
           title: {
             display: true,
-            text: "E1RM"
+            text: "E1RM",
+            color: CHART_TEXT_COLOR
           },
           ticks: {
+            color: CHART_TEXT_COLOR,
             callback: (value) => `${value}`
+          },
+          grid: {
+            color: CHART_GRID_COLOR
           }
         },
         y1: {
@@ -270,12 +284,14 @@ function renderWorkoutProgressComboChart(canvas, rawLocalStorageData, selectedEx
           position: "right",
           title: {
             display: true,
-            text: "Volume"
+            text: "Volume",
+            color: CHART_TEXT_COLOR
           },
           grid: {
             drawOnChartArea: false
           },
           ticks: {
+            color: CHART_TEXT_COLOR,
             callback: (value) => `${value}`
           }
         }
