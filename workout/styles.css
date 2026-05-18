@@ -181,6 +181,33 @@ h1 {
   display: none !important;
 }
 
+.idle-clock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  color: #f7f7f7;
+  padding: 0;
+}
+
+.idle-clock-overlay[hidden] {
+  display: none !important;
+}
+
+.idle-clock-time {
+  font-size: clamp(4.5rem, 24vw, 13rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
 .exercise-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

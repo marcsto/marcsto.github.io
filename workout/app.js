@@ -20,6 +20,8 @@ const MIN_WEIGHT = 0;
 const DEFAULT_MAX_WEIGHT = 500;
 const WEIGHT_STEP = 2.5;
 const SAVE_COOLDOWN_MS = 1000;
+const IDLE_CLOCK_DELAY_MS = 30 * 60 * 1000;
+const CLOCK_UPDATE_MS = 1000;
 
 const state = {
   user: null,
@@ -27,7 +29,11 @@ const state = {
   workouts: [],
   exerciseCache: {},
   unsubscribeWorkouts: null,
-  saveCooldownTimer: null
+  saveCooldownTimer: null,
+  idleTimer: null,
+  clockTimer: null,
+  lastInteractionAt: Date.now(),
+  isIdleClockVisible: false
 };
 
 const els = {};
@@ -39,6 +45,7 @@ function initApp() {
   bindEvents();
   renderHome();
   setSyncStatus("Loading", "");
+  resetIdleTimer();
   watchAuth(handleAuthState);
 }
 
@@ -64,6 +71,8 @@ function cacheElements() {
   els.saveButton = document.getElementById("saveButton");
   els.entryStatus = document.getElementById("entryStatus");
   els.recentSetList = document.getElementById("recentSetList");
+  els.idleClockOverlay = document.getElementById("idleClockOverlay");
+  els.idleClockTime = document.getElementById("idleClockTime");
 }
 
 function bindEvents() {
@@ -76,6 +85,96 @@ function bindEvents() {
   els.weightDown.addEventListener("click", () => setWeight(getWeight() - WEIGHT_STEP));
   els.weightUp.addEventListener("click", () => setWeight(getWeight() + WEIGHT_STEP));
   els.saveButton.addEventListener("click", handleSave);
+  els.idleClockOverlay.addEventListener("click", wakeFromIdleClock);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  ["pointerdown", "keydown", "input", "wheel"].forEach((eventName) => {
+    document.addEventListener(eventName, handleUserActivity, { capture: true, passive: true });
+  });
+}
+
+function handleUserActivity() {
+  if (state.isIdleClockVisible) {
+    wakeFromIdleClock();
+    return;
+  }
+
+  resetIdleTimer();
+}
+
+function resetIdleTimer() {
+  state.lastInteractionAt = Date.now();
+  scheduleIdleTimer();
+}
+
+function scheduleIdleTimer() {
+  window.clearTimeout(state.idleTimer);
+
+  if (document.visibilityState === "hidden" || state.isIdleClockVisible) {
+    return;
+  }
+
+  state.idleTimer = window.setTimeout(checkIdleTimeout, IDLE_CLOCK_DELAY_MS);
+}
+
+function checkIdleTimeout() {
+  const idleFor = Date.now() - state.lastInteractionAt;
+  if (idleFor >= IDLE_CLOCK_DELAY_MS) {
+    showIdleClock();
+    return;
+  }
+
+  state.idleTimer = window.setTimeout(checkIdleTimeout, IDLE_CLOCK_DELAY_MS - idleFor);
+}
+
+function showIdleClock() {
+  if (state.isIdleClockVisible) {
+    return;
+  }
+
+  window.clearTimeout(state.idleTimer);
+  state.idleTimer = null;
+  state.isIdleClockVisible = true;
+  updateIdleClock();
+  els.idleClockOverlay.hidden = false;
+  document.documentElement.classList.add("is-idle-clock");
+  state.clockTimer = window.setInterval(updateIdleClock, CLOCK_UPDATE_MS);
+}
+
+function wakeFromIdleClock() {
+  if (!state.isIdleClockVisible) {
+    resetIdleTimer();
+    return;
+  }
+
+  state.isIdleClockVisible = false;
+  window.clearInterval(state.clockTimer);
+  state.clockTimer = null;
+  els.idleClockOverlay.hidden = true;
+  document.documentElement.classList.remove("is-idle-clock");
+  showHome();
+  resetIdleTimer();
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === "hidden") {
+    window.clearTimeout(state.idleTimer);
+    return;
+  }
+
+  if (Date.now() - state.lastInteractionAt >= IDLE_CLOCK_DELAY_MS) {
+    showIdleClock();
+    return;
+  }
+
+  scheduleIdleTimer();
+}
+
+function updateIdleClock() {
+  const now = new Date();
+  const hours = now.getHours() % 12 || 12;
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  els.idleClockTime.textContent = `${hours}:${minutes}`;
+  els.idleClockTime.dateTime = now.toISOString();
 }
 
 async function handleAuthState(user) {
