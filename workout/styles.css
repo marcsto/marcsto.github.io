@@ -740,6 +740,10 @@ input[type="range"]::-moz-range-thumb {
   background: var(--workout-cell);
 }
 
+.calendar-cell.has-steps:not(.has-workout) {
+  border-color: rgba(98, 168, 234, 0.3);
+}
+
 .calendar-cell.is-today {
   border-color: var(--green);
   box-shadow: inset 0 0 0 1px var(--green);
@@ -769,6 +773,33 @@ input[type="range"]::-moz-range-thumb {
   text-transform: uppercase;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.steps-line {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 15px;
+  gap: 1px;
+  overflow: hidden;
+  color: var(--blue);
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1;
+  padding-top: 3px;
+  white-space: nowrap;
+}
+
+.steps-line:empty {
+  display: none;
+}
+
+.steps-line .material-symbols-rounded {
+  font-size: 0.8rem;
+}
+
+.calendar-cell.is-future .steps-line {
+  color: inherit;
 }
 
 .workout-lines {
@@ -892,6 +923,10 @@ input[type="range"]::-moz-range-thumb {
     font-size: 0.74rem;
   }
 
+  .steps-line {
+    font-size: 0.7rem;
+  }
+
   .chart-container {
     padding: 14px;
   }
@@ -917,6 +952,10 @@ input[type="range"]::-moz-range-thumb {
 
   .workout-line {
     font-size: 0.58rem;
+  }
+
+  .steps-line {
+    font-size: 0.55rem;
   }
 }
 

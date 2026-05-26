@@ -100,6 +100,16 @@ export async function subscribeWorkouts(userId, onNext, onError) {
   }, onError);
 }
 
+export async function subscribeDailySteps(userId, startDate, onNext, onError) {
+  await firestoreReady;
+  return onSnapshot(query(
+    dailyStepsCollection(userId),
+    where("date", ">=", startDate)
+  ), (snapshot) => {
+    onNext(snapshot.docs.map(dailyStepsFromDocument));
+  }, onError);
+}
+
 export async function getWorkoutsForExercise(userId, exerciseName) {
   await firestoreReady;
   const snapshot = await getDocs(query(
@@ -113,6 +123,10 @@ function workoutsCollection(userId) {
   return collection(db, "users", userId, "workouts");
 }
 
+function dailyStepsCollection(userId) {
+  return collection(db, "users", userId, "dailySteps");
+}
+
 function workoutFromDocument(documentSnapshot) {
   const data = documentSnapshot.data();
   return {
@@ -121,6 +135,15 @@ function workoutFromDocument(documentSnapshot) {
     reps: Number(data.reps) || 0,
     weight: Number(data.weight) || 0,
     timestamp: timestampToDate(data.timestamp)
+  };
+}
+
+function dailyStepsFromDocument(documentSnapshot) {
+  const data = documentSnapshot.data();
+  return {
+    date: data.date || documentSnapshot.id,
+    steps: Math.max(0, Math.round(Number(data.steps) || 0)),
+    sourceAppName: data.sourceAppName || ""
   };
 }
 

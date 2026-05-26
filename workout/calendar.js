@@ -7,6 +7,7 @@ import {
 import {
   getFirestorePersistenceStatus,
   signInWithGoogle,
+  subscribeDailySteps,
   subscribeWorkouts,
   watchAuth
 } from "./firebase.js";
@@ -19,7 +20,9 @@ const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const calendarState = {
   user: null,
   workouts: [],
-  unsubscribeWorkouts: null
+  dailySteps: [],
+  unsubscribeWorkouts: null,
+  unsubscribeDailySteps: null
 };
 
 const calendarEls = {};
@@ -56,8 +59,14 @@ async function handleAuthState(user) {
     calendarState.unsubscribeWorkouts = null;
   }
 
+  if (calendarState.unsubscribeDailySteps) {
+    calendarState.unsubscribeDailySteps();
+    calendarState.unsubscribeDailySteps = null;
+  }
+
   if (!user) {
     calendarState.workouts = [];
+    calendarState.dailySteps = [];
     renderCalendarSkeleton("Sign in to load your workout history.");
     setStatus("Sign in", "");
     return;
@@ -72,6 +81,14 @@ async function handleAuthState(user) {
     }, (error) => {
       renderCalendarSkeleton(error.message || "Could not load workouts.");
       setStatus("Sync error", "error");
+    });
+    const visibleDays = getCalendarDays();
+    calendarState.unsubscribeDailySteps = await subscribeDailySteps(user.uid, dateKey(visibleDays[0]), (dailySteps) => {
+      calendarState.dailySteps = dailySteps;
+      renderCurrentCalendar();
+      setStatus(getReadyStatus(), "ok");
+    }, () => {
+      setStatus("Steps error", "error");
     });
   } catch (error) {
     renderCalendarSkeleton(error.message || "Could not start Firestore.");
@@ -112,13 +129,14 @@ function getReadyStatus() {
 function renderCurrentCalendar() {
   const days = getCalendarDays();
   const byDate = groupRowsByDate(calendarState.workouts, days[0], days[days.length - 1]);
-  renderCalendar(days, byDate);
+  const stepsByDate = new Map(calendarState.dailySteps.map((dailySteps) => [dailySteps.date, dailySteps]));
+  renderCalendar(days, byDate, stepsByDate);
 }
 
 function renderCalendarSkeleton(message = "") {
   const days = getCalendarDays();
   const byDate = new Map();
-  renderCalendar(days, byDate);
+  renderCalendar(days, byDate, new Map());
 
   if (message) {
     const firstPastCell = calendarEls.grid.querySelector(".calendar-cell:not(.is-future) .workout-lines");
@@ -128,7 +146,7 @@ function renderCalendarSkeleton(message = "") {
   }
 }
 
-function renderCalendar(days, workoutsByDate) {
+function renderCalendar(days, workoutsByDate, stepsByDate) {
   calendarEls.grid.replaceChildren();
   calendarEls.dateRangeLabel.textContent = formatDateRange(days[0], days[days.length - 1]);
   const today = startOfDay(new Date());
@@ -136,6 +154,7 @@ function renderCalendar(days, workoutsByDate) {
   days.forEach((date) => {
     const key = dateKey(date);
     const summaries = summarizeDay(workoutsByDate.get(key) || []);
+    const dailySteps = stepsByDate.get(key);
     const isToday = sameDate(date, today);
     const isFuture = date > today;
 
@@ -144,8 +163,9 @@ function renderCalendar(days, workoutsByDate) {
     cell.classList.toggle("is-today", isToday);
     cell.classList.toggle("is-future", isFuture);
     cell.classList.toggle("has-workout", summaries.length > 0);
+    cell.classList.toggle("has-steps", Boolean(dailySteps));
     cell.setAttribute("role", "gridcell");
-    cell.setAttribute("aria-label", buildCellLabel(date, summaries));
+    cell.setAttribute("aria-label", buildCellLabel(date, summaries, dailySteps));
 
     const dateBar = document.createElement("div");
     dateBar.className = "cell-date";
@@ -159,6 +179,20 @@ function renderCalendar(days, workoutsByDate) {
       todayLabel.className = "today-label";
       todayLabel.textContent = "Today";
       dateBar.append(todayLabel);
+    }
+
+    const stepsLine = document.createElement("div");
+    stepsLine.className = "steps-line";
+    if (dailySteps) {
+      const stepsIcon = document.createElement("span");
+      stepsIcon.className = "material-symbols-rounded";
+      stepsIcon.setAttribute("aria-hidden", "true");
+      stepsIcon.textContent = "directions_walk";
+
+      const stepsCount = document.createElement("span");
+      stepsCount.textContent = dailySteps.steps.toLocaleString();
+      stepsLine.title = `${dailySteps.steps.toLocaleString()} steps${dailySteps.sourceAppName ? ` from ${dailySteps.sourceAppName}` : ""}`;
+      stepsLine.append(stepsIcon, stepsCount);
     }
 
     const lines = document.createElement("div");
@@ -181,7 +215,7 @@ function renderCalendar(days, workoutsByDate) {
       lines.append(moreLine);
     }
 
-    cell.append(dateBar, lines);
+    cell.append(dateBar, stepsLine, lines);
     calendarEls.grid.append(cell);
   });
 }
@@ -298,12 +332,13 @@ function formatNumber(value) {
   return Number.isInteger(number) ? String(number) : number.toFixed(1);
 }
 
-function buildCellLabel(date, summaries) {
+function buildCellLabel(date, summaries, dailySteps) {
   const dateLabel = `${WEEKDAY_LABELS[date.getDay()]}, ${date.toLocaleDateString()}`;
+  const stepLabel = dailySteps ? `${dailySteps.steps.toLocaleString()} steps` : "no step data";
 
   if (!summaries.length) {
-    return `${dateLabel}: no workouts`;
+    return `${dateLabel}: ${stepLabel}; no workouts`;
   }
 
-  return `${dateLabel}: ${summaries.map((summary) => summary.fullText).join("; ")}`;
+  return `${dateLabel}: ${stepLabel}; ${summaries.map((summary) => summary.fullText).join("; ")}`;
 }
