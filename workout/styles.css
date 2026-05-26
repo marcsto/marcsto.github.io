@@ -249,6 +249,9 @@ h1 {
 .back-button:focus-visible,
 .step-button:focus-visible,
 .save-button:focus-visible,
+.log-date-toggle:focus-visible,
+.log-date-input:focus-visible,
+.use-today-button:focus-visible,
 .delete-set-button:focus-visible {
   outline: 3px solid rgba(36, 90, 141, 0.35);
   outline-offset: 2px;
@@ -476,13 +479,15 @@ input[type="range"]::-moz-range-thumb {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .recent-sets-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 32px;
+  gap: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0 10px;
 }
@@ -495,6 +500,68 @@ input[type="range"]::-moz-range-thumb {
   letter-spacing: 0;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.log-date-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  gap: 4px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0 4px;
+}
+
+.log-date-toggle .material-symbols-rounded {
+  font-size: 1rem;
+}
+
+.log-date-toggle.is-custom-date {
+  background: rgba(244, 184, 94, 0.12);
+  color: var(--amber);
+  padding: 0 7px;
+}
+
+.log-date-panel {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 5px 10px;
+}
+
+.log-date-label {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.log-date-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  padding: 0 7px;
+}
+
+.use-today-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 0 8px;
 }
 
 .recent-set-list {
@@ -644,6 +711,22 @@ input[type="range"]::-moz-range-thumb {
 
 .is-fullscreen .recent-sets-header {
   min-height: 24px;
+}
+
+.is-fullscreen .log-date-toggle {
+  min-height: 22px;
+  font-size: 0.68rem;
+}
+
+.is-fullscreen .log-date-panel {
+  min-height: 40px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.is-fullscreen .log-date-input,
+.is-fullscreen .use-today-button {
+  min-height: 32px;
 }
 
 .is-fullscreen .recent-set-list {

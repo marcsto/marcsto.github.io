@@ -93,6 +93,15 @@
             <section class="recent-sets" aria-labelledby="recentSetsHeading">
               <div class="recent-sets-header">
                 <h3 id="recentSetsHeading">Recent sets</h3>
+                <button id="logDateToggle" class="log-date-toggle" type="button" aria-expanded="false" aria-controls="logDatePanel">
+                  <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
+                  <span id="logDateSummary">Log: Today</span>
+                </button>
+              </div>
+              <div id="logDatePanel" class="log-date-panel" hidden>
+                <label class="log-date-label" for="logDateInput">Log date</label>
+                <input id="logDateInput" class="log-date-input" type="date">
+                <button id="useTodayButton" class="use-today-button" type="button">Today</button>
               </div>
               <div id="recentSetList" class="recent-set-list"></div>
             </section>

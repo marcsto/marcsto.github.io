@@ -33,7 +33,8 @@ const state = {
   idleTimer: null,
   clockTimer: null,
   lastInteractionAt: Date.now(),
-  isIdleClockVisible: false
+  isIdleClockVisible: false,
+  logDate: null
 };
 
 const els = {};
@@ -70,6 +71,11 @@ function cacheElements() {
   els.weightUp = document.getElementById("weightUp");
   els.saveButton = document.getElementById("saveButton");
   els.entryStatus = document.getElementById("entryStatus");
+  els.logDateToggle = document.getElementById("logDateToggle");
+  els.logDateSummary = document.getElementById("logDateSummary");
+  els.logDatePanel = document.getElementById("logDatePanel");
+  els.logDateInput = document.getElementById("logDateInput");
+  els.useTodayButton = document.getElementById("useTodayButton");
   els.recentSetList = document.getElementById("recentSetList");
   els.idleClockOverlay = document.getElementById("idleClockOverlay");
   els.idleClockTime = document.getElementById("idleClockTime");
@@ -85,6 +91,9 @@ function bindEvents() {
   els.weightDown.addEventListener("click", () => setWeight(getWeight() - WEIGHT_STEP));
   els.weightUp.addEventListener("click", () => setWeight(getWeight() + WEIGHT_STEP));
   els.saveButton.addEventListener("click", handleSave);
+  els.logDateToggle.addEventListener("click", toggleLogDatePanel);
+  els.logDateInput.addEventListener("change", handleLogDateChange);
+  els.useTodayButton.addEventListener("click", resetLogDate);
   els.idleClockOverlay.addEventListener("click", wakeFromIdleClock);
   document.addEventListener("visibilitychange", handleVisibilityChange);
   ["pointerdown", "keydown", "input", "wheel"].forEach((eventName) => {
@@ -337,6 +346,7 @@ function openExercise(exercise) {
 
   updateLastLogged();
   renderRecentSets();
+  resetLogDate();
   setEntryStatus("", "");
   els.homeView.hidden = true;
   els.entryView.hidden = false;
@@ -346,6 +356,7 @@ function showHome() {
   els.entryView.hidden = true;
   els.homeView.hidden = false;
   state.activeExercise = null;
+  resetLogDate();
   renderRecentSets();
   renderHome();
 }
@@ -439,6 +450,64 @@ function getWeightMax() {
   return toNumber(els.weightSlider.max, DEFAULT_MAX_WEIGHT);
 }
 
+function toggleLogDatePanel() {
+  const isOpening = els.logDatePanel.hidden;
+  if (isOpening && !state.logDate) {
+    els.logDateInput.value = dateKey(new Date());
+  }
+
+  els.logDateInput.max = dateKey(new Date());
+  els.logDatePanel.hidden = !isOpening;
+  els.logDateToggle.setAttribute("aria-expanded", String(isOpening));
+
+  if (isOpening) {
+    els.logDateInput.focus();
+  }
+}
+
+function handleLogDateChange() {
+  const selectedDate = parseDateKey(els.logDateInput.value);
+  const today = startOfDay(new Date());
+
+  if (!selectedDate || selectedDate > today || sameDate(selectedDate, today)) {
+    resetLogDate();
+    return;
+  }
+
+  state.logDate = els.logDateInput.value;
+  els.logDatePanel.hidden = true;
+  els.logDateToggle.setAttribute("aria-expanded", "false");
+  updateLogDateSummary();
+}
+
+function resetLogDate() {
+  state.logDate = null;
+  els.logDateInput.max = dateKey(new Date());
+  els.logDateInput.value = els.logDateInput.max;
+  els.logDatePanel.hidden = true;
+  els.logDateToggle.setAttribute("aria-expanded", "false");
+  updateLogDateSummary();
+}
+
+function updateLogDateSummary() {
+  const date = state.logDate ? parseDateKey(state.logDate) : null;
+  els.logDateSummary.textContent = date ? `Log: ${formatShortDate(date)}` : "Log: Today";
+  els.logDateToggle.classList.toggle("is-custom-date", Boolean(date));
+  els.logDateToggle.title = date ? "Change the log date or switch back to today" : "Log a missed set for an earlier date";
+}
+
+function getLogTimestamp() {
+  const now = new Date();
+  const date = state.logDate ? parseDateKey(state.logDate) : null;
+
+  if (!date) {
+    return now;
+  }
+
+  date.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+  return date;
+}
+
 async function handleSave() {
   if (els.saveButton.disabled) {
     return;
@@ -462,14 +531,14 @@ async function handleSave() {
     exerciseName: state.activeExercise.name,
     reps: getReps(),
     weight: isDuration ? 0 : getWeight(),
-    timestamp: new Date()
+    timestamp: getLogTimestamp()
   };
 
   updateExerciseCache(workout);
   renderHome();
   updateLastLogged();
   renderRecentSets();
-  setEntryStatus(`Saved ${formatTime(workout.timestamp)}`, "ok");
+  setEntryStatus(`Saved ${state.logDate ? formatDateTime(workout.timestamp) : formatTime(workout.timestamp)}`, "ok");
   setSyncStatus("Saving", "");
 
   try {
@@ -580,6 +649,11 @@ function renderRecentSets() {
 }
 
 function updateExerciseCache(workout) {
+  const current = state.exerciseCache[workout.exerciseName];
+  if (current && workout.timestamp <= current.timestamp) {
+    return;
+  }
+
   state.exerciseCache[workout.exerciseName] = {
     reps: workout.reps,
     weight: workout.weight,
@@ -647,6 +721,13 @@ function formatDateTime(date) {
   }).format(date);
 }
 
+function formatShortDate(date) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric"
+  }).format(date);
+}
+
 function formatRelativeDateTime(date) {
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
@@ -656,6 +737,33 @@ function formatRelativeDateTime(date) {
   }
 
   return formatDateTime(date);
+}
+
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function sameDate(a, b) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function dateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(value) {
+  const parts = String(value).split("-").map(Number);
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) {
+    return null;
+  }
+
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  return dateKey(date) === value ? date : null;
 }
 
 function formatSetSummary(workout) {
