@@ -22,6 +22,7 @@ const WEIGHT_STEP = 2.5;
 const SAVE_COOLDOWN_MS = 1000;
 const IDLE_CLOCK_DELAY_MS = 30 * 60 * 1000;
 const CLOCK_UPDATE_MS = 1000;
+const WAKE_CLICK_SUPPRESSION_MS = 600;
 
 const state = {
   user: null,
@@ -32,6 +33,8 @@ const state = {
   saveCooldownTimer: null,
   idleTimer: null,
   clockTimer: null,
+  wakeClickSuppressionTimer: null,
+  suppressNextClickUntil: 0,
   lastInteractionAt: Date.now(),
   isIdleClockVisible: false,
   logDate: null
@@ -94,20 +97,58 @@ function bindEvents() {
   els.logDateToggle.addEventListener("click", toggleLogDatePanel);
   els.logDateInput.addEventListener("change", handleLogDateChange);
   els.useTodayButton.addEventListener("click", resetLogDate);
-  els.idleClockOverlay.addEventListener("click", wakeFromIdleClock);
+  els.idleClockOverlay.addEventListener("click", handleIdleClockOverlayClick);
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener("click", handleDocumentClick, { capture: true });
   ["pointerdown", "keydown", "input", "wheel"].forEach((eventName) => {
-    document.addEventListener(eventName, handleUserActivity, { capture: true, passive: true });
+    document.addEventListener(eventName, handleUserActivity, { capture: true });
   });
 }
 
-function handleUserActivity() {
+function handleDocumentClick(event) {
+  if (!state.suppressNextClickUntil || Date.now() > state.suppressNextClickUntil) {
+    clearWakeClickSuppression();
+    return;
+  }
+
+  consumeEvent(event);
+  clearWakeClickSuppression();
+}
+
+function handleIdleClockOverlayClick(event) {
+  consumeEvent(event);
+  wakeFromIdleClock();
+}
+
+function handleUserActivity(event) {
   if (state.isIdleClockVisible) {
+    suppressNextClick();
+    consumeEvent(event);
     wakeFromIdleClock();
     return;
   }
 
   resetIdleTimer();
+}
+
+function suppressNextClick() {
+  state.suppressNextClickUntil = Date.now() + WAKE_CLICK_SUPPRESSION_MS;
+  window.clearTimeout(state.wakeClickSuppressionTimer);
+  state.wakeClickSuppressionTimer = window.setTimeout(clearWakeClickSuppression, WAKE_CLICK_SUPPRESSION_MS);
+}
+
+function clearWakeClickSuppression() {
+  state.suppressNextClickUntil = 0;
+  window.clearTimeout(state.wakeClickSuppressionTimer);
+  state.wakeClickSuppressionTimer = null;
+}
+
+function consumeEvent(event) {
+  event.stopImmediatePropagation();
+
+  if (event.cancelable) {
+    event.preventDefault();
+  }
 }
 
 function resetIdleTimer() {
