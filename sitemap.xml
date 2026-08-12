@@ -3,14 +3,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 <url>
 <loc>https://marc.ai/</loc>
+<lastmod>2026-08-11T23:35:56-07:00</lastmod>
 </url>
 <url>
 <loc>https://marc.ai/earthquake-early-warning/</loc>
-<lastmod>2026-08-11T18:30:00-07:00</lastmod>
+<lastmod>2026-08-11T23:35:56-07:00</lastmod>
 <image:image>
 <image:loc>https://marc.ai/earthquake-early-warning/assets/og.png</image:loc>
 <image:title><![CDATA[Android Earthquake Alerts: The Complete Guide]]></image:title>
 </image:image>
+</url>
+<url>
+<loc>https://marc.ai/pass-the-pigs-scoreboard.html</loc>
+<lastmod>2025-05-20T12:00:00-07:00</lastmod>
+<image:image>
+<image:loc>https://marc.ai/images/pigs/sider.png</image:loc>
+<image:title><![CDATA[Pass the Pigs Scoreboard]]></image:title>
+</image:image>
+</url>
+<url>
+<loc>https://marc.ai/free-captions-org.html</loc>
+<lastmod>2025-05-15T12:00:00-07:00</lastmod>
 </url>
 <url>
 <loc>https://marc.ai/about-marc-stogaitis.html</loc>
