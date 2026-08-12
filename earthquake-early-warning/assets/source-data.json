@@ -1,0 +1,77 @@
+{
+  "title": "Public data used in Android Earthquake Alerts: The Complete Guide",
+  "lastReviewed": "2026-08-11",
+  "studyPeriod": {
+    "start": "2021-04-01",
+    "end": "2024-03-31",
+    "earthquakesDetected": 11231,
+    "averageDetectionsPerMonth": 312,
+    "androidDetectedEventsAlerted": 1279,
+    "falseAlerts": 3,
+    "countriesReceivingAlerts": 98,
+    "source": "https://www.science.org/doi/10.1126/science.ads4779"
+  },
+  "publicUpdate2025": {
+    "earthquakesDetected": 18000,
+    "alertedEarthquakes": 2000,
+    "alertsDelivered": 790000000,
+    "peopleWithEarlyWarningAccess2019": 250000000,
+    "peopleWithEarlyWarningAccess2025": 2500000000,
+    "source": "https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/",
+    "notes": "Values described as over or approximately these amounts in the source."
+  },
+  "magnitudeAccuracy": {
+    "firstEstimateMedianAbsoluteErrorInitial": 0.5,
+    "firstEstimateMedianAbsoluteErrorLatest": 0.25,
+    "firstEstimate90thPercentileErrorInitial": 1.02,
+    "firstEstimate90thPercentileErrorLatest": 0.7,
+    "source": "https://www.science.org/doi/10.1126/science.ads4779"
+  },
+  "userSurvey": {
+    "responses": 1555006,
+    "veryHelpfulPercent": 85,
+    "veryHelpfulWithoutFeltShakingPercent": 79,
+    "takeActionRecipientsReportingDropCoverHoldPercent": 28,
+    "source": "https://www.science.org/doi/10.1126/science.ads4779"
+  },
+  "exampleEvents": [
+    {
+      "place": "Philippines",
+      "date": "2023-11-17",
+      "magnitude": 6.7,
+      "firstAlertSecondsAfterOrigin": 18.3,
+      "phonesAlertedApprox": 2500000,
+      "source": "https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/"
+    },
+    {
+      "place": "Nepal",
+      "date": "2023-11-03",
+      "magnitude": 5.7,
+      "firstAlertSecondsAfterOrigin": 15.6,
+      "phonesAlertedOver": 10000000,
+      "source": "https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/"
+    },
+    {
+      "place": "Turkiye",
+      "date": "2025-04-23",
+      "magnitude": 6.2,
+      "firstAlertSecondsAfterOrigin": 8,
+      "phonesAlertedOver": 11000000,
+      "source": "https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/"
+    },
+    {
+      "place": "Sarangani, Philippines",
+      "date": "2026-06-08",
+      "magnitude": 7.8,
+      "source": "https://www.phivolcs.dost.gov.ph/primer-on-the-08-june-2026-magnitude-mw-7-8-offshore-sarangani-earthquake/",
+      "notes": "No audited Android timing or delivery total was used."
+    },
+    {
+      "place": "Venezuela",
+      "date": "2026-06-24",
+      "magnitudes": [7.2, 7.5],
+      "alertsReported": 11400000,
+      "source": "https://current.fas.harvard.edu/stories/smartphone-system-detected-seismic-activity-saved-lives-venezuela"
+    }
+  ]
+}

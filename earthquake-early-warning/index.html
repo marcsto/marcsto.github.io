@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Android Earthquake Alerts: The Complete Guide - Marc.ai</title>
+  <meta name="description" content="How Android phones detect earthquakes, send Be Aware, Be Ready and Take Action alerts, and what accuracy, coverage and warning times really look like.">
+  <meta name="author" content="Marc Stogaitis">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://marc.ai/earthquake-early-warning/">
+  <link rel="alternate" type="application/atom+xml" href="https://marc.ai/feed.xml" title="Marc.ai - RSS">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Marc.ai">
+  <meta property="og:title" content="Android Earthquake Alerts: The Complete Guide">
+  <meta property="og:description" content="How Android detects quakes, sends alerts, and the real-world science behind the technology.">
+  <meta property="og:url" content="https://marc.ai/earthquake-early-warning/">
+  <meta property="og:image" content="https://marc.ai/earthquake-early-warning/assets/how-android-earthquake-alerts-work.png">
+  <meta property="og:image:width" content="1448">
+  <meta property="og:image:height" content="1086">
+  <meta property="og:image:alt" content="Diagram showing how Android phones detect an earthquake and send alerts before stronger shaking arrives">
+  <meta property="article:author" content="Marc Stogaitis">
+  <meta property="article:published_time" content="2026-08-11T00:00:00-07:00">
+  <meta property="article:modified_time" content="2026-08-11T00:00:00-07:00">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@marcsto">
+  <meta name="twitter:creator" content="@marcsto">
+  <meta name="twitter:title" content="Android Earthquake Alerts: The Complete Guide">
+  <meta name="twitter:description" content="A practical, evidence-based guide to Android earthquake detection, alerts, accuracy and safety.">
+  <meta name="twitter:image" content="https://marc.ai/earthquake-early-warning/assets/how-android-earthquake-alerts-work.png">
+  <meta name="twitter:image:alt" content="Diagram showing how Android phones detect an earthquake and send alerts before stronger shaking arrives">
+  <link rel="shortcut icon" href="../media/website/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="styles.css">
+  <noscript><style>img[loading] { opacity: 1; }</style></noscript>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": "https://marc.ai/earthquake-early-warning/#article",
+        "mainEntityOfPage": {"@type": "WebPage", "@id": "https://marc.ai/earthquake-early-warning/"},
+        "headline": "Android Earthquake Alerts: The Complete Guide",
+        "alternativeHeadline": "A breakdown of how Android detects quakes, sends alerts, and the real-world science behind the tech.",
+        "description": "How Android phones detect earthquakes, who receives each alert, how accurate the system is, why an alert may not arrive, and what to do when one does.",
+        "image": "https://marc.ai/earthquake-early-warning/assets/how-android-earthquake-alerts-work.png",
+        "datePublished": "2026-08-11",
+        "dateModified": "2026-08-11",
+        "author": {"@type": "Person", "name": "Marc Stogaitis", "url": "https://marc.ai/authors/marc-stogaitis/"},
+        "publisher": {"@type": "Person", "name": "Marc Stogaitis", "url": "https://marc.ai/"},
+        "about": ["Android Earthquake Alerts System", "Earthquake early warning", "Earthquake safety"]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://marc.ai/earthquake-early-warning/#faq",
+        "mainEntity": [
+          {"@type": "Question", "name": "What is the Android Earthquake Alerts System?", "acceptedAnswer": {"@type": "Answer", "text": "It is a global earthquake detection and early-warning system built into Android. Its phone-based detection network combines motion signals from many stationary Android phones to estimate an earthquake and warn compatible Android devices in the expected shaking area."}},
+          {"@type": "Question", "name": "Does the system predict earthquakes?", "acceptedAnswer": {"@type": "Answer", "text": "No. It detects an earthquake after it starts, near the source, then tries to warn people farther away before slower and usually more damaging shaking reaches them."}},
+          {"@type": "Question", "name": "How much warning time will I get?", "acceptedAnswer": {"@type": "Answer", "text": "Warning time can range from none near the earthquake source to a few seconds, tens of seconds, or around two minutes for more distant users in favorable cases. Distance matters because alert messages travel much faster than seismic waves, but the system must first detect and estimate the earthquake."}},
+          {"@type": "Question", "name": "What are the Android earthquake alert types?", "acceptedAnswer": {"@type": "Answer", "text": "Be Aware is for expected weak or light shaking, Be Ready is for noticeable light or moderate shaking, and Take Action is a full-screen warning for expected moderate to extreme shaking."}},
+          {"@type": "Question", "name": "How do I enable Android Earthquake Alerts?", "acceptedAnswer": {"@type": "Answer", "text": "In a supported region, alerts should be on by default. Check Settings, then Safety and emergency, then Earthquake alerts. Wi-Fi or cellular data and location must also be enabled."}},
+          {"@type": "Question", "name": "Can Android detect earthquakes in the ocean?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. When shaking from an offshore earthquake reaches phones onshore, their measurements can allow the system to detect the event. The research paper reports detections for subduction-zone earthquakes tens to hundreds of kilometers offshore."}},
+          {"@type": "Question", "name": "Does earthquake detection drain my phone battery?", "acceptedAnswer": {"@type": "Answer", "text": "Detection monitoring is restricted to suitable phones that are stationary and plugged in. A phone does not need to be plugged in to receive an alert."}},
+          {"@type": "Question", "name": "Why might I not receive an earthquake alert?", "acceptedAnswer": {"@type": "Answer", "text": "Possible reasons include being too close to the source for advance warning, an unsupported country, disabled location or alert settings, a missed or late detection, magnitude-estimation error, network delay or outage, or a device without Wi-Fi or cellular data."}},
+          {"@type": "Question", "name": "How accurate is the Android Earthquake Alerts System?", "acceptedAnswer": {"@type": "Answer", "text": "In the 2025 Science study, the median absolute error of the first magnitude estimate improved from 0.50 to 0.25 over three years. From April 2021 through March 2024 the system issued alerts for 1,279 Android-detected events, including three false alerts."}},
+          {"@type": "Question", "name": "Can an alert cross a country border?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Alert eligibility is based on whether the Android system is enabled where the receiving device is located, not whether the epicenter is in the same country."}},
+          {"@type": "Question", "name": "What's the relationship between ShakeAlert and the Android Earthquake Alerts System?", "acceptedAnswer": {"@type": "Answer", "text": "They are separate systems that work together in California, Oregon and Washington. ShakeAlert uses ground-based seismic instruments to generate warnings, and Android delivers those warnings to compatible devices. Elsewhere, Android generally uses earthquake information from its own phone-based detection network."}},
+          {"@type": "Question", "name": "What should I do when an earthquake alert arrives?", "acceptedAnswer": {"@type": "Answer", "text": "There is no single safe action for every building and country. Follow local emergency-management guidance and make a plan in advance. In the United States, USGS recommends Drop, Cover and Hold On indoors, moving into the open if already outside, and pulling over carefully if driving."}}
+        ]
+      }
+    ]
+  }
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DHDFQ2KFXP"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-DHDFQ2KFXP');</script>
+</head>
+<body class="eew-page">
+  <div class="site-container">
+    <header class="top" id="js-header">
+      <a class="logo" href="../">Marc.ai</a>
+      <nav class="navbar js-navbar" aria-label="Primary navigation">
+        <button class="navbar__toggle js-toggle" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span class="navbar__toggle-box"><span class="navbar__toggle-inner">Menu</span></span></button>
+        <ul class="navbar__menu">
+          <li><a href="../about-marc-stogaitis.html">About</a></li>
+          <li><a href="https://www.play20questions.com/">Play20Questions</a></li>
+          <li class="active"><a href="https://marc.ai/earthquake-early-warning/">Earthquake-Alerts</a></li><li><a href="https://freecaptions.org/">FreeCaptions</a></li>
+          <li><a href="../celebrity-look-alike-for-android.html">Celebrity Look-alike</a></li>
+          <li><a href="../doodlecast-for-chromecast-android-app.html">Doodlecast</a></li>
+          <li><a href="../piclearn-helps-you-learn-chinese-and-french.html">PicLearn</a></li>
+          <li><a href="http://www.gmote.org">Gmote</a></li>
+          <li><a href="../feed.xml">RSS</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <article>
+        <header class="guide-hero">
+          <div class="guide-hero__inner">
+            <p class="guide-hero__eyebrow">Field guide · Android · Earthquake early warning</p>
+            <h1>Android Earthquake Alerts <span>The Complete Guide</span></h1>
+            <p class="guide-hero__subtitle">A breakdown of how Android detects quakes, sends alerts, and the real-world science behind the tech.</p>
+            <div class="guide-hero__meta">
+              <img src="../media/website/mstogaitis.jpg" alt="Marc Stogaitis" width="80" height="80">
+              <a href="../authors/marc-stogaitis/" rel="author">Marc Stogaitis</a>
+              <span>Updated August 11, 2026</span>
+              <span>Evidence from 18,000+ detected earthquakes</span>
+            </div>
+            <div class="waveform" aria-hidden="true">
+              <span style="--h:5%"></span><span style="--h:8%"></span><span style="--h:12%"></span><span style="--h:7%"></span><span style="--h:18%"></span><span style="--h:10%"></span><span style="--h:22%"></span><span style="--h:14%"></span><span style="--h:32%"></span><span style="--h:16%"></span><span style="--h:45%"></span><span style="--h:20%"></span><span style="--h:62%"></span><span style="--h:28%"></span><span style="--h:85%"></span><span style="--h:36%"></span><span style="--h:100%"></span><span style="--h:48%"></span><span style="--h:72%"></span><span style="--h:30%"></span><span style="--h:52%"></span><span style="--h:25%"></span><span style="--h:38%"></span><span style="--h:18%"></span><span style="--h:29%"></span><span style="--h:14%"></span><span style="--h:21%"></span><span style="--h:10%"></span><span style="--h:16%"></span><span style="--h:8%"></span><span style="--h:12%"></span><span style="--h:6%"></span>
+            </div>
+          </div>
+        </header>
+
+        <div class="guide-shell">
+          <div class="lede-grid">
+            <p class="lede">Android has turned a global network of phones into <strong>the world's largest earthquake detection network</strong>. This guide explains what happens between the first motion sensed by a phone and the warning on your screen.</p>
+          </div>
+
+          <div class="stats-band" aria-label="System at a glance">
+            <div class="stats-band__inner">
+              <div class="stat"><span class="stat__value">18k+</span><span class="stat__label">earthquakes detected by the 2025 public update</span></div>
+              <div class="stat"><span class="stat__value">790m</span><span class="stat__label">alerts delivered worldwide</span></div>
+              <div class="stat"><span class="stat__value">2.5b</span><span class="stat__label">people with access to earthquake early warning</span></div>
+              <div class="stat"><span class="stat__value">0.25</span><span class="stat__label">median first-estimate magnitude error</span></div>
+            </div>
+          </div>
+
+          <div class="page-grid">
+            <aside class="toc" aria-label="On this page">
+              <p class="card-kicker">On this page</p>
+              <ol>
+                <li><a href="#system">The system</a></li>
+                <li><a href="#alerts">Alert types</a></li>
+                <li><a href="#coverage">Coverage</a></li>
+                <li><a href="#setup">Phone setup</a></li>
+                <li><a href="#performance">Accuracy &amp; reach</a></li>
+                <li><a href="#events">Example events</a></li>
+                <li><a href="#missed-alerts">Why alerts are missed</a></li>
+                <li><a href="#safety">Protective actions</a></li>
+                <li><a href="#learn-more">To learn more</a></li>
+                <li><a href="#sources">Sources</a></li>
+              </ol>
+            </aside>
+
+            <div class="guide-content">
+              <section id="system">
+                <p class="section-kicker">01 · Foundations</p>
+                <h2 class="section-title">The system</h2>
+                <p class="section-intro">Earthquake early warning is a race that starts after the earthquake does.</p>
+
+                <article class="qa">
+                  <h3>What is the Android Earthquake Alerts System?</h3>
+                  <div class="answer">
+                    <p>It is a global earthquake detection and early-warning system built into Android. Its phone-based detection network turns the accelerometers already inside suitable Android phones into a distributed network of earthquake sensors.</p>
+                    <p>When many stationary phones in the same area detect earthquake-like motion, the system combines their signals to estimate the earthquake and send alerts to compatible Android devices likely to experience shaking. This approach extends early warning to places without dense networks of traditional seismic instruments: by the end of 2023, Android-generated alerts were active in 98 countries.</p>
+                    <p>The goal is to give people useful notice - sometimes only seconds - to move away from hazards and protect themselves before the strongest shaking arrives.<a class="citation" href="#source-1">[1]</a><a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>How does Android detect an earthquake?</h3>
+                  <div class="answer">
+                    <ol class="process">
+                      <li><strong>A phone feels motion.</strong><span>A stationary phone's accelerometer notices motion consistent with earthquake waves.</span></li>
+                      <li><strong>It sends a signal.</strong><span>The phone reports acceleration data and a privacy-preserving, coarse location.</span></li>
+                      <li><strong>Many signals agree.</strong><span>Servers look for a time-and-place pattern that fits a real seismic source.</span></li>
+                      <li><strong>Warnings race ahead.</strong><span>The system estimates the event and alerts devices in the expected shaking region.</span></li>
+                    </ol>
+                    <p>Earthquakes produce fast P-waves and slower, usually more damaging S-waves. Data can travel over communications networks much faster than either wave. That speed difference creates the warning window - particularly for people farther from the source.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></p>
+                    <div class="mini-definition"><strong>Important:</strong> an individual phone trigger is not treated as an earthquake. Phones are noisy. The system waits for a pattern across many devices that is consistent with a seismic event.</div>
+                    <figure class="media-card">
+                      <div class="media-switcher" data-media-switcher>
+                        <img src="assets/how-android-earthquake-alerts-work.png" loading="lazy" alt="Diagram showing phones detecting an earthquake and alerts reaching people before stronger shaking" width="1448" height="1086" data-media-image>
+                        <video controls preload="metadata" playsinline poster="assets/how-android-earthquake-alerts-work.png" hidden data-media-video>
+                          <source src="assets/how-android-earthquake-alerts-work.mp4" type="video/mp4">
+                          Your browser does not support embedded video.
+                        </video>
+                      </div>
+                      <figcaption class="media-card__caption-row">
+                        <span>How Android Earthquake Alerts works. Video supplied with this guide.</span>
+                        <span class="media-card__actions">
+                          <button class="media-switcher__toggle" type="button" aria-pressed="false" data-media-toggle>Play animation</button>
+                          <a href="assets/how-android-earthquake-alerts-work.png" target="_blank" rel="noopener">Open diagram</a>
+                        </span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>Does the system predict earthquakes?</h3>
+                  <div class="answer">
+                    <p><strong>No.</strong> It detects an earthquake that has already begun. Phones near the epicenter feel the early shaking; the system then tries to warn people farther away that the waves are heading toward them. This is why people at or very near the source may have little or no advance warning.</p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>How much warning time will I get?</h3>
+                  <div class="answer">
+                    <p><strong>It can range from no advance warning at all to around two minutes in favorable cases.</strong> Distance from the earthquake source is one of the biggest factors. The system needs time to detect the earthquake and estimate where shaking will occur, but once an alert is generated, the message travels much faster than the seismic waves. People close to the epicenter may already be shaking; people farther away may have tens of seconds or more.</p>
+                    <p>The Science study shows how wide that range can be:</p>
+                    <ul>
+                      <li><strong>Philippines, M6.7:</strong> Be Aware warning times ranged from a few seconds near the epicenter to about 90 seconds at 400 km. People who experienced moderate to strong shaking received anything from seconds to about a minute.</li>
+                      <li><strong>Nepal, M5.7:</strong> sparse phone coverage near the epicenter delayed detection, leaving no warning time within roughly 50 km. Many people who experienced moderate to strong shaking farther away received 10 to 60 seconds.</li>
+                      <li><strong>Venezuela, M7.2 and M7.5:</strong> Android warnings reached 11.4 million people, giving users from seconds to up to two minutes of notice.<a class="citation" href="#source-18">[18]</a></li>
+                    </ul>
+                    <p>These examples are not a promise. Warning time also depends on the earthquake's depth and size, how the fault ruptures, the density of usable phones near the source, detection speed and network delivery.<a class="citation" href="#source-3">[3]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>How did the system get started?</h3>
+                  <div class="answer">
+                    <p>The idea began during a one-week internal Google hackathon in 2015. Marc Stogaitis laid the groundwork for a global network that could use the sensors already inside phones, then continued refining it with a larger team. The first promising field data came when the prototype detected the 2018 magnitude 7.1 Anchorage earthquake.<a class="citation" href="#source-7">[7]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>What's the history of the system?</h3>
+                  <div class="answer">
+                    <ol class="timeline">
+                      <li><time datetime="2015-10">October 2015</time><p>During a one-week internal Google hackathon, Marc Stogaitis began exploring whether phone accelerometers could detect earthquakes, laying the groundwork for the Android Earthquake Alerts System.<a class="citation" href="#source-7">[7]</a></p></li>
+                      <li><time datetime="2018-11-30">November 2018</time><p>The first promising field data happened when it detected the magnitude 7.1 Anchorage earthquake.<a class="citation" href="#source-7">[7]</a></p></li>
+                      <li><time datetime="2020-08-11">August 2020</time><p>Android began distributing USGS ShakeAlert warnings in California. Phone-based detections initially improved rapid earthquake information in Google Search.<a class="citation" href="#source-5">[5]</a></p></li>
+                      <li><time datetime="2021-04-28">April 2021</time><p>Alerts generated by Android detections began rolling out in New Zealand and Greece.<a class="citation" href="#source-2">[2]</a></p></li>
+                      <li><time datetime="2023-12-31">End of 2023</time><p>The Android-detected system was active in 98 countries.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></p></li>
+                      <li><time datetime="2024-09-03">September 2024</time><p>Android's alert coverage expanded across the United States; ShakeAlert remains the source in California, Oregon and Washington.<a class="citation" href="#source-6">[6]</a></p></li>
+                    </ol>
+                  </div>
+                </article>
+              </section>
+
+              <section id="alerts">
+                <p class="section-kicker">02 · What you see</p>
+                <h2 class="section-title">Alert types</h2>
+                <p class="section-intro">The screen, sound and interruption level are matched to the shaking the system expects at your location.</p>
+
+                <div class="alert-grid">
+                  <article class="alert-card alert-card--aware">
+                    <div class="alert-card__copy">
+                      <h4>Be Aware</h4>
+                      <p class="alert-card__level">Shaking expected</p>
+                      <ul>
+                        <li>A heads-up for expected MMI 3 or above shaking from an earthquake of magnitude 4.5 or greater.</li>
+                        <li>Appears as a notification, plays a distinctive sound and normally respects volume and Do Not Disturb settings.</li>
+                        <li>Take it seriously: shaking forecasts are difficult, and earthquakes can grow after the first estimate.</li>
+                      </ul>
+                    </div>
+                    <img src="assets/alert-be-aware.webp" loading="lazy" alt="Android Be Aware earthquake alert on a phone" width="1080" height="2400">
+                  </article>
+                  <article class="alert-card alert-card--ready">
+                    <div class="alert-card__copy">
+                      <h4>Be Ready</h4>
+                      <p class="alert-card__level">Moderate to strong shaking</p>
+                      <ul>
+                        <li>Designed to get your attention before noticeable shaking arrives.</li>
+                        <li>Sent to users expected to experience MMI 4 or greater during a significant earthquake.</li>
+                        <li>Plays a distinctive sound repeatedly and may break through Do Not Disturb settings.</li>
+                      </ul>
+                    </div>
+                    <img src="assets/alert-be-ready.webp" loading="lazy" alt="Android Be Ready earthquake alert on a phone" width="1080" height="2400">
+                  </article>
+                  <article class="alert-card alert-card--action">
+                    <div class="alert-card__copy">
+                      <h4>Take Action</h4>
+                      <p class="alert-card__level">Strong to extreme shaking</p>
+                      <ul>
+                        <li>For locations expected to experience MMI 5 or greater shaking.</li>
+                        <li>Takes over the screen, turns it on and plays a loud, distinctive sound.</li>
+                        <li>Breaks through Do Not Disturb so you can act immediately.</li>
+                      </ul>
+                    </div>
+                    <img src="assets/alert-take-action.png" loading="lazy" alt="Android Take Action alert instructing the user to drop, cover and hold" width="1236" height="2757">
+                  </article>
+                </div>
+                <p class="mini-definition"><strong>MMI means Modified Mercalli Intensity:</strong> a measure of how strongly the ground shakes at a particular place. An earthquake has one magnitude, but its intensity varies by location, distance, depth, geology and buildings.<a class="citation" href="#source-1">[1]</a></p>
+
+                <article class="qa">
+                  <h3>How can I see a Take Action demo?</h3>
+                  <div class="answer">
+                    <p>On your phone, go to:</p>
+                    <p class="settings-path"><span>Settings</span><i>›</i><span>Safety &amp; emergency</span><i>›</i><span>Earthquake alerts</span><i>›</i><span>See a demo</span></p>
+                    <p><strong>Warning: it is going to be loud.</strong> Try it before an emergency, ideally when the sound will not startle someone nearby.</p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>What information is shown after the alert?</h3>
+                  <div class="answer">
+                    <p>Tapping an alert opens an earthquake safety page. It includes a map with an early estimate of the earthquake's location and magnitude, practical post-event steps, and a warning to expect aftershocks. It can also link to additional event information and a feedback survey.<a class="citation" href="#source-1">[1]</a></p>
+                    <figure class="media-card media-card--phone">
+                      <img src="assets/post-event-safety.png" loading="lazy" alt="Android post-earthquake safety screen with tips to get shoes, check gas and avoid damaged buildings" width="1236" height="2757">
+                      <figcaption>Android's post-event safety information. Source: Google Crisis Resilience.<a class="citation" href="#source-1">[1]</a></figcaption>
+                    </figure>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>Can a Be Aware alert sound when Do Not Disturb is enabled?</h3>
+                  <div class="answer">
+                    <p><strong>By default, Be Aware respects Do Not Disturb.</strong> On devices that expose notification-channel controls, you may be able to change that behavior:</p>
+                    <p class="settings-path"><span>Settings</span><i>›</i><span>Notifications</span><i>›</i><span>App notifications</span><i>›</i><span>Google Play services</span><i>›</i><span>Personal Safety</span></p>
+                    <p>Open <strong>Earthquake Early Warning Alert</strong> and <strong>Earthquake Early Warning Notification</strong>, then enable <strong>Override Do Not Disturb</strong> if your device offers it. Names and paths vary by Android version and manufacturer. Be Ready may break through Do Not Disturb; Take Action will.<a class="citation" href="#source-1">[1]</a></p>
+                  </div>
+                </article>
+              </section>
+
+              <section id="coverage">
+                <p class="section-kicker">03 · Where it works</p>
+                <h2 class="section-title">Coverage</h2>
+                <p class="section-intro">The detection network is global. Alert delivery is enabled country by country.</p>
+
+                <article class="qa">
+                  <h3>Which countries can receive Android earthquake alerts?</h3>
+                  <div class="answer">
+                    <p>The peer-reviewed study and Google's July 2025 research summary report that Android-generated alerts were active in <strong>98 countries</strong>. Because availability can change, use the <a href="https://support.google.com/android/answer/9319337#zippy=%2Cget-alerts-for-nearby-earthquakes%2Cwhere-the-android-earthquake-alerts-system-is-active">Android Help Center's live country list</a> as the source of truth.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-4">[4]</a></p>
+                    <figure class="media-card figure-wide">
+                      <img src="assets/map.png" loading="lazy" alt="World map of Android Earthquake Alerts detections and alerts" width="1891" height="1021">
+                      <figcaption>Light green: countries where Android detections generate alerts. Dark green: USGS ShakeAlert delivery in California, Oregon and Washington. Alerted shaking regions appear in yellow and red. Source: Google Research.<a class="citation" href="#source-2">[2]</a></figcaption>
+                    </figure>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>If the epicenter is in another country, can I still be alerted?</h3>
+                  <div class="answer">
+                    <p><strong>Yes.</strong> Alert eligibility depends on whether the system is enabled where your device is located, not whether the epicenter is inside the same border. If shaking from a nearby-country earthquake is expected to reach you, the event can still trigger an alert on your side of the border.<a class="citation" href="#source-4">[4]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>What's the relationship between ShakeAlert and the Android Earthquake Alerts System?</h3>
+                  <div class="answer">
+                    <p>They are separate systems that work together in California, Oregon and Washington. The USGS ShakeAlert system uses a network of ground-based seismic instruments to detect earthquakes and generate warnings. Android delivers those warnings directly to compatible devices in the affected area.</p>
+                    <p>In the rest of the supported world - including other U.S. states - Android generally uses earthquake information from its own phone-based detection network. The alert experience is still part of the Android Earthquake Alerts System; what changes is the source of the earthquake information.<a class="citation" href="#source-1">[1]</a><a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-6">[6]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>Can the system detect an earthquake in the ocean?</h3>
+                  <div class="answer">
+                    <p><strong>Yes.</strong> When earthquake waves reach a populated shoreline, phones on land can provide enough measurements to detect an offshore event. The Science study found magnitude 4.5 earthquakes detected up to roughly 100 km offshore and reports that the system detects subduction-zone events tens to hundreds of kilometers offshore. Mid-ocean events far from phones are much harder or impossible for this network to detect.<a class="citation" href="#source-3">[3]</a></p>
+                  </div>
+                </article>
+              </section>
+
+              <section id="setup">
+                <p class="section-kicker">04 · Your device</p>
+                <h2 class="section-title">Setup &amp; battery</h2>
+                <p class="section-intro">Receiving an alert and helping detect an earthquake are different jobs with different requirements.</p>
+
+                <article class="qa">
+                  <h3>Does detection use my battery? Is my phone always listening for earthquakes?</h3>
+                  <div class="answer">
+                    <p><strong>No.</strong> Detection monitoring is limited to suitable phones that are plugged in and stationary. Your phone is not continuously doing high-power earthquake analysis while you carry it around. It also does not need to be plugged in to <em>receive</em> an alert.<a class="citation" href="#source-3">[3]</a><a class="citation" href="#source-7">[7]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>How do I enable Android Earthquake Alerts?</h3>
+                  <div class="answer">
+                    <p>In a supported region, alerts should be on by default. To check or change the setting:</p>
+                    <p class="settings-path"><span>Settings</span><i>›</i><span>Safety &amp; emergency</span><i>›</i><span>Earthquake alerts</span></p>
+                    <p>If you do not see <strong>Safety &amp; emergency</strong>, try <strong>Location › Advanced › Earthquake alerts</strong>. You also need Wi-Fi or cellular data turned on.<a class="citation" href="#source-4">[4]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>How can I verify that my device is properly set up?</h3>
+                  <div class="answer">
+                    <ul>
+                      <li>Open <strong>Settings › Safety &amp; emergency › Earthquake alerts</strong>. The screen will tell you whether alerts are enabled.</li>
+                      <li>Confirm <strong>Location</strong> is on; approximate location determines whether your device is in the expected shaking area.</li>
+                      <li>Confirm <strong>Wi-Fi or cellular data</strong> is on. The system requires a network connection.</li>
+                      <li>Make sure you have not disabled all notifications from <strong>Google Play services</strong>, including the Personal Safety earthquake channels.</li>
+                      <li>Check that you are in a <a href="https://support.google.com/android/answer/9319337#zippy=%2Cget-alerts-for-nearby-earthquakes%2Cwhere-the-android-earthquake-alerts-system-is-active">supported country</a>.</li>
+                    </ul>
+                    <p>The system uses a privacy-preserving, coarse device location for alert delivery; it does not need a precise location to identify an individual user.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-4">[4]</a></p>
+                  </div>
+                </article>
+              </section>
+
+              <section id="performance">
+                <p class="section-kicker">05 · What the data says</p>
+                <h2 class="section-title">Reach &amp; accuracy</h2>
+                <p class="section-intro">A global system gains reach from phones people already own - and learns from every new earthquake.</p>
+
+                <article class="qa">
+                  <h3>How many people have access to earthquake early warning?</h3>
+                  <div class="answer">
+                    <div class="data-callout"><div class="data-callout__number">10×</div><p>About 250 million people had access to earthquake early warning in 2019. With Android's global rollout, the estimate grew to 2.5 billion - approximately a tenfold increase.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></p></div>
+                    <figure class="media-card figure-wide">
+                      <img src="assets/global-reach.png" loading="lazy" alt="Chart showing global access to earthquake early warning growing from 250 million in 2019 to 2.5 billion with Android" width="1999" height="1391">
+                      <figcaption>The global reach of earthquake early warning expanded dramatically with Android. Source: Google Research.<a class="citation" href="#source-2">[2]</a></figcaption>
+                    </figure>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>How accurate is the system?</h3>
+                  <div class="answer">
+                    <p>There is no single accuracy number; detection, magnitude, location, start-time, shaking forecast and delivery are important metrics. The 2025 Science study provides several useful measures for the April 2021 through March 2024 evaluation period:</p>
+                    <ul>
+                      <li><strong>11,231 earthquakes detected,</strong> averaging 312 per month, from magnitude 1.9 up to 7.8.</li>
+                      <li><strong>1,279 Android-detected events generated alerts.</strong> Three were false alerts: two thunderstorms and one mass phone-notification event. The causes led to algorithm changes.</li>
+                      <li><strong>Magnitude estimates improved:</strong> median absolute error in the first estimate fell from 0.50 to 0.25 over three years; its 90th-percentile error fell from 1.02 to 0.70.</li>
+                      <li><strong>User feedback was strongly positive:</strong> in more than 1.5 million survey responses, 85% rated the alert "very helpful." Even among respondents who did not feel shaking, 79% rated it as very helpful.</li>
+                    </ul>
+                    <p>Google's later public update reported more than 18,000 detections, alerts for more than 2,000 earthquakes and 790 million individual alerts delivered.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></p>
+                    <figure class="media-card figure-wide">
+                      <img src="assets/magnitude-error.png" loading="lazy" alt="Graph showing Android earthquake magnitude error decreasing over three years" width="1299" height="977">
+                      <figcaption>Evolution of magnitude-estimation error. The first estimate provides the most warning time; later estimates have more data. Source: Google Research.<a class="citation" href="#source-2">[2]</a></figcaption>
+                    </figure>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>Why is estimating magnitude so difficult?</h3>
+                  <div class="answer">
+                    <p>An early warning system must decide while the earthquake is still unfolding. In the first few seconds, only part of the fault may have ruptured and only a small fraction of the eventual energy may have been released. The largest events can start like smaller ones.</p>
+                    <ul>
+                      <li><strong>Wait longer,</strong> and the estimate generally improves - but every second spent waiting is one less second of warning.</li>
+                      <li><strong>Underestimate,</strong> and people who will experience dangerous shaking may not be warned.</li>
+                      <li><strong>Overestimate,</strong> and an unnecessarily broad or urgent alert may weaken trust.</li>
+                    </ul>
+                    <p>That is why an early warning magnitude will often differ from the final value published by an official seismic agency hours or days later. Final catalogs use the complete earthquake and far more data; an alert must use the incomplete beginning.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>Do people find the alerts useful?</h3>
+                  <div class="answer">
+                    <p>Yes. The study's opt-in survey is not a randomized sample, but it is unusually large: 1,555,006 responses. In addition to the 85% "very helpful" result, 92% of Take Action recipients who answered the shaking question reported strong shaking, and 28% of Take Action recipients reported Drop, Cover and Hold On - the most common action for that alert.<a class="citation" href="#source-3">[3]</a></p>
+                    <figure class="media-card figure-wide">
+                      <img src="assets/user-feedback.png" loading="lazy" alt="Charts summarizing feedback from more than 1.5 million Android earthquake alert recipients" width="1999" height="763">
+                      <figcaption>What alert recipients reported. Source: Google Research and the peer-reviewed Science paper.<a class="citation" href="#source-2">[2]</a><a class="citation" href="#source-3">[3]</a></figcaption>
+                    </figure>
+                  </div>
+                </article>
+              </section>
+
+              <section id="events">
+                <p class="section-kicker">06 · In the field</p>
+                <h2 class="section-title">Example events</h2>
+                <p class="section-intro">Warning time depends on where the quake begins, where phones are available and how far each recipient is from the source.</p>
+
+                <div class="events-grid">
+                  <article class="event-card">
+                    <p class="event-card__meta">Philippines · M6.7 · Nov 2023</p>
+                    <h4>Up to a minute for moderate shaking</h4>
+                    <p>The first alert went out 18.3 seconds after origin time. Nearly 2.5 million phones were alerted. People in the strongest shaking zone received up to about 15 seconds; people farther away who experienced moderate shaking received up to roughly a minute.</p>
+                    <p class="event-card__metric">100,000+ Take Action alerts</p>
+                  </article>
+                  <article class="event-card">
+                    <p class="event-card__meta">Nepal · M5.7 · Nov 2023</p>
+                    <h4>Ten million alerts</h4>
+                    <p>The first alert was generated 15.6 seconds after the earthquake began. Sparse phone coverage near the epicenter delayed detection, but many people who experienced moderate to strong shaking received roughly 10 to 60 seconds of warning.</p>
+                    <p class="event-card__metric">10m+ Be Aware alerts</p>
+                  </article>
+                  <article class="event-card event-card--feature">
+                    <p class="event-card__meta">Türkiye · M6.2 · Apr 2025</p>
+                    <h4>Watch a detection unfold, phone by phone</h4>
+                    <p>The system generated its first alert 8.0 seconds after origin time and delivered more than 11 million alerts. People who experienced moderate to strong shaking received from a few seconds to about 20 seconds of warning.</p>
+                    <figure class="media-card">
+                      <video controls muted loop preload="metadata" playsinline>
+                        <source src="assets/phones-detecting-turkiye.mp4" type="video/mp4">
+                        Your browser does not support embedded video.
+                      </video>
+                      <figcaption>Phones detecting shaking as the earthquake progresses. Yellow dots are phone triggers; the yellow and red circles estimate the P- and S-wave fronts. Source: Google Research.<a class="citation" href="#source-2">[2]</a></figcaption>
+                    </figure>
+                    <p class="event-card__metric">First alert: 8.0 seconds · 11m+ alerts delivered</p>
+                  </article>
+                  <article class="event-card event-card--wide">
+                    <p class="event-card__meta">Philippines · M7.8 · Jun 2026</p>
+                    <h4>A major offshore event</h4>
+                    <p>PHIVOLCS reports that the June 8 Sarangani earthquake was a magnitude 7.8 event centered offshore near southern Mindanao. Public videos captured Android alerts in the affected region. Audited Android detection timing and delivery totals have not yet been published, so this guide does not infer them from social posts.<a class="citation" href="#source-11">[11]</a></p>
+                    <a class="video-link" href="https://www.youtube.com/watch?t=550&amp;v=VvfyyTAneYc" aria-label="Watch public video showing the Philippines earthquake alert on YouTube">
+                      <img src="assets/philippines-2026-video.jpg" loading="lazy" alt="Video thumbnail from coverage of the 2026 Philippines earthquake" width="1280" height="720">
+                    </a>
+                    <p class="clip-links"><strong>More public clips:</strong> <a href="https://www.facebook.com/reel/2222063308595401">Facebook 1</a> · <a href="https://www.facebook.com/reel/886845993692900/">Facebook 2</a> · <a href="https://x.com/News5PH/status/2064277755508973895">News5 on X</a></p>
+                    <p class="event-card__metric">Official event magnitude: M7.8</p>
+                  </article>
+                  <article class="event-card event-card--wide event-card--field-report">
+                    <p class="event-card__meta">Venezuela · M7.2 &amp; M7.5 · Jun 2026</p>
+                    <h4>11.4 million people warned in a twin event</h4>
+                    <p>Two major earthquakes struck northern Venezuela on June 24. The New York Times reports that Android warnings reached 11.4 million people, giving recipients from seconds to up to two minutes of notice. People farther from the earthquakes were more likely to receive an alert before shaking began.<a class="citation" href="#source-13">[13]</a><a class="citation" href="#source-18">[18]</a></p>
+                    <p class="event-card__note">Public videos and posts show individual experiences during the earthquakes; they are not audited measurements of system performance.</p>
+                    <div class="event-media-grid">
+                      <figure class="event-clip">
+                        <video controls preload="metadata" playsinline poster="assets/venezuela-shop-warning.jpg" aria-label="Shop security footage showing people responding to an Android earthquake alert">
+                          <source src="assets/venezuela-shop-warning.mp4" type="video/mp4">
+                          Your browser does not support embedded video.
+                        </video>
+                        <figcaption><strong>About 30 seconds to react</strong>People in a shop receive the alert and leave before severe shaking begins. <a href="https://x.com/marcsto/status/2070743201099735419">Watch the original post on X</a>.</figcaption>
+                      </figure>
+                      <figure class="event-clip">
+                        <video controls preload="metadata" playsinline poster="assets/venezuela-father-daughter.jpg" aria-label="Home footage showing a father responding to an Android earthquake alert and evacuating with his daughter">
+                          <source src="assets/venezuela-father-daughter.mp4" type="video/mp4">
+                          Your browser does not support embedded video.
+                        </video>
+                        <figcaption><strong>A father gets his daughter</strong>He receives the alert, gets his daughter and leaves before shaking arrives. <a href="https://x.com/heraldodemexico/status/2070572324428873815">Watch the original post on X</a>.</figcaption>
+                      </figure>
+                    </div>
+                    <p class="clip-links"><strong>More public footage:</strong> <a href="https://x.com/marcsto/status/2070740867422580978">World Cup shopping-center evacuation</a> · <a href="https://www.instagram.com/reel/DaBfw-8onzJ/?igsh=MTc4MmM1YmI2Ng%3D%3D">Family moves toward the exit</a></p>
+                    <div class="recipient-reports" data-story-carousel>
+                      <div class="recipient-reports__header">
+                        <h5 id="recipient-reports-title">What people shared</h5>
+                        <div class="story-carousel__controls">
+                          <button class="story-carousel__button" type="button" data-story-prev aria-label="Show the previous recipient report" aria-controls="recipient-report-track">&larr;</button>
+                          <span class="story-carousel__status" data-story-status>1 of 20</span>
+                          <button class="story-carousel__button" type="button" data-story-next aria-label="Show the next recipient report" aria-controls="recipient-report-track">&rarr;</button>
+                          <button class="story-carousel__button story-carousel__toggle" type="button" data-story-toggle aria-label="Pause automatic recipient reports">Pause</button>
+                        </div>
+                      </div>
+                      <div class="story-carousel__viewport" role="region" aria-roledescription="carousel" aria-labelledby="recipient-reports-title" aria-live="off" tabindex="0">
+                        <div class="story-carousel__track" id="recipient-report-track" data-story-track>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="1 of 20">
+                            <p>&ldquo;I was about to get into an elevator, but the alarm went off, so I didn't.&rdquo;</p>
+                            <cite><a href="https://x.com/Aglaia_Berlutti/status/2070979484463804873">Aglaia Berlutti on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="2 of 20">
+                            <p>&ldquo;I received the alert like 30 secs before the shake and that allowed us to go under the table.&rdquo;</p>
+                            <cite><a href="https://x.com/Egp240576/status/2071022245145633239">La vieja fitness con un cambur on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="3 of 20">
+                            <p>&ldquo;It was the only thing that alerted me and I had a minute to gather my phone, water bottle and put myself safe.&rdquo;</p>
+                            <cite><a href="https://x.com/sailoor_maria/status/2070978849815359557">Mar&iacute;a on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="4 of 20">
+                            <p>&ldquo;The phone generated the alert 10 seconds before.&rdquo;</p>
+                            <cite><a href="https://x.com/Rafass_3/status/2070962864358064213">Rafael S&aacute;nchez on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="5 of 20">
+                            <p>&ldquo;Thanks to the alarm, my family and I were together when the earthquake started, which made the evacuation easier.&rdquo;</p>
+                            <cite><a href="https://x.com/latin_hera/status/2070838939322060967">Queen Hera on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="6 of 20">
+                            <p>&ldquo;Thanks to that alert, I wasn't in an elevator when the earthquake struck.&rdquo;</p>
+                            <cite><a href="https://x.com/Ohliv98/status/2070954609942708722">ohliv on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="7 of 20">
+                            <p>&ldquo;Thanks to the warning we were alerted and we were able to cling to the columns or under the table in my house.&rdquo;</p>
+                            <cite><a href="https://x.com/Ingenielson2279/status/2070894933007843412">Nelson Rodriguez on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="8 of 20">
+                            <p>&ldquo;I was there... The notification was unexpected and timely—it definitely helped a lot of people.&rdquo;</p>
+                            <cite><a href="https://x.com/lecarlotti/status/2071037207276568658">Luis Carlotti on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="9 of 20">
+                            <p>&ldquo;Such early and rapid warning about the impending earthquake offers most valuable time, allowing you to react without being caught off guard.&rdquo;</p>
+                            <cite><a href="https://x.com/nacquatella/status/2070966865178792317">Neil Acquatella on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="10 of 20">
+                            <p>&ldquo;You saved my life, my wife and my daughter thanks to your work.&rdquo;</p>
+                            <cite><a href="https://x.com/SignosQQ/status/2070899361358225769">SignosQQ on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="11 of 20">
+                            <p>&ldquo;The message reached me as well as many friends and family... it is a great tool.&rdquo;</p>
+                            <cite><a href="https://x.com/AdrianaVil64472/status/2070997295840080151">pat,123 on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="12 of 20">
+                            <p>&ldquo;Heard so many stories of friends and family... who this saved precious seconds for.&rdquo;</p>
+                            <cite><a href="https://x.com/gusiggins/status/2070964924483014945">Gus on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="13 of 20">
+                            <p>&ldquo;I am Venezuelan and I live in Caracas. Thanks a million for this very important alert application that saves lives.&rdquo;</p>
+                            <cite><a href="https://x.com/LuisaElena2302/status/2070977188174745862">Luisa Elena Sucre F. on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="14 of 20">
+                            <p>&ldquo;...gave the opportunity to survive... including my young brother, my father, his wife and my godparents.&rdquo;</p>
+                            <cite><a href="https://x.com/PreUenLinea/status/2070993201385615833">PreuniversitarioenLinea.com on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="15 of 20">
+                            <p>&ldquo;What you did literally saved my friend and his family. Infinite thanks.&rdquo;</p>
+                            <cite><a href="https://x.com/soymaikoldev/status/2070838301318099001">Maikol on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="16 of 20">
+                            <p>&ldquo;Thank you Marc, you saved the lives of me, my children and my husband.&rdquo;</p>
+                            <cite><a href="https://x.com/Mariposita340/status/2070998446543372415">Venezolana7estrellas on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="17 of 20">
+                            <p>&ldquo;Saved my and my parents life. Thank you.&rdquo;</p>
+                            <cite><a href="https://x.com/reysantaf/status/2070830131325644802">Reinaldo Santana Fajardo on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="18 of 20">
+                            <p>&ldquo;Many Venezuelans received the notifications and mobilized more quickly. My aunt received it.&rdquo;</p>
+                            <cite><a href="https://x.com/Berbinda/status/2070983696748888534">Berbinda on X</a></cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="19 of 20">
+                            <p>&ldquo;Many Venezuelans reacted in time thanks to the notification they received on their cell phones!&rdquo;</p>
+                            <cite><a href="https://x.com/DarianaRondn1/status/2070940071197384957">Dariana Rond&oacute;n on X</a> · translated from Spanish</cite>
+                          </blockquote>
+                          <blockquote class="recipient-report story-carousel__slide" data-story-slide role="group" aria-roledescription="slide" aria-label="20 of 20">
+                            <p>&ldquo;Every new video shows people reacting faster because they heard the alert, even before knowing what it meant.&rdquo;</p>
+                            <cite><a href="https://x.com/fl0rmA/status/2070996484745482262">Flor Mar&iacute;a Roa on X</a></cite>
+                          </blockquote>
+                        </div>
+                      </div>
+                      <div class="story-carousel__dots" aria-label="Choose a recipient report"></div>
+                    </div>
+                    <p class="event-card__metric">11.4m people reached</p>
+                  </article>
+                </div>
+
+                <figure class="media-card figure-wide">
+                  <img src="assets/warning-times.png" loading="lazy" alt="Warning time plotted against shaking intensity for earthquakes in the Philippines and Nepal" width="1999" height="1070">
+                  <figcaption>Warning times observed in the 2023 Philippines and Nepal events. Source: Google Research.<a class="citation" href="#source-2">[2]</a></figcaption>
+                </figure>
+              </section>
+
+              <section id="missed-alerts">
+                <p class="section-kicker">07 · Limits</p>
+                <h2 class="section-title">Why an alert may not arrive</h2>
+                <p class="section-intro">The system tries to alert as many people as possible for as many earthquakes as possible. It cannot reach everyone - no earthquake early warning system can.</p>
+
+                <div class="reasons">
+                  <article class="reason"><h4>You are very close to the source</h4><p>The system does not predict the future. It needs phones to feel motion, enough reports to agree, and time to calculate the event. Near the epicenter, initial shaking may arrive before the alert - although a warning before peak shaking can still be possible.</p></article>
+                  <article class="reason"><h4>Alerting is not enabled where you are</h4><p>The detection network may observe an event even where user alerts are not active. Check the <a href="https://support.google.com/android/answer/9319337#zippy=%2Cget-alerts-for-nearby-earthquakes%2Cwhere-the-android-earthquake-alerts-system-is-active">Android Help Center's current country list</a>.<a class="citation" href="#source-4">[4]</a></p></article>
+                  <article class="reason"><h4>Location is off</h4><p>Without location, the system cannot determine that your device is inside the affected region. Alerting uses a privacy-preserving coarse location, not a precise personal location.<a class="citation" href="#source-2">[2]</a></p></article>
+                  <article class="reason"><h4>Your device or platform is not supported</h4><p>You need a compatible Android phone, watch or tablet with Google Play services support. This Android system does not itself send alerts to iPhones.</p></article>
+                  <article class="reason"><h4>Earthquake alerts are turned off</h4><p>They should be on by default in supported regions. Verify the switch under Settings › Safety &amp; emergency › Earthquake alerts.</p></article>
+                  <article class="reason"><h4>Google Play services notifications are blocked</h4><p>Be Aware and Be Ready notifications depend on notification-channel settings. Check Google Play services › Personal Safety and confirm the earthquake channels are enabled.</p></article>
+                  <article class="reason"><h4>The earthquake was not detected</h4><p>Detection depends on the event's physics, nearby phone density, phone noise and working connectivity. Offshore and sparsely populated areas are especially challenging.</p></article>
+                  <article class="reason"><h4>The system underestimated the magnitude</h4><p>Alerts are issued when the estimated magnitude reaches 4.5 or above. If the system underestimates an earthquake and its estimates remain below that threshold, it may not send an alert.</p></article>
+                  <article class="reason"><h4>Detection came too late for your location</h4><p>Even a correctly detected event may not leave enough time for advance warning at every location. Android Help explicitly notes that an alert may arrive before, during or after shaking begins.<a class="citation" href="#source-4">[4]</a></p></article>
+                  <article class="reason"><h4>Delivery was delayed</h4><p>Millions of devices may need to be reached in seconds. Network congestion, server-to-device delivery, connection type and a sleeping or offline device can all add delay.</p></article>
+                  <article class="reason"><h4>A network outage occurred</h4><p>Detection and delivery both require connectivity. A pre-existing outage - or infrastructure damage early in the event - can interrupt phone reports and outbound alerts.</p></article>
+                  <article class="reason"><h4>Wi-Fi and cellular data were both off</h4><p>At least one must be enabled. A Temblor analysis of a California event found that devices on Wi-Fi were more likely to receive a fast alert, though performance varies by network and event.<a class="citation" href="#source-10">[10]</a></p></article>
+                </div>
+              </section>
+
+              <section id="safety">
+                <p class="section-kicker">08 · Make a plan</p>
+                <h2 class="section-title">Protective actions</h2>
+                <p class="section-intro">An alert is useful only if you already know what you are going to do with the time it gives you.</p>
+
+                <div class="safety-banner">
+                  <strong>There is no single instruction that is safest in every building and every country.</strong>
+                  <p>Construction materials, collapse risk, falling-facade risk, tsunami exposure and official guidance vary. Check your local emergency-management advice and plan for the actual rooms, buildings and routes where you spend time.</p>
+                </div>
+
+                <article class="qa">
+                  <h3>When should I Drop, Cover and Hold On?</h3>
+                  <div class="answer">
+                    <p>In the United States, USGS recommends:</p>
+                    <div class="situation-grid">
+                      <article class="situation"><h4>If you are indoors</h4><p>Stay there. Get under a desk or table and hold on, or move against an inside wall. Keep clear of windows, fireplaces, kitchens and heavy furniture. Do not rush downstairs or outside while the building is shaking.</p></article>
+                      <article class="situation"><h4>If you are outside</h4><p>Move into the open, away from buildings, power lines, chimneys and anything else that may fall.</p></article>
+                      <article class="situation"><h4>If you are driving</h4><p>Pull over carefully, away from bridges, trees, posts, power lines and signs. Stay inside the vehicle until shaking stops, then watch for damaged pavement and fallen rock.</p></article>
+                      <article class="situation"><h4>Mountains or coast</h4><p>Watch for landslides and falling rock in mountainous areas. Near the ocean, follow local tsunami guidance and be ready to move inland or uphill after strong or long shaking.</p></article>
+                    </div>
+                    <p>Drop, Cover and Hold On protects against falling objects, reduces the chance that violent back-and-forth motion will throw you down, and avoids the dangerous exterior zone where glass, masonry and facades may fall.<a class="citation" href="#source-8">[8]</a><a class="citation" href="#source-9">[9]</a></p>
+                    <figure class="media-card">
+                      <video controls preload="metadata" playsinline poster="assets/usgs-drop-cover-hold.jpg">
+                        <source src="assets/usgs-drop-cover-hold.mp4" type="video/mp4">
+                        Your browser does not support embedded video.
+                      </video>
+                      <figcaption>USGS demonstration of Drop, Cover and Hold On (50 seconds; public domain).<a class="citation" href="#source-17">[17]</a></figcaption>
+                    </figure>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>When should I evacuate a building?</h3>
+                  <div class="answer">
+                    <p><strong>Follow the plan for your building and the instructions of your local authorities.</strong> In many regions, leaving during shaking is more dangerous than sheltering because exits, stairs and the area immediately outside can be exposed to falls and debris. In other settings - particularly vulnerable masonry or concrete buildings with a very short, safe route to an open assembly area - local guidance may favor immediate evacuation from lower floors.</p>
+                    <ul>
+                      <li><strong>Mexico:</strong> guidance reported from Mexico's Civil Protection authorities says people on the ground, first or second floor may evacuate in an orderly way when the route and assembly point are safe, while people on the third floor or above should shelter in a lower-risk interior location until shaking stops. It also stresses evaluating falling glass, trees and old facades.<a class="citation" href="#source-15">[15]</a></li>
+                      <li><strong>Peru:</strong> INDECI guidance reported by the state news agency distinguishes a first-floor route with direct access to a safe open area from upper floors, where people should use identified internal safety zones and evacuate after motion stops.<a class="citation" href="#source-16">[16]</a></li>
+                    </ul>
+                    <p>Wood-framed buildings often flex differently from older unreinforced masonry, brick or concrete buildings, but construction type alone is not enough to make a split-second decision. Learn your local guidance, identify structural and nonstructural hazards, practice your route, and decide in advance what you will do in each place you regularly occupy.</p>
+                  </div>
+                </article>
+
+                <article class="qa">
+                  <h3>So what is the short answer?</h3>
+                  <div class="answer">
+                    <p>I cannot give one universal recommendation. <strong>Check what your local government and emergency-management office recommends, and have a plan for the different spaces you use.</strong> If an alert arrives, use the warning time to carry out that plan - not to begin inventing one.</p>
+                  </div>
+                </article>
+              </section>
+
+              <section id="learn-more">
+                <p class="section-kicker">09 · Official links</p>
+                <h2 class="section-title">To Learn More</h2>
+                <p class="section-intro">These official Google resources are the best places to continue reading and to check current product information.</p>
+                <div class="learn-more-grid">
+                  <a class="learn-more-card" href="https://crisisresilience.google/android-early-earthquake-warnings">
+                    <span class="learn-more-card__label">Official overview</span>
+                    <strong>Android early earthquake warnings</strong>
+                    <span class="learn-more-card__summary">How the system detects earthquakes and how Be Aware, Be Ready and Take Action alerts work.</span>
+                    <span class="learn-more-card__cta">Explore Crisis Resilience <span aria-hidden="true">&nearr;</span></span>
+                  </a>
+                  <a class="learn-more-card" href="https://support.google.com/android/answer/9319337#zippy=%2Cget-alerts-for-nearby-earthquakes%2Cwhere-the-android-earthquake-alerts-system-is-active">
+                    <span class="learn-more-card__label">Official help</span>
+                    <strong>Get alerts for nearby earthquakes</strong>
+                    <span class="learn-more-card__summary">Current country availability, requirements, limitations and instructions for checking your settings.</span>
+                    <span class="learn-more-card__cta">Visit Android Help <span aria-hidden="true">&nearr;</span></span>
+                  </a>
+                  <a class="learn-more-card" href="https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/">
+                    <span class="learn-more-card__label">Research blog</span>
+                    <strong>Android Earthquake Alerts: A global system for early warning</strong>
+                    <span class="learn-more-card__summary">Marc Stogaitis's overview of the global network, its performance and the research published in 2025.</span>
+                    <span class="learn-more-card__cta">Read the research post <span aria-hidden="true">&nearr;</span></span>
+                  </a>
+                </div>
+              </section>
+
+              <aside class="personal-note">
+                <h3>A quick note</h3>
+                <p>I'm the founder and lead of the team that built the Android Earthquake Alerts System, but I'm writing this guide in my personal capacity, not on behalf of Google. My goal here is simply to bring together everything that is publicly known about the system into one helpful resource. All facts, data, and details presented are strictly drawn from public records and cited sources.</p>
+                <a class="personal-note__follow" href="https://x.com/marcsto" rel="me">Follow me on X <strong>@marcsto</strong> <span aria-hidden="true">&nearr;</span></a>
+              </aside>
+
+              <section id="sources">
+                <p class="section-kicker">10 · References</p>
+                <h2 class="section-title">Sources</h2>
+                <p class="section-intro">Primary and official sources are used wherever possible. Figures and product screens are reproduced from the linked public pages.</p>
+                <ol class="source-list">
+                  <li id="source-1"><a href="https://crisisresilience.google/android-early-earthquake-warnings">Google Crisis Resilience: Android early earthquake warnings<span>Current alert definitions, product screens, detection overview and safety information.</span></a></li>
+                  <li id="source-2"><a href="https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/">Google Research: Android Earthquake Alerts - A global system for early warning<span>Public research summary, global statistics, maps, performance figures and examples.</span></a></li>
+                  <li id="source-3"><div><a href="https://www.science.org/doi/10.1126/science.ads4779">Allen et al., <em>Global earthquake detection and warning using Android phones</em>, Science (2025)</a><span>Peer-reviewed methods, evaluation and user-response study. <a href="assets/AllenEtAl-AndroidEarthquakeAlerts-Science-2025.pdf">Read the supplied PDF copy.</a></span></div></li>
+                  <li id="source-4"><a href="https://support.google.com/android/answer/9319337#zippy=%2Cget-alerts-for-nearby-earthquakes%2Cwhere-the-android-earthquake-alerts-system-is-active">Android Help: Get alerts for nearby earthquakes<span>Live country list, requirements, limitations and settings instructions.</span></a></li>
+                  <li id="source-5"><a href="https://blog.google/products-and-platforms/platforms/android/earthquake-detection-and-alerts/">Google: Earthquake detection and early alerts, now on your Android phone (2020)<span>Initial launch and technical introduction by Marc Stogaitis.</span></a></li>
+                  <li id="source-6"><a href="https://blog.google/products-and-platforms/platforms/android/android-earthquake-alerts-expansion/">Google: Android Earthquake Alerts now available across the U.S.<span>United States expansion and the relationship with USGS ShakeAlert.</span></a></li>
+                  <li id="source-7"><div><a href="https://www.washingtonpost.com/climate-environment/2025/07/17/android-earthquake-detection-study/">The Washington Post: Your Android phone is getting better at warning you about earthquakes</a><span>Origins of the system, interviews and independent overview. <a href="assets/Your-Android-phone-is-getting-better-at-warning-you-about-earthquakes-The-Washington-Post-Reprint.pdf">Read the supplied reprint.</a></span></div></li>
+                  <li id="source-8"><a href="https://www.usgs.gov/faqs/what-should-i-do-during-earthquake">U.S. Geological Survey: What should I do during an earthquake?<span>U.S. protective-action recommendations for indoors, outdoors, driving, mountains and coastlines.</span></a></li>
+                  <li id="source-9"><a href="https://www.weather.gov/safety/tsunami-during">NOAA / National Weather Service: During a tsunami<span>Official U.S. tsunami safety guidance.</span></a></li>
+                  <li id="source-10"><a href="https://rallen.berkeley.edu/press/pdfs/20221220_Temblor.pdf">Temblor: MyShake warning delivery analysis<span>Independent examination of factors associated with earthquake warning delivery times.</span></a></li>
+                  <li id="source-11"><a href="https://www.phivolcs.dost.gov.ph/primer-on-the-08-june-2026-magnitude-mw-7-8-offshore-sarangani-earthquake/">PHIVOLCS: Primer on the June 8, 2026 M7.8 Offshore Sarangani earthquake<span>Official Philippines event description and parameters.</span></a></li>
+                  <li id="source-12"><a href="https://www.youtube.com/watch?t=550&amp;v=VvfyyTAneYc">Public video showing an Android alert during the 2026 Philippines earthquake<span>Linked as an observation, not as a source for audited system performance.</span></a></li>
+                  <li id="source-13"><a href="https://www.paho.org/sites/default/files/2026/06/24jun2026ven-earthquakessitrep1.pdf">PAHO: Venezuela earthquakes situation report<span>Event magnitudes and regional impact for the June 24, 2026 sequence.</span></a></li>
+                  <li id="source-14"><a href="https://current.fas.harvard.edu/stories/smartphone-system-detected-seismic-activity-saved-lives-venezuela">Harvard FAS: The smartphone system that detected seismic activity in Venezuela<span>Public account of Android detection and 11.4 million alerts.</span></a></li>
+                  <li id="source-15"><a href="https://www.infobae.com/mexico/2024/09/19/evacuar-o-no-esto-es-lo-que-debes-hacer-en-caso-de-sismo-dependiendo-el-piso-donde-estes-segun-proteccion-civil/">Infobae: Mexico Civil Protection guidance by floor<span>Reported CNPC guidance on evacuation and sheltering decisions.</span></a></li>
+                  <li id="source-16"><a href="https://andina.pe/ingles/noticia-simulacro-multipeligro-lima-y-callao-hacer-ante-sismo-magnitud-88-video-895283.aspx">Agencia Andina: INDECI earthquake preparation guidance<span>Peruvian state news coverage of official safety-zone and evacuation planning.</span></a></li>
+                  <li id="source-17"><a href="https://www.usgs.gov/media/videos/part-five-drop-cover-and-hold">USGS: Drop, Cover and Hold On video<span>Official 50-second public-domain protective-action demonstration.</span></a></li>
+                  <li id="source-18"><a href="assets/How%20Phones%20Alerted%20Millions%20Before%20Earthquakes%20Shook%20Venezuela%20-%20The%20New%20York%20Times%20-%20Reprint.pdf">The New York Times: How Phones Alerted Millions Before Earthquakes Shook Venezuela<span>Reported warning times, alert reach and the role of distance during the June 2026 earthquakes.</span></a></li>
+                </ol>
+
+                <p class="updated-note">Last fact-checked August 11, 2026. Alert availability, settings paths and product behavior can change; consult Android Help and your local emergency-management authority for current guidance.</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__social">
+        <a href="https://twitter.com/marcsto" aria-label="Twitter"><svg aria-hidden="true"><use href="../assets/svg/svg-map.svg#twitter"></use></svg></a>
+        <a href="https://www.linkedin.com/in/marc-stogaitis-81379224" aria-label="LinkedIn"><svg aria-hidden="true"><use href="../assets/svg/svg-map.svg#linkedin"></use></svg></a>
+      </div>
+      <div class="footer__copyright"><p>Independent guide by Marc Stogaitis · <a href="../">Marc.ai</a></p></div>
+      <button class="footer__bttop js-footer__bttop" aria-label="Back to top"><svg aria-hidden="true"><use href="../assets/svg/svg-map.svg#toparrow"></use></svg></button>
+    </footer>
+  </div>
+
+  <script>window.publiiThemeMenuConfig={mobileMenuMode:'sidebar',animationSpeed:300,submenuWidth:'auto',doubleClickTime:500,mobileMenuExpandableSubmenus:true,relatedContainerForOverlayMenuSelector:'.top'};</script>
+  <script defer src="../assets/js/scripts.min.js"></script>
+  <script>
+    (function(){
+      var images=document.querySelectorAll('img[loading]');
+      for(var i=0;i<images.length;i++){
+        if(images[i].complete){images[i].classList.add('is-loaded');}
+        else{images[i].addEventListener('load',function(){this.classList.add('is-loaded');},false);}
+      }
+
+      var mediaToggles=document.querySelectorAll('[data-media-toggle]');
+      for(var j=0;j<mediaToggles.length;j++){
+        mediaToggles[j].addEventListener('click',function(){
+          var figure=this.closest('.media-card');
+          var image=figure.querySelector('[data-media-image]');
+          var video=figure.querySelector('[data-media-video]');
+          var showVideo=video.hidden;
+
+          image.hidden=showVideo;
+          video.hidden=!showVideo;
+          this.setAttribute('aria-pressed',showVideo?'true':'false');
+          this.textContent=showVideo?'Show diagram':'Play animation';
+
+          if(showVideo){
+            var playback=video.play();
+            if(playback&&typeof playback.catch==='function'){playback.catch(function(){});}
+          }else{
+            video.pause();
+          }
+        },false);
+      }
+
+      var storyCarousels=document.querySelectorAll('[data-story-carousel]');
+      for(var k=0;k<storyCarousels.length;k++){
+        (function(carousel){
+          var track=carousel.querySelector('[data-story-track]');
+          var slides=carousel.querySelectorAll('[data-story-slide]');
+          var dotsContainer=carousel.querySelector('.story-carousel__dots');
+          var previous=carousel.querySelector('[data-story-prev]');
+          var next=carousel.querySelector('[data-story-next]');
+          var toggle=carousel.querySelector('[data-story-toggle]');
+          var status=carousel.querySelector('[data-story-status]');
+          var viewport=carousel.querySelector('.story-carousel__viewport');
+          var current=0;
+          var timer=null;
+          var isVisible=true;
+          var pointerInside=false;
+          var focusInside=false;
+          var userPaused=false;
+          var reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+          if(!track||slides.length<2){return;}
+
+          if(dotsContainer){
+            for(var buildIndex=0;buildIndex<slides.length;buildIndex++){
+              var dot=document.createElement('button');
+              dot.type='button';
+              dot.setAttribute('data-story-dot','');
+              dot.setAttribute('data-story-index',buildIndex);
+              dot.setAttribute('aria-label','Show recipient report '+(buildIndex+1));
+              if(buildIndex===0){dot.setAttribute('aria-current','true');}
+              dotsContainer.appendChild(dot);
+            }
+          }
+
+          var dots=carousel.querySelectorAll('[data-story-dot]');
+
+          function stopAutoAdvance(){
+            if(timer){window.clearInterval(timer);timer=null;}
+          }
+
+          function startAutoAdvance(){
+            stopAutoAdvance();
+            if(reduceMotion||userPaused||!isVisible||pointerInside||focusInside||document.hidden){return;}
+            timer=window.setInterval(function(){showSlide(current+1);},6500);
+          }
+
+          function showSlide(newIndex){
+            current=(newIndex+slides.length)%slides.length;
+            track.style.transform='translate3d(-'+(current*100)+'%,0,0)';
+            status.textContent=(current+1)+' of '+slides.length;
+
+            for(var slideIndex=0;slideIndex<slides.length;slideIndex++){
+              var isCurrent=slideIndex===current;
+              var slideLinks=slides[slideIndex].querySelectorAll('a, button');
+              slides[slideIndex].setAttribute('aria-hidden',isCurrent?'false':'true');
+              for(var linkIndex=0;linkIndex<slideLinks.length;linkIndex++){
+                slideLinks[linkIndex].tabIndex=isCurrent?0:-1;
+              }
+            }
+
+            for(var dotIndex=0;dotIndex<dots.length;dotIndex++){
+              if(dotIndex===current){dots[dotIndex].setAttribute('aria-current','true');}
+              else{dots[dotIndex].removeAttribute('aria-current');}
+            }
+
+            if(dotsContainer&&dots[current]){
+              var centeredLeft=dots[current].offsetLeft-(dotsContainer.clientWidth-dots[current].offsetWidth)/2;
+              if(typeof dotsContainer.scrollTo==='function'){
+                dotsContainer.scrollTo({left:centeredLeft,behavior:reduceMotion?'auto':'smooth'});
+              }else{
+                dotsContainer.scrollLeft=centeredLeft;
+              }
+            }
+          }
+
+          previous.addEventListener('click',function(){showSlide(current-1);startAutoAdvance();},false);
+          next.addEventListener('click',function(){showSlide(current+1);startAutoAdvance();},false);
+          toggle.addEventListener('click',function(){
+            userPaused=!userPaused;
+            this.textContent=userPaused?'Play':'Pause';
+            this.setAttribute('aria-label',userPaused?'Play automatic recipient reports':'Pause automatic recipient reports');
+            if(userPaused){stopAutoAdvance();}else{startAutoAdvance();}
+          },false);
+
+          for(var dotIndex=0;dotIndex<dots.length;dotIndex++){
+            dots[dotIndex].addEventListener('click',function(){
+              showSlide(parseInt(this.getAttribute('data-story-index'),10));
+              startAutoAdvance();
+            },false);
+          }
+
+          viewport.addEventListener('keydown',function(event){
+            if(event.key==='ArrowLeft'){event.preventDefault();showSlide(current-1);}
+            if(event.key==='ArrowRight'){event.preventDefault();showSlide(current+1);}
+          },false);
+
+          carousel.addEventListener('mouseenter',function(){pointerInside=true;stopAutoAdvance();},false);
+          carousel.addEventListener('mouseleave',function(){pointerInside=false;startAutoAdvance();},false);
+          carousel.addEventListener('focusin',function(){focusInside=true;stopAutoAdvance();},false);
+          carousel.addEventListener('focusout',function(){
+            window.setTimeout(function(){
+              focusInside=carousel.contains(document.activeElement);
+              startAutoAdvance();
+            },0);
+          },false);
+          document.addEventListener('visibilitychange',startAutoAdvance,false);
+
+          showSlide(0);
+
+          if(reduceMotion){toggle.hidden=true;}
+
+          if('IntersectionObserver' in window){
+            isVisible=false;
+            var observer=new IntersectionObserver(function(entries){
+              isVisible=entries[0].isIntersecting;
+              startAutoAdvance();
+            },{threshold:0.35});
+            observer.observe(carousel);
+          }else{
+            startAutoAdvance();
+          }
+        })(storyCarousels[k]);
+      }
+    })();
+  </script>
+</body>
+</html>
