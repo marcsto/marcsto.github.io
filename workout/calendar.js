@@ -11,6 +11,7 @@ import {
   subscribeWorkouts,
   watchAuth
 } from "./firebase.js";
+import { getStepFreshness } from "./step-freshness.js";
 
 const CALENDAR_DAYS = 28;
 const DAYS_PER_WEEK = 7;
@@ -21,6 +22,10 @@ const calendarState = {
   user: null,
   workouts: [],
   dailySteps: [],
+  stepsLoaded: false,
+  stepsFromCache: false,
+  stepsError: false,
+  authRun: 0,
   unsubscribeWorkouts: null,
   unsubscribeDailySteps: null
 };
@@ -35,6 +40,11 @@ function initCalendar() {
   renderCalendarSkeleton();
   setStatus("Loading", "");
   watchAuth(handleAuthState);
+  // Age warnings even when Firestore hasn't changed or the tab was asleep.
+  window.setInterval(renderStepFreshness, 60 * 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) renderStepFreshness();
+  });
 }
 
 function cacheCalendarElements() {
@@ -43,6 +53,9 @@ function cacheCalendarElements() {
   calendarEls.refreshButton = document.getElementById("refreshButton");
   calendarEls.dateRangeLabel = document.getElementById("dateRangeLabel");
   calendarEls.grid = document.getElementById("calendarGrid");
+  calendarEls.stepsSync = document.getElementById("stepsSync");
+  calendarEls.stepsSyncStatus = document.getElementById("stepsSyncStatus");
+  calendarEls.stepsSyncDetail = document.getElementById("stepsSyncDetail");
 }
 
 function bindCalendarEvents() {
@@ -51,8 +64,16 @@ function bindCalendarEvents() {
 }
 
 async function handleAuthState(user) {
+  const run = ++calendarState.authRun;
   calendarState.user = user;
+  calendarState.workouts = [];
+  calendarState.dailySteps = [];
+  calendarState.stepsLoaded = false;
+  calendarState.stepsFromCache = false;
+  calendarState.stepsError = false;
   updateAuthUi();
+  renderCalendarSkeleton();
+  renderStepFreshness();
 
   if (calendarState.unsubscribeWorkouts) {
     calendarState.unsubscribeWorkouts();
@@ -74,23 +95,45 @@ async function handleAuthState(user) {
 
   setStatus("Loading", "");
   try {
-    calendarState.unsubscribeWorkouts = await subscribeWorkouts(user.uid, (workouts) => {
+    const unsubscribeWorkouts = await subscribeWorkouts(user.uid, (workouts) => {
+      if (run !== calendarState.authRun) return;
       calendarState.workouts = workouts;
       renderCurrentCalendar();
       setStatus(getReadyStatus(), "ok");
     }, (error) => {
+      if (run !== calendarState.authRun) return;
       renderCalendarSkeleton(error.message || "Could not load workouts.");
       setStatus("Sync error", "error");
     });
+    if (run !== calendarState.authRun) {
+      unsubscribeWorkouts();
+      return;
+    }
+    calendarState.unsubscribeWorkouts = unsubscribeWorkouts;
     const visibleDays = getCalendarDays();
-    calendarState.unsubscribeDailySteps = await subscribeDailySteps(user.uid, dateKey(visibleDays[0]), (dailySteps) => {
+    const unsubscribeDailySteps = await subscribeDailySteps(user.uid, dateKey(visibleDays[0]), (dailySteps, metadata) => {
+      if (run !== calendarState.authRun) return;
       calendarState.dailySteps = dailySteps;
+      calendarState.stepsLoaded = true;
+      calendarState.stepsFromCache = Boolean(metadata?.fromCache);
+      calendarState.stepsError = false;
       renderCurrentCalendar();
       setStatus(getReadyStatus(), "ok");
     }, () => {
+      if (run !== calendarState.authRun) return;
+      calendarState.stepsError = true;
+      renderStepFreshness();
       setStatus("Steps error", "error");
     });
+    if (run !== calendarState.authRun) {
+      unsubscribeDailySteps();
+      return;
+    }
+    calendarState.unsubscribeDailySteps = unsubscribeDailySteps;
   } catch (error) {
+    if (run !== calendarState.authRun) return;
+    calendarState.stepsError = true;
+    renderStepFreshness();
     renderCalendarSkeleton(error.message || "Could not start Firestore.");
     setStatus("Sync error", "error");
   }
@@ -131,6 +174,32 @@ function renderCurrentCalendar() {
   const byDate = groupRowsByDate(calendarState.workouts, days[0], days[days.length - 1]);
   const stepsByDate = new Map(calendarState.dailySteps.map((dailySteps) => [dailySteps.date, dailySteps]));
   renderCalendar(days, byDate, stepsByDate);
+  renderStepFreshness();
+}
+
+function renderStepFreshness() {
+  let freshness;
+  if (!calendarState.user) {
+    freshness = { message: "Steps: sign in to view sync status", detail: "", tone: "" };
+  } else if (calendarState.stepsError) {
+    freshness = {
+      message: "Steps: unable to verify sync status",
+      detail: "Step updates could not be loaded. Any displayed counts may be cached. Check your connection and reload the page.",
+      tone: "warning"
+    };
+  } else if (!calendarState.stepsLoaded) {
+    freshness = { message: "Steps: loading", detail: "", tone: "" };
+  } else {
+    freshness = getStepFreshness(calendarState.dailySteps);
+    if (calendarState.stepsFromCache) {
+      freshness.message = `Cached · ${freshness.message}`;
+      freshness.detail = `Showing saved data; waiting for a server connection. ${freshness.detail}`;
+      freshness.tone = "warning";
+    }
+  }
+  calendarEls.stepsSyncStatus.textContent = freshness.message;
+  calendarEls.stepsSyncDetail.textContent = freshness.detail;
+  calendarEls.stepsSync.classList.toggle("is-warning", freshness.tone === "warning");
 }
 
 function renderCalendarSkeleton(message = "") {
@@ -192,6 +261,8 @@ function renderCalendar(days, workoutsByDate, stepsByDate) {
       const stepsCount = document.createElement("span");
       stepsCount.textContent = dailySteps.steps.toLocaleString();
       stepsLine.title = `${dailySteps.steps.toLocaleString()} steps${dailySteps.sourceAppName ? ` from ${dailySteps.sourceAppName}` : ""}`;
+      const checkedAt = dailySteps.readAt || dailySteps.syncedAt;
+      stepsLine.title += checkedAt ? `; checked ${checkedAt.toLocaleString()}` : "; check time unknown";
       stepsLine.append(stepsIcon, stepsCount);
     }
 

@@ -758,7 +758,28 @@ input[type="range"]::-moz-range-thumb {
   width: 100%;
   min-height: 0;
   gap: 8px;
-  grid-template-rows: auto 20px minmax(0, 1fr);
+  grid-template-rows: auto auto 20px minmax(0, 1fr);
+}
+
+.steps-sync {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.steps-sync summary {
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.steps-sync.is-warning summary {
+  color: #f5bf66;
+}
+
+.steps-sync p {
+  margin: 4px 0 8px;
+  max-height: 18vh;
+  overflow-y: auto;
 }
 
 .calendar-summary {

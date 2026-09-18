@@ -1,3 +1,4 @@
+import { dailyStepsFromData } from "./step-freshness.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
   GoogleAuthProvider,
@@ -105,8 +106,8 @@ export async function subscribeDailySteps(userId, startDate, onNext, onError) {
   return onSnapshot(query(
     dailyStepsCollection(userId),
     where("date", ">=", startDate)
-  ), (snapshot) => {
-    onNext(snapshot.docs.map(dailyStepsFromDocument));
+  ), { includeMetadataChanges: true }, (snapshot) => {
+    onNext(snapshot.docs.map(dailyStepsFromDocument), { fromCache: snapshot.metadata.fromCache });
   }, onError);
 }
 
@@ -139,12 +140,7 @@ function workoutFromDocument(documentSnapshot) {
 }
 
 function dailyStepsFromDocument(documentSnapshot) {
-  const data = documentSnapshot.data();
-  return {
-    date: data.date || documentSnapshot.id,
-    steps: Math.max(0, Math.round(Number(data.steps) || 0)),
-    sourceAppName: data.sourceAppName || ""
-  };
+  return dailyStepsFromData(documentSnapshot.data(), documentSnapshot.id);
 }
 
 function timestampToDate(timestamp) {
