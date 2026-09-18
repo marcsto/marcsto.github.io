@@ -53,11 +53,6 @@
             </button>
           </div>
 
-          <details id="stepsSync" class="steps-sync">
-            <summary><span id="stepsSyncStatus" aria-live="polite">Steps: loading</span></summary>
-            <p id="stepsSyncDetail"></p>
-          </details>
-
           <div class="weekday-row" aria-hidden="true">
             <span>Sun</span>
             <span>Mon</span>
@@ -72,5 +67,13 @@
         </section>
       </main>
     </div>
+    <dialog id="stepsDetailDialog" class="steps-detail-dialog" aria-labelledby="stepsDetailHeading" aria-describedby="stepsDetailStatus stepsDetailText">
+      <h2 id="stepsDetailHeading">Steps</h2>
+      <p id="stepsDetailStatus"></p>
+      <p id="stepsDetailText"></p>
+      <form method="dialog">
+        <button class="icon-text-button" autofocus>Close</button>
+      </form>
+    </dialog>
   </body>
 </html>

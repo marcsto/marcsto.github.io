@@ -53,18 +53,27 @@ function cacheCalendarElements() {
   calendarEls.refreshButton = document.getElementById("refreshButton");
   calendarEls.dateRangeLabel = document.getElementById("dateRangeLabel");
   calendarEls.grid = document.getElementById("calendarGrid");
-  calendarEls.stepsSync = document.getElementById("stepsSync");
-  calendarEls.stepsSyncStatus = document.getElementById("stepsSyncStatus");
-  calendarEls.stepsSyncDetail = document.getElementById("stepsSyncDetail");
+  calendarEls.stepsDialog = document.getElementById("stepsDetailDialog");
+  calendarEls.stepsHeading = document.getElementById("stepsDetailHeading");
+  calendarEls.stepsStatus = document.getElementById("stepsDetailStatus");
+  calendarEls.stepsDetail = document.getElementById("stepsDetailText");
 }
 
 function bindCalendarEvents() {
   calendarEls.signInButton.addEventListener("click", handleSignIn);
   calendarEls.refreshButton.addEventListener("click", renderCurrentCalendar);
+  calendarEls.grid.addEventListener("click", (event) => {
+    const button = event.target.closest("button.steps-line");
+    if (!button) return;
+    calendarEls.stepsDialog.dataset.date = button.dataset.date;
+    renderStepDetails();
+    calendarEls.stepsDialog.showModal();
+  });
 }
 
 async function handleAuthState(user) {
   const run = ++calendarState.authRun;
+  calendarEls.stepsDialog.close();
   calendarState.user = user;
   calendarState.workouts = [];
   calendarState.dailySteps = [];
@@ -122,7 +131,7 @@ async function handleAuthState(user) {
     }, () => {
       if (run !== calendarState.authRun) return;
       calendarState.stepsError = true;
-      renderStepFreshness();
+      renderCurrentCalendar();
       setStatus("Steps error", "error");
     });
     if (run !== calendarState.authRun) {
@@ -174,10 +183,35 @@ function renderCurrentCalendar() {
   const byDate = groupRowsByDate(calendarState.workouts, days[0], days[days.length - 1]);
   const stepsByDate = new Map(calendarState.dailySteps.map((dailySteps) => [dailySteps.date, dailySteps]));
   renderCalendar(days, byDate, stepsByDate);
-  renderStepFreshness();
 }
 
 function renderStepFreshness() {
+  const stepsByDate = new Map(calendarState.dailySteps.map((row) => [row.date, row]));
+  calendarEls.grid.querySelectorAll("button.steps-line").forEach((button) => {
+    const dailySteps = stepsByDate.get(button.dataset.date);
+    const freshness = getDailyStepFreshness(dailySteps);
+    const warning = freshness.tone === "warning";
+    button.classList.toggle("is-warning", warning);
+    button.querySelector(".material-symbols-rounded").textContent = warning ? "warning" : "directions_walk";
+    const count = dailySteps ? `${dailySteps.steps.toLocaleString()} steps` : "No step data";
+    const label = `${button.dataset.date}: ${count}. ${freshness.message}. View step details.`;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+  });
+  if (calendarEls.stepsDialog.open) renderStepDetails();
+}
+
+function renderStepDetails() {
+  const date = calendarEls.stepsDialog.dataset.date;
+  const dailySteps = calendarState.dailySteps.find((row) => row.date === date);
+  const freshness = getDailyStepFreshness(dailySteps);
+  calendarEls.stepsHeading.textContent = `${date} · ${dailySteps ? `${dailySteps.steps.toLocaleString()} steps` : "No step data"}`;
+  calendarEls.stepsStatus.textContent = freshness.message;
+  calendarEls.stepsDetail.textContent = freshness.detail;
+  calendarEls.stepsDialog.classList.toggle("is-warning", freshness.tone === "warning");
+}
+
+function getDailyStepFreshness(dailySteps) {
   let freshness;
   if (!calendarState.user) {
     freshness = { message: "Steps: sign in to view sync status", detail: "", tone: "" };
@@ -190,16 +224,14 @@ function renderStepFreshness() {
   } else if (!calendarState.stepsLoaded) {
     freshness = { message: "Steps: loading", detail: "", tone: "" };
   } else {
-    freshness = getStepFreshness(calendarState.dailySteps);
+    freshness = getStepFreshness(dailySteps ? [dailySteps] : []);
     if (calendarState.stepsFromCache) {
       freshness.message = `Cached · ${freshness.message}`;
       freshness.detail = `Showing saved data; waiting for a server connection. ${freshness.detail}`;
       freshness.tone = "warning";
     }
   }
-  calendarEls.stepsSyncStatus.textContent = freshness.message;
-  calendarEls.stepsSyncDetail.textContent = freshness.detail;
-  calendarEls.stepsSync.classList.toggle("is-warning", freshness.tone === "warning");
+  return freshness;
 }
 
 function renderCalendarSkeleton(message = "") {
@@ -250,19 +282,20 @@ function renderCalendar(days, workoutsByDate, stepsByDate) {
       dateBar.append(todayLabel);
     }
 
-    const stepsLine = document.createElement("div");
+    const showSteps = !isFuture && (dailySteps || (isToday && calendarState.user && (calendarState.stepsLoaded || calendarState.stepsError)));
+    const stepsLine = document.createElement(showSteps ? "button" : "div");
     stepsLine.className = "steps-line";
-    if (dailySteps) {
+    if (showSteps) {
+      stepsLine.type = "button";
+      stepsLine.dataset.date = key;
+      stepsLine.setAttribute("aria-haspopup", "dialog");
       const stepsIcon = document.createElement("span");
       stepsIcon.className = "material-symbols-rounded";
       stepsIcon.setAttribute("aria-hidden", "true");
       stepsIcon.textContent = "directions_walk";
 
       const stepsCount = document.createElement("span");
-      stepsCount.textContent = dailySteps.steps.toLocaleString();
-      stepsLine.title = `${dailySteps.steps.toLocaleString()} steps${dailySteps.sourceAppName ? ` from ${dailySteps.sourceAppName}` : ""}`;
-      const checkedAt = dailySteps.readAt || dailySteps.syncedAt;
-      stepsLine.title += checkedAt ? `; checked ${checkedAt.toLocaleString()}` : "; check time unknown";
+      stepsCount.textContent = dailySteps ? dailySteps.steps.toLocaleString() : "—";
       stepsLine.append(stepsIcon, stepsCount);
     }
 
@@ -289,6 +322,7 @@ function renderCalendar(days, workoutsByDate, stepsByDate) {
     cell.append(dateBar, stepsLine, lines);
     calendarEls.grid.append(cell);
   });
+  renderStepFreshness();
 }
 
 function getCalendarDays() {

@@ -758,28 +758,42 @@ input[type="range"]::-moz-range-thumb {
   width: 100%;
   min-height: 0;
   gap: 8px;
-  grid-template-rows: auto auto 20px minmax(0, 1fr);
+  grid-template-rows: auto 20px minmax(0, 1fr);
 }
 
-.steps-sync {
+.steps-detail-dialog {
+  width: min(420px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.steps-detail-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.steps-detail-dialog h2 {
+  font-size: 1rem;
+}
+
+.steps-detail-dialog p {
   color: var(--muted);
-  font-size: 0.75rem;
-  line-height: 1.4;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 12px 0;
 }
 
-.steps-sync summary {
-  cursor: pointer;
-  padding: 4px 0;
+.steps-detail-dialog.is-warning #stepsDetailStatus {
+  color: var(--amber);
 }
 
-.steps-sync.is-warning summary {
-  color: #f5bf66;
-}
-
-.steps-sync p {
-  margin: 4px 0 8px;
-  max-height: 18vh;
-  overflow-y: auto;
+.steps-detail-dialog form {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .calendar-summary {
@@ -883,15 +897,27 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  min-height: 15px;
+  min-height: 24px;
   gap: 1px;
   overflow: hidden;
   color: var(--blue);
   font-size: 0.62rem;
   font-weight: 900;
   line-height: 1;
-  padding-top: 3px;
+  padding: 3px 0 0;
+  background: transparent;
+  text-align: left;
   white-space: nowrap;
+}
+
+.steps-line.is-warning .material-symbols-rounded {
+  color: var(--amber);
+}
+
+.steps-line:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+  border-radius: 3px;
 }
 
 .steps-line:empty {

@@ -37,7 +37,9 @@ const state = {
   suppressNextClickUntil: 0,
   lastInteractionAt: Date.now(),
   isIdleClockVisible: false,
-  logDate: null
+  logDate: null,
+  entryEdited: false,
+  prefilledSetKey: null
 };
 
 const els = {};
@@ -93,6 +95,12 @@ function bindEvents() {
   els.repsUp.addEventListener("click", () => setReps(getReps() + getPrimaryStep()));
   els.weightDown.addEventListener("click", () => setWeight(getWeight() - WEIGHT_STEP));
   els.weightUp.addEventListener("click", () => setWeight(getWeight() + WEIGHT_STEP));
+  [els.repsSlider, els.weightSlider].forEach((slider) => {
+    slider.addEventListener("input", markEntryEdited);
+  });
+  [els.repsDown, els.repsUp, els.weightDown, els.weightUp].forEach((button) => {
+    button.addEventListener("click", markEntryEdited);
+  });
   els.saveButton.addEventListener("click", handleSave);
   els.logDateToggle.addEventListener("click", toggleLogDatePanel);
   els.logDateInput.addEventListener("change", handleLogDateChange);
@@ -252,6 +260,7 @@ async function handleAuthState(user) {
       renderHome();
       updateLastLogged();
       renderRecentSets();
+      prefillNextSet();
       setSyncStatus(getReadyStatus(), "ok");
     }, (error) => {
       setSyncStatus("Sync error", "error");
@@ -372,6 +381,8 @@ function getTileMeta(exerciseName) {
 
 function openExercise(exercise) {
   state.activeExercise = exercise;
+  state.entryEdited = false;
+  state.prefilledSetKey = null;
   const cached = state.exerciseCache[exercise.name] || {};
   const reps = toNumber(cached.reps, getDefaultPrimaryValue(exercise));
   const weight = toNumber(cached.weight, DEFAULT_WEIGHT);
@@ -391,6 +402,42 @@ function openExercise(exercise) {
   setEntryStatus("", "");
   els.homeView.hidden = true;
   els.entryView.hidden = false;
+}
+
+function markEntryEdited() {
+  state.entryEdited = true;
+}
+
+function prefillNextSet() {
+  if (!state.activeExercise || isDurationExercise(state.activeExercise) || state.entryEdited) {
+    return;
+  }
+
+  const logDay = state.logDate || dateKey(new Date());
+  const exerciseSets = state.workouts.filter((workout) => (
+    workout.exerciseName === state.activeExercise.name
+  ));
+  const setIndex = exerciseSets.filter((workout) => dateKey(workout.timestamp) === logDay).length;
+  const setKey = `${state.activeExercise.name}:${logDay}:${setIndex}`;
+  if (state.prefilledSetKey === setKey) {
+    return;
+  }
+
+  // A session is a local calendar day. Never use today's sets as the template.
+  const earlierSets = exerciseSets
+    .filter((workout) => dateKey(workout.timestamp) < logDay)
+    .sort((a, b) => a.timestamp - b.timestamp);
+  const previousDay = earlierSets.length ? dateKey(earlierSets[earlierSets.length - 1].timestamp) : null;
+  const previousSets = earlierSets.filter((workout) => dateKey(workout.timestamp) === previousDay);
+  const previousSet = previousSets[setIndex];
+  if (!previousSet) {
+    return;
+  }
+
+  setReps(previousSet.reps);
+  ensureWeightRange(previousSet.weight);
+  setWeight(previousSet.weight);
+  state.prefilledSetKey = setKey;
 }
 
 function showHome() {
@@ -519,6 +566,9 @@ function handleLogDateChange() {
   els.logDatePanel.hidden = true;
   els.logDateToggle.setAttribute("aria-expanded", "false");
   updateLogDateSummary();
+  state.entryEdited = false;
+  state.prefilledSetKey = null;
+  prefillNextSet();
 }
 
 function resetLogDate() {
@@ -528,6 +578,9 @@ function resetLogDate() {
   els.logDatePanel.hidden = true;
   els.logDateToggle.setAttribute("aria-expanded", "false");
   updateLogDateSummary();
+  state.entryEdited = false;
+  state.prefilledSetKey = null;
+  prefillNextSet();
 }
 
 function updateLogDateSummary() {
@@ -582,6 +635,8 @@ async function handleSave() {
   setEntryStatus(`Saved ${state.logDate ? formatDateTime(workout.timestamp) : formatTime(workout.timestamp)}`, "ok");
   setSyncStatus("Saving", "");
 
+  // The local Firestore snapshot advances to the next set, even when offline.
+  state.entryEdited = false;
   try {
     await addWorkoutSet(state.user.uid, workout);
     setSyncStatus(getReadyStatus(), "ok");
