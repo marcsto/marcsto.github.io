@@ -10,8 +10,8 @@ import {
   subscribeDailySteps,
   subscribeWorkouts,
   watchAuth
-} from "./firebase.js";
-import { getStepFreshness } from "./step-freshness.js";
+} from "./firebase.js?v=20260918-1";
+import { getStepFreshness } from "./step-freshness.js?v=20260918-1";
 
 const CALENDAR_DAYS = 28;
 const DAYS_PER_WEEK = 7;
@@ -48,6 +48,10 @@ function initCalendar() {
 }
 
 function cacheCalendarElements() {
+  // HTML and modules can be cached independently during a static-site deployment.
+  // Step details must not prevent the calendar from starting with older markup.
+  ensureStepsDialog();
+  document.getElementById("stepsSync")?.remove();
   calendarEls.status = document.getElementById("calendarStatus");
   calendarEls.signInButton = document.getElementById("signInButton");
   calendarEls.refreshButton = document.getElementById("refreshButton");
@@ -57,6 +61,32 @@ function cacheCalendarElements() {
   calendarEls.stepsHeading = document.getElementById("stepsDetailHeading");
   calendarEls.stepsStatus = document.getElementById("stepsDetailStatus");
   calendarEls.stepsDetail = document.getElementById("stepsDetailText");
+}
+
+function ensureStepsDialog() {
+  if (document.getElementById("stepsDetailDialog")) return;
+
+  const dialog = document.createElement("dialog");
+  dialog.id = "stepsDetailDialog";
+  dialog.className = "steps-detail-dialog";
+  dialog.setAttribute("aria-labelledby", "stepsDetailHeading");
+  dialog.setAttribute("aria-describedby", "stepsDetailStatus stepsDetailText");
+  const heading = document.createElement("h2");
+  heading.id = "stepsDetailHeading";
+  heading.textContent = "Steps";
+  const status = document.createElement("p");
+  status.id = "stepsDetailStatus";
+  const detail = document.createElement("p");
+  detail.id = "stepsDetailText";
+  const form = document.createElement("form");
+  form.method = "dialog";
+  const close = document.createElement("button");
+  close.className = "icon-text-button";
+  close.textContent = "Close";
+  close.autofocus = true;
+  form.append(close);
+  dialog.append(heading, status, detail, form);
+  document.body.append(dialog);
 }
 
 function bindCalendarEvents() {
