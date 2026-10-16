@@ -1,6 +1,6 @@
 {
   "title": "Public data used in Android Earthquake Alerts: The Complete Guide",
-  "lastReviewed": "2026-08-11",
+  "lastReviewed": "2026-10-15",
   "studyPeriod": {
     "start": "2021-04-01",
     "end": "2024-03-31",
@@ -19,6 +19,27 @@
     "peopleWithEarlyWarningAccess2025": 2500000000,
     "source": "https://research.google/blog/android-earthquake-alerts-a-global-system-for-early-warning/",
     "notes": "Values described as over or approximately these amounts in the source."
+  },
+  "publicUpdate2026": {
+    "announcementDate": "2026-10-15",
+    "countriesAndRegionsOver": 200,
+    "helpCenterEntriesOnAnnouncementDate": 213,
+    "alertsSentOver": 1000000000,
+    "newRegionsHighlighted": [
+      "Panama",
+      "Guatemala"
+    ],
+    "rollout": "Began October 15, 2026, with full availability in newly supported regions expected over the following week.",
+    "beReadyPreview": [
+      "Map showing the radius where shaking was detected",
+      "Estimated earthquake magnitude",
+      "Recommended action",
+      "Button to learn more as information becomes available"
+    ],
+    "announcementSource": "https://blog.google/products-and-platforms/platforms/android/android-earthquake-alerts-expansion-2026/",
+    "availabilitySource": "https://support.google.com/android/answer/9319337?hl=en",
+    "availabilitySnapshot": "android-earthquake-alerts-coverage-2026.json",
+    "notes": "Google describes current availability as more than 200 countries and regions. The exact Help Center entry count is a dated snapshot, not a fixed product total."
   },
   "magnitudeAccuracy": {
     "firstEstimateMedianAbsoluteErrorInitial": 0.5,
