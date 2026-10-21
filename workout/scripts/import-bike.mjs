@@ -23,7 +23,8 @@ let page;
 try {
   const context = browser.contexts()[0];
   page = await context.newPage();
-  await page.goto("https://marc.ai/workout/calendar.html", { waitUntil: "networkidle" });
+  // Firestore keeps a live connection; waiting for network idle can never finish.
+  await page.goto("https://marc.ai/workout/calendar.html", { waitUntil: "domcontentloaded" });
   const result = await page.evaluate(async ({ prepared, apply, updateId, newRide }) => {
     const appModule = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js");
     const { getAuth } = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js");
