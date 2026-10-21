@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 import * as config from "../config.js";
+import * as biking from "../biking.js";
 
 // Run the actual form handlers with an in-memory DOM and Firestore subscription.
 const source = (await readFile(new URL("../app.js", import.meta.url), "utf8"))
@@ -33,7 +34,7 @@ async function form(history = []) {
   let publish;
   let rows = history;
   const context = vm.createContext({
-    ...config, Date,
+    ...config, ...biking, Date,
     document: {
       addEventListener() {},
       getElementById(id) {

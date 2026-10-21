@@ -4,7 +4,8 @@ import {
   getWorkoutsForExercise,
   signInWithGoogle,
   watchAuth
-} from "./firebase.js";
+} from "./firebase.js?v=20261021-1";
+import { BIKE_PROGRESS_METRICS, bikeProgressRows, bikeNumber, isBiking } from "./biking.js";
 
 const PROGRESS_LIMIT_DAYS = 30;
 const STRENGTH_LINE_COLOR = "#31c48d";
@@ -40,15 +41,19 @@ function cacheProgressElements() {
   progressEls.exerciseSelect = document.getElementById("exerciseSelect");
   progressEls.chartMessage = document.getElementById("chartMessage");
   progressEls.canvas = document.getElementById("progressChart");
+  progressEls.metricControl = document.getElementById("bikeMetricControl");
+  progressEls.metricSelect = document.getElementById("bikeMetricSelect");
 }
 
 function bindProgressEvents() {
   progressEls.signInButton.addEventListener("click", handleSignIn);
   progressEls.refreshButton.addEventListener("click", renderSelectedExerciseChart);
   progressEls.exerciseSelect.addEventListener("change", renderSelectedExerciseChart);
+  progressEls.metricSelect?.addEventListener("change", renderSelectedExerciseChart);
 }
 
 async function handleAuthState(user) {
+  ++progressState.loadingRun;
   progressState.user = user;
   updateAuthUi();
 
@@ -85,6 +90,7 @@ function updateAuthUi() {
   progressEls.signInButton.title = progressState.user
     ? `Signed in as ${progressState.user.email || "Google user"}`
     : "Sign in with Google";
+  progressEls.signInButton.setAttribute("aria-label", progressEls.signInButton.title);
 }
 
 function getReadyStatus() {
@@ -92,7 +98,7 @@ function getReadyStatus() {
 }
 
 function populateExerciseSelect() {
-  const strengthExercises = DEFAULT_EXERCISES.filter((exercise) => exercise.type !== "duration");
+  const strengthExercises = DEFAULT_EXERCISES.filter((exercise) => exercise.type !== "duration" || isBiking(exercise.name));
   progressEls.exerciseSelect.replaceChildren();
 
   strengthExercises.forEach((exercise) => {
@@ -101,22 +107,31 @@ function populateExerciseSelect() {
     option.textContent = exercise.name;
     progressEls.exerciseSelect.append(option);
   });
+  if (new URLSearchParams(location.search).get("exercise") === "Biking") progressEls.exerciseSelect.value = "Biking";
+  BIKE_PROGRESS_METRICS.forEach((metric) => {
+    const option = document.createElement("option");
+    option.value = metric.key;
+    option.textContent = `${metric.label} (${metric.unit})`;
+    progressEls.metricSelect?.append(option);
+  });
+  if (progressEls.metricSelect) progressEls.metricSelect.value = "avgPowerWatts";
 }
 
 async function renderSelectedExerciseChart() {
+  const currentRun = ++progressState.loadingRun;
+  const selectedExercise = progressEls.exerciseSelect.value;
+  const biking = isBiking(selectedExercise);
+  if (progressEls.metricControl) progressEls.metricControl.hidden = !biking;
   if (!window.Chart) {
     renderEmptyChart("Loading chart library...");
     return;
   }
 
-  const selectedExercise = progressEls.exerciseSelect.value;
   if (!progressState.user) {
     renderEmptyChart("Sign in to load progress.");
     return;
   }
 
-  const currentRun = progressState.loadingRun + 1;
-  progressState.loadingRun = currentRun;
   setStatus("Loading", "");
   progressEls.chartMessage.textContent = `${selectedExercise}: loading`;
 
@@ -126,16 +141,61 @@ async function renderSelectedExerciseChart() {
       return;
     }
 
+    if (biking) {
+      renderBikeProgress(workouts);
+      setStatus(getReadyStatus(), "ok");
+      return;
+    }
     progressState.chart = renderWorkoutProgressComboChart(progressEls.canvas, workouts, selectedExercise, progressState.chart);
+    progressEls.canvas.setAttribute("aria-label", `${selectedExercise} strength and volume progress chart`);
     const processed = processWorkoutProgressData(workouts, selectedExercise);
     progressEls.chartMessage.textContent = processed.labels.length
       ? `${selectedExercise}: ${processed.labels.length} workout days`
       : `${selectedExercise}: no weighted sets found`;
     setStatus(getReadyStatus(), "ok");
   } catch (error) {
+    if (currentRun !== progressState.loadingRun) return;
     renderEmptyChart(error.message || "Could not load progress.");
     setStatus("Sync error", "error");
   }
+}
+
+function renderBikeProgress(workouts) {
+  const metric = BIKE_PROGRESS_METRICS.find((m) => m.key === progressEls.metricSelect?.value) || BIKE_PROGRESS_METRICS[0];
+  const cutoff = startOfDay(new Date());
+  cutoff.setDate(cutoff.getDate() - (PROGRESS_LIMIT_DAYS - 1));
+  const rows = bikeProgressRows(workouts, metric.key, dateKey(cutoff), dateKey(new Date()));
+  const recorded = rows.filter((row) => row.value != null);
+  progressState.chart?.destroy();
+  progressState.chart = new Chart(progressEls.canvas, {
+    type: "line",
+    data: {
+      labels: rows.map((row) => row.date),
+      datasets: [{
+        label: `${metric.label} (${metric.unit})`, data: rows.map((row) => row.value),
+        borderColor: "#7bdc7b", backgroundColor: "#7bdc7b", borderWidth: 2,
+        pointRadius: 5, pointHoverRadius: 7, tension: 0, spanGaps: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: CHART_TEXT_COLOR } },
+        tooltip: { callbacks: {
+          label: (context) => `${metric.label}: ${bikeNumber(context.parsed.y)} ${metric.unit}${metric.key === "calories" && rows[context.dataIndex].workout.cycling?.caloriesEstimated ? " (estimated)" : ""}`,
+          afterLabel: (context) => `Ride duration: ${bikeNumber(rows[context.dataIndex].workout.reps)} min`
+        } }
+      },
+      scales: {
+        x: { ticks: { color: CHART_TEXT_COLOR, maxTicksLimit: 6 }, grid: { display: false } },
+        y: { beginAtZero: true, title: { display: true, text: metric.unit, color: CHART_TEXT_COLOR }, ticks: { color: CHART_TEXT_COLOR }, grid: { color: CHART_GRID_COLOR } }
+      }
+    }
+  });
+  progressEls.canvas.setAttribute("aria-label", `${metric.label} per ride. ${recorded.map((row) => `${row.date}: ${bikeNumber(row.value)} ${metric.unit}`).join("; ") || "No recorded values"}`);
+  progressEls.chartMessage.textContent = recorded.length
+    ? `${recorded.length} ride${recorded.length === 1 ? "" : "s"} · last 30 days · latest ${bikeNumber(recorded.at(-1).value)} ${metric.unit}${recorded.length < rows.length ? ` · ${rows.length - recorded.length} unrecorded` : ""}`
+    : `No ${metric.label.toLowerCase()} recorded in the last 30 days. Try Duration for older rides.`;
 }
 
 function processWorkoutProgressData(workouts, selectedExercise) {
@@ -310,6 +370,7 @@ function renderEmptyChart(message = "") {
   }
 
   progressState.chart = renderWorkoutProgressComboChart(progressEls.canvas, [], progressEls.exerciseSelect.value || "", progressState.chart);
+  progressEls.canvas.setAttribute("aria-label", "Workout progress chart; no data loaded");
 }
 
 function waitForChart(timeoutMs = 5000) {

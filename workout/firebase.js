@@ -1,4 +1,5 @@
 import { dailyStepsFromData } from "./step-freshness.js";
+import { isBiking, normalizeCycling } from "./biking.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
   GoogleAuthProvider,
@@ -81,11 +82,13 @@ export async function signInWithGoogle() {
 
 export async function addWorkoutSet(userId, workout) {
   await firestoreReady;
+  const cycling = isBiking(workout.exerciseName) ? normalizeCycling(workout.cycling, { strict: true }) : {};
   return addDoc(workoutsCollection(userId), {
     exerciseName: workout.exerciseName,
     reps: Number(workout.reps) || 0,
     weight: Number(workout.weight) || 0,
-    timestamp: Timestamp.fromDate(workout.timestamp || new Date())
+    timestamp: Timestamp.fromDate(workout.timestamp || new Date()),
+    ...(Object.keys(cycling).length ? { cycling } : {})
   });
 }
 
@@ -135,6 +138,9 @@ function workoutFromDocument(documentSnapshot) {
     exerciseName: data.exerciseName || "",
     reps: Number(data.reps) || 0,
     weight: Number(data.weight) || 0,
+    cycling: isBiking(data.exerciseName) ? normalizeCycling(data.cycling) : {},
+    workoutDate: data.workoutDate || null,
+    source: data.source || null,
     timestamp: timestampToDate(data.timestamp)
   };
 }

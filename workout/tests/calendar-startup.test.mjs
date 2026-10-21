@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 import * as config from "../config.js";
+import * as biking from "../biking.js";
 import { getStepFreshness } from "../step-freshness.js";
 
 const source = (await readFile(new URL("../calendar.js", import.meta.url), "utf8"))
@@ -50,7 +51,7 @@ function calendar(markup) {
   let authHandler;
   const subscriptions = [];
   const context = vm.createContext({
-    ...config, getStepFreshness, document,
+    ...config, ...biking, getStepFreshness, document,
     window: { setInterval() {} },
     watchAuth: (callback) => { authHandler = callback; },
     getFirestorePersistenceStatus: () => "enabled",

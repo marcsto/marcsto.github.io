@@ -10,8 +10,9 @@ import {
   subscribeDailySteps,
   subscribeWorkouts,
   watchAuth
-} from "./firebase.js?v=20260918-1";
+} from "./firebase.js?v=20261021-1";
 import { getStepFreshness } from "./step-freshness.js?v=20260918-1";
+import { isBiking, bikeSummaryLines, bikeDetailMetrics, workoutDateKey } from "./biking.js";
 
 const CALENDAR_DAYS = 28;
 const DAYS_PER_WEEK = 7;
@@ -51,6 +52,7 @@ function cacheCalendarElements() {
   // HTML and modules can be cached independently during a static-site deployment.
   // Step details must not prevent the calendar from starting with older markup.
   ensureStepsDialog();
+  ensureBikeDialog();
   document.getElementById("stepsSync")?.remove();
   calendarEls.status = document.getElementById("calendarStatus");
   calendarEls.signInButton = document.getElementById("signInButton");
@@ -61,6 +63,65 @@ function cacheCalendarElements() {
   calendarEls.stepsHeading = document.getElementById("stepsDetailHeading");
   calendarEls.stepsStatus = document.getElementById("stepsDetailStatus");
   calendarEls.stepsDetail = document.getElementById("stepsDetailText");
+  calendarEls.bikeDialog = document.getElementById("bikeDetailDialog");
+}
+
+function ensureBikeDialog() {
+  if (document.getElementById("bikeDetailDialog")) return;
+  const dialog = document.createElement("dialog");
+  dialog.id = "bikeDetailDialog";
+  dialog.className = "steps-detail-dialog bike-detail-dialog";
+  dialog.setAttribute("aria-labelledby", "bikeDetailHeading");
+  const heading = document.createElement("h2");
+  heading.id = "bikeDetailHeading";
+  const details = document.createElement("div");
+  details.id = "bikeDetailContent";
+  const form = document.createElement("form");
+  form.method = "dialog";
+  const close = document.createElement("button");
+  close.className = "icon-text-button";
+  close.textContent = "Close";
+  close.autofocus = true;
+  form.append(close);
+  dialog.append(heading, details, form);
+  document.body.append(dialog);
+}
+
+function showBikeDetails(date) {
+  document.getElementById("bikeDetailHeading").textContent = `Biking · ${date}`;
+  const content = document.getElementById("bikeDetailContent");
+  content.replaceChildren();
+  const rides = calendarState.workouts.filter((row) => isBiking(row.exerciseName) && workoutDateKey(row) === date)
+    .sort((a, b) => a.timestamp - b.timestamp);
+  rides.forEach((ride, index) => {
+    const section = document.createElement("section");
+    const subtitle = document.createElement("p");
+    subtitle.textContent = `${rides.length > 1 ? `Ride ${index + 1} · ` : ""}${ride.source?.device || "Ride summary"}`;
+    const metrics = document.createElement("dl");
+    metrics.className = "bike-detail-metrics";
+    for (const metric of bikeDetailMetrics(ride)) {
+      const group = document.createElement("div");
+      const label = document.createElement("dt");
+      label.textContent = metric.label;
+      const value = document.createElement("dd");
+      value.textContent = metric.value;
+      group.append(label, value);
+      metrics.append(group);
+    }
+    section.append(subtitle, metrics);
+    if (ride.source?.type === "photo") {
+      const note = document.createElement("p");
+      note.textContent = "Transcribed from a workout photo. Workout date supplied separately; time of day not recorded.";
+      section.append(note);
+    }
+    content.append(section);
+  });
+  const progress = document.createElement("a");
+  progress.href = "progress.html?exercise=Biking";
+  progress.className = "bike-progress-link";
+  progress.textContent = "View biking progress →";
+  content.append(progress);
+  calendarEls.bikeDialog.showModal();
 }
 
 function ensureStepsDialog() {
@@ -93,6 +154,11 @@ function bindCalendarEvents() {
   calendarEls.signInButton.addEventListener("click", handleSignIn);
   calendarEls.refreshButton.addEventListener("click", renderCurrentCalendar);
   calendarEls.grid.addEventListener("click", (event) => {
+    const bike = event.target.closest("button.bike-line");
+    if (bike) {
+      showBikeDetails(bike.dataset.date);
+      return;
+    }
     const button = event.target.closest("button.steps-line");
     if (!button) return;
     calendarEls.stepsDialog.dataset.date = button.dataset.date;
@@ -104,6 +170,7 @@ function bindCalendarEvents() {
 async function handleAuthState(user) {
   const run = ++calendarState.authRun;
   calendarEls.stepsDialog.close();
+  calendarEls.bikeDialog.close();
   calendarState.user = user;
   calendarState.workouts = [];
   calendarState.dailySteps = [];
@@ -202,6 +269,7 @@ function updateAuthUi() {
   calendarEls.signInButton.title = calendarState.user
     ? `Signed in as ${calendarState.user.email || "Google user"}`
     : "Sign in with Google";
+  calendarEls.signInButton.setAttribute("aria-label", calendarEls.signInButton.title);
 }
 
 function getReadyStatus() {
@@ -333,11 +401,28 @@ function renderCalendar(days, workoutsByDate, stepsByDate) {
     lines.className = "workout-lines";
 
     summaries.slice(0, VISIBLE_WORKOUT_LINES).forEach((summary) => {
-      const line = document.createElement("div");
-      line.className = "workout-line";
+      const line = document.createElement(summary.bike ? "button" : "div");
+      line.className = summary.bike ? "workout-line bike-line" : "workout-line";
       line.style.setProperty("--exercise-color", summary.color);
       line.style.setProperty("--exercise-bg", summary.tint);
-      line.textContent = summary.shortText;
+      if (summary.bike) {
+        line.type = "button";
+        line.dataset.date = key;
+        line.setAttribute("aria-haspopup", "dialog");
+        line.setAttribute("aria-label", `${summary.fullText}. View ride details.`);
+        const label = document.createElement("span");
+        label.className = "bike-label";
+        label.textContent = "BIKE";
+        line.append(label);
+        summary.lines.forEach((text, index) => {
+          const metric = document.createElement("span");
+          metric.className = index < 2 ? "bike-primary" : "bike-secondary";
+          metric.textContent = text;
+          line.append(metric);
+        });
+      } else {
+        line.textContent = summary.shortText;
+      }
       line.title = summary.fullText;
       lines.append(line);
     });
@@ -368,10 +453,10 @@ function groupRowsByDate(rows, startDate, endDate) {
   const byDate = new Map();
 
   rows
-    .filter((row) => row.timestamp >= start && row.timestamp < end)
+    .filter((row) => workoutDateKey(row) >= dateKey(start) && workoutDateKey(row) < dateKey(end))
     .sort((a, b) => a.timestamp - b.timestamp)
     .forEach((row) => {
-      const key = dateKey(row.timestamp);
+      const key = workoutDateKey(row);
       if (!byDate.has(key)) {
         byDate.set(key, []);
       }
@@ -384,8 +469,10 @@ function groupRowsByDate(rows, startDate, endDate) {
 
 function summarizeDay(rows) {
   const byExercise = new Map();
+  const rides = rows.filter((row) => isBiking(row.exerciseName));
 
   rows.forEach((row) => {
+    if (isBiking(row.exerciseName)) return;
     if (!byExercise.has(row.exerciseName)) {
       byExercise.set(row.exerciseName, []);
     }
@@ -393,7 +480,14 @@ function summarizeDay(rows) {
     byExercise.get(row.exerciseName).push(row);
   });
 
-  return Array.from(byExercise.entries()).map(([exerciseName, sets]) => summarizeExercise(exerciseName, sets));
+  const bikeStyle = getExerciseStyle("Biking");
+  const bikeSummaries = rides.map((ride) => ({
+    bike: true,
+    lines: bikeSummaryLines(ride),
+    fullText: `Biking: ${bikeDetailMetrics(ride).filter((m) => m.value !== "Not recorded").map((m) => `${m.label}: ${m.value}`).join(", ")}`,
+    ...bikeStyle
+  }));
+  return [...bikeSummaries, ...Array.from(byExercise.entries()).map(([exerciseName, sets]) => summarizeExercise(exerciseName, sets))];
 }
 
 function summarizeExercise(exerciseName, sets) {

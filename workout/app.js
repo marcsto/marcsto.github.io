@@ -6,7 +6,8 @@ import {
   signInWithGoogle,
   subscribeWorkouts,
   watchAuth
-} from "./firebase.js";
+} from "./firebase.js?v=20261021-1";
+import { BIKE_METRICS, isBiking, normalizeCycling, bikeSummaryLines, workoutDateKey } from "./biking.js";
 
 const DEFAULT_REPS = 8;
 const MIN_REPS = 1;
@@ -84,6 +85,62 @@ function cacheElements() {
   els.recentSetList = document.getElementById("recentSetList");
   els.idleClockOverlay = document.getElementById("idleClockOverlay");
   els.idleClockTime = document.getElementById("idleClockTime");
+  createBikeFields();
+}
+
+function createBikeFields() {
+  // Optional for independently cached HTML and the lightweight form test DOM.
+  const controls = document.querySelector?.(".entry-controls");
+  if (!controls) return;
+  const details = document.createElement("details");
+  details.className = "bike-entry-fields";
+  details.hidden = true;
+  const summary = document.createElement("summary");
+  summary.textContent = "Ride metrics (optional)";
+  const grid = document.createElement("div");
+  grid.className = "bike-entry-grid";
+  els.bikeInputs = {};
+  BIKE_METRICS.forEach(({ key, label, unit, step, min }) => {
+    const field = document.createElement("label");
+    field.textContent = `${label} (${unit})`;
+    const input = document.createElement("input");
+    input.type = "number";
+    input.step = step;
+    if (min != null) input.min = min;
+    input.placeholder = "Not recorded";
+    input.addEventListener("input", markEntryEdited);
+    field.append(input);
+    grid.append(field);
+    els.bikeInputs[key] = input;
+  });
+  const estimateLabel = document.createElement("label");
+  estimateLabel.className = "bike-estimate-label";
+  els.bikeEstimated = document.createElement("input");
+  els.bikeEstimated.type = "checkbox";
+  els.bikeEstimated.checked = true;
+  estimateLabel.append(els.bikeEstimated, document.createTextNode("Calories are estimated"));
+  details.append(summary, grid, estimateLabel);
+  controls.insertBefore(details, els.entryStatus);
+  els.bikeFields = details;
+}
+
+function clearBikeFields() {
+  Object.values(els.bikeInputs || {}).forEach((input) => { input.value = ""; });
+  if (els.bikeEstimated) els.bikeEstimated.checked = true;
+}
+
+function readBikeFields() {
+  const metrics = {};
+  for (const [key, input] of Object.entries(els.bikeInputs || {})) {
+    if (!input.checkValidity()) {
+      els.bikeFields.open = true;
+      input.reportValidity();
+      throw new Error("Check the ride metrics before saving.");
+    }
+    if (input.value !== "") metrics[key] = Number(input.value);
+  }
+  if (metrics.calories != null) metrics.caloriesEstimated = els.bikeEstimated.checked;
+  return normalizeCycling(metrics, { strict: true });
 }
 
 function bindEvents() {
@@ -294,6 +351,7 @@ function updateAuthUi() {
   }
 
   els.signInButton.title = state.user ? `Signed in as ${state.user.email || "Google user"}` : "Sign in with Google";
+  els.signInButton.setAttribute("aria-label", els.signInButton.title);
 }
 
 function getReadyStatus() {
@@ -308,6 +366,8 @@ function buildExerciseCache(workouts) {
       cache[workout.exerciseName] = {
         reps: workout.reps,
         weight: workout.weight,
+        cycling: workout.cycling,
+        workoutDate: workout.workoutDate,
         timestamp: workout.timestamp
       };
     }
@@ -372,6 +432,8 @@ function getTileMeta(exerciseName) {
     return "";
   }
 
+  if (isBiking(exerciseName)) return bikeSummaryLines(cached).slice(0, 2).join(" · ");
+
   if (isDurationExerciseName(exerciseName)) {
     return `${formatNumber(cached.reps)} min`;
   }
@@ -380,6 +442,7 @@ function getTileMeta(exerciseName) {
 }
 
 function openExercise(exercise) {
+  clearBikeFields();
   state.activeExercise = exercise;
   state.entryEdited = false;
   state.prefilledSetKey = null;
@@ -417,7 +480,7 @@ function prefillNextSet() {
   const exerciseSets = state.workouts.filter((workout) => (
     workout.exerciseName === state.activeExercise.name
   ));
-  const setIndex = exerciseSets.filter((workout) => dateKey(workout.timestamp) === logDay).length;
+  const setIndex = exerciseSets.filter((workout) => workoutDateKey(workout) === logDay).length;
   const setKey = `${state.activeExercise.name}:${logDay}:${setIndex}`;
   if (state.prefilledSetKey === setKey) {
     return;
@@ -451,12 +514,18 @@ function showHome() {
 
 function configureEntryControls(exercise) {
   const isDuration = isDurationExercise(exercise);
+  const biking = isBiking(exercise.name);
+  const durationStep = biking ? 1 : DURATION_STEP_MINUTES;
+  if (els.bikeFields) {
+    els.bikeFields.hidden = !biking;
+    els.bikeFields.open = false;
+  }
   els.repsLabel.textContent = isDuration ? "Minutes" : "Reps";
-  els.repsDown.textContent = isDuration ? `-${DURATION_STEP_MINUTES}` : "-1";
-  els.repsUp.textContent = isDuration ? `+${DURATION_STEP_MINUTES}` : "+1";
-  els.repsSlider.min = String(isDuration ? MIN_DURATION_MINUTES : MIN_REPS);
+  els.repsDown.textContent = isDuration ? `-${durationStep}` : "-1";
+  els.repsUp.textContent = isDuration ? `+${durationStep}` : "+1";
+  els.repsSlider.min = String(biking ? 1 : isDuration ? MIN_DURATION_MINUTES : MIN_REPS);
   els.repsSlider.max = String(isDuration ? MAX_DURATION_MINUTES : MAX_REPS);
-  els.repsSlider.step = String(isDuration ? DURATION_STEP_MINUTES : 1);
+  els.repsSlider.step = String(isDuration ? durationStep : 1);
   els.weightControl.hidden = isDuration;
   els.weightSlider.disabled = isDuration;
   els.weightDown.disabled = isDuration;
@@ -465,10 +534,14 @@ function configureEntryControls(exercise) {
 }
 
 function getPrimaryStep() {
+  if (isBiking(state.activeExercise?.name)) return 1;
   return isDurationExercise(state.activeExercise) ? DURATION_STEP_MINUTES : 1;
 }
 
 function getPrimaryBounds() {
+  if (isBiking(state.activeExercise?.name)) {
+    return { min: 1, max: MAX_DURATION_MINUTES, step: 1, defaultValue: DEFAULT_DURATION_MINUTES };
+  }
   if (isDurationExercise(state.activeExercise)) {
     return {
       min: MIN_DURATION_MINUTES,
@@ -628,6 +701,15 @@ async function handleSave() {
     timestamp: getLogTimestamp()
   };
 
+  if (isBiking(workout.exerciseName)) {
+    try {
+      workout.cycling = readBikeFields();
+    } catch (error) {
+      setEntryStatus(error.message, "error");
+      return;
+    }
+  }
+
   updateExerciseCache(workout);
   renderHome();
   updateLastLogged();
@@ -639,6 +721,7 @@ async function handleSave() {
   state.entryEdited = false;
   try {
     await addWorkoutSet(state.user.uid, workout);
+    if (isBiking(workout.exerciseName)) clearBikeFields();
     setSyncStatus(getReadyStatus(), "ok");
   } catch (error) {
     setSyncStatus("Queued", "error");
@@ -722,7 +805,9 @@ function renderRecentSets() {
 
     const timestamp = document.createElement("span");
     timestamp.className = "recent-set-time";
-    timestamp.textContent = formatRelativeDateTime(workout.timestamp);
+    timestamp.textContent = workout.workoutDate
+      ? `${workout.workoutDate}${workout.source?.type === "photo" ? " · From photo" : ""}`
+      : formatRelativeDateTime(workout.timestamp);
 
     details.append(summary, timestamp);
 
@@ -753,6 +838,8 @@ function updateExerciseCache(workout) {
   state.exerciseCache[workout.exerciseName] = {
     reps: workout.reps,
     weight: workout.weight,
+    cycling: workout.cycling,
+    workoutDate: workout.workoutDate,
     timestamp: workout.timestamp
   };
 }
@@ -762,7 +849,7 @@ function updateLastLogged() {
   const cached = exerciseName ? state.exerciseCache[exerciseName] : null;
 
   if (cached && isDurationExerciseName(exerciseName)) {
-    els.lastLogged.textContent = `Last ${formatNumber(cached.reps)} min, ${formatDateTime(cached.timestamp)}`;
+    els.lastLogged.textContent = `Last ${formatNumber(cached.reps)} min, ${cached.workoutDate || formatDateTime(cached.timestamp)}`;
     return;
   }
 
@@ -863,6 +950,7 @@ function parseDateKey(value) {
 }
 
 function formatSetSummary(workout) {
+  if (isBiking(workout.exerciseName)) return bikeSummaryLines(workout).join(" · ");
   if (isDurationExerciseName(workout.exerciseName)) {
     return `${formatNumber(workout.reps)} min`;
   }
