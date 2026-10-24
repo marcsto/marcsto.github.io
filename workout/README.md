@@ -6,7 +6,7 @@ Static pages on https://marc.ai/workout/ with Firebase Auth and Firestore. Worko
 
 `reps` remains duration in minutes for duration exercises, including biking, for compatibility with old entries. Optional numeric readings live in `cycling`; names encode their units. Missing readings must be omitted, not converted to zero. Calories retain their estimated flag. Resistance is a machine level, so compare it on the same equipment. Average speed is calculated from distance and duration and is labeled accordingly.
 
-The calendar shows minutes, miles, average watts, and cadence. Tap a biking card for all readings; multiple rides on a date remain distinct. Progress → Biking charts one selected metric per ride over the last 30 days. Legacy rides still appear in the duration chart; missing readings create gaps in other charts.
+The calendar shows minutes, miles, average watts, cadence, and calories (≈ marks estimated calories). Tap a biking card for all readings; multiple rides on a date remain distinct. Progress → Biking charts one selected metric per ride over the last 30 days. Legacy rides still appear in the duration chart; missing readings create gaps in other charts.
 
 When the user provides a new workout photo:
 

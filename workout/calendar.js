@@ -12,7 +12,7 @@ import {
   watchAuth
 } from "./firebase.js?v=20261021-1";
 import { getStepFreshness } from "./step-freshness.js?v=20260918-1";
-import { isBiking, bikeSummaryLines, bikeDetailMetrics, workoutDateKey } from "./biking.js";
+import { isBiking, bikeNumber, bikeSummaryLines, bikeDetailMetrics, workoutDateKey } from "./biking.js";
 
 const CALENDAR_DAYS = 28;
 const DAYS_PER_WEEK = 7;
@@ -420,6 +420,13 @@ function renderCalendar(days, workoutsByDate, stepsByDate) {
           metric.textContent = text;
           line.append(metric);
         });
+        if (summary.calories != null) {
+          const calories = document.createElement("span");
+          calories.className = "bike-calories";
+          calories.textContent = `${summary.caloriesEstimated ? "≈" : ""}${bikeNumber(summary.calories)} cal`;
+          calories.title = `${bikeNumber(summary.calories)} ${summary.caloriesEstimated ? "estimated " : ""}calories`;
+          line.append(calories);
+        }
       } else {
         line.textContent = summary.shortText;
       }
@@ -484,6 +491,8 @@ function summarizeDay(rows) {
   const bikeSummaries = rides.map((ride) => ({
     bike: true,
     lines: bikeSummaryLines(ride),
+    calories: ride.cycling?.calories,
+    caloriesEstimated: ride.cycling?.caloriesEstimated,
     fullText: `Biking: ${bikeDetailMetrics(ride).filter((m) => m.value !== "Not recorded").map((m) => `${m.label}: ${m.value}`).join(", ")}`,
     ...bikeStyle
   }));

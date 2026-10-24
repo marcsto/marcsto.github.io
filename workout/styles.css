@@ -979,6 +979,7 @@ input[type="range"]::-moz-range-thumb {
 
 .bike-label { color: #7bdc7b; font-size: 0.85em; letter-spacing: 0.04em; }
 .bike-secondary { color: #b4cab6; font-weight: 600; }
+.bike-calories { grid-column: 1 / -1; color: #f4c56f; font-weight: 700; }
 .bike-line:hover { background: #274c2b; }
 .bike-line:focus-visible { outline: 2px solid #7bdc7b; outline-offset: -2px; }
 .calendar-panel { overflow-y: auto; }
