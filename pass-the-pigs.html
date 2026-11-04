@@ -1195,28 +1195,12 @@ gtag('config', 'G-DHDFQ2KFXP');</script>
                     } else if (result.score >= 20) {
                         playHappySound();
                     }
-                } else if (state.lastRollDisplay && state.lastRollDisplay.includes('banked')) {
+                } else if (state.gameStatus !== 'finished' && state.lastRollDisplay && state.lastRollDisplay.includes('banked')) {
                     playBankSound();
                 }
             }
 
-            // Check for Win Sound (Transition to finished)
-            // We use a simple check if gameStatus is finished, but to avoid loop
-            // we should perhaps rely on the transition.
-            // However, rollID updates usually trigger updateUI.
-            // If the game just finished, let's play the sound.
-            if (state.gameStatus === 'finished' && state.lastRollData === null) {
-                // To ensure it plays only once, we can check if we already played it for this "event"
-                // But simplified: checking if we just processed a rollID that led to finish?
-                // Actually, handleBank sets finished and clears lastRollData.
-                // Let's use a flag on the state or similar?
-                // Alternatively, detect change from active/waiting to finished?
-                // Ideally we track previousGameStatus.
-            }
-            // Better approach: handleBank updates rollID too? No, it updates lastRollDisplay.
-            // But listenToRoom triggers updateUI on any change.
-            // Let's add a local tracking variable for gameStatus to detect edge.
-
+            // Play the win sound once when the game transitions to finished.
             if (state.gameStatus === 'finished' && window.lastGameStatus !== 'finished') {
                 playWinSound();
             }
@@ -1260,7 +1244,7 @@ gtag('config', 'G-DHDFQ2KFXP');</script>
                              } else {
                                  if (Math.random() < 0.5) handleRoll(); else handleBank();
                              }
-                         }, 1500);
+                         }, 500);
                     }
                 }
             }
