@@ -54,7 +54,7 @@ test('a king stays hidden until its holder taps; a blocked swap consumes the cha
     assert.equal(act(room, 'revealKing', 'c'), undefined);
 });
 
-test('lowest rank loses; all ties lose and aces are low', () => {
+test('lowest rank loses; tied non-dealers lose and aces are low', () => {
     let room = table([1, 1, 7]);
     for (const id of room.round.order) room = act(room, 'hold', id);
     assert.equal(room.round.phase, 'finished');
@@ -62,6 +62,112 @@ test('lowest rank loses; all ties lose and aces are low', () => {
     assert.equal(room.round.lowRank, 1);
     assert.equal(room.round.everyoneLoses, false);
     assert.equal(act(room, 'hold', 'a'), undefined);
+});
+
+test('dealer alone loses a tie for lowest, including a whole-table tie', () => {
+    for (const ranks of [[1, 8, 1], [6, 6, 6], [13, 13, 13]]) {
+        let room = table(ranks);
+        for (const id of room.round.order) room = act(room, 'hold', id);
+        assert.deepEqual(room.round.losers, ['a']);
+        assert.equal(room.round.dealerLosesTie, true);
+        assert.equal(room.round.everyoneLoses, false);
+    }
+});
+
+test('a tie above the lowest card does not make the dealer lose', () => {
+    let room = table([2, 8, 8]);
+    for (const id of room.round.order) room = act(room, 'hold', id);
+    assert.deepEqual(room.round.losers, ['b']);
+    assert.equal(room.round.dealerLosesTie, false);
+});
+
+test('dealer also loses a low tie after cutting a non-king', () => {
+    let room = table([3, 7, 12], 3);
+    room = act(act(room, 'hold', 'b'), 'hold', 'c');
+    room = act(room, 'cut', 'a', { cutIndex: 0 });
+    assert.deepEqual(room.round.losers, ['a']);
+    assert.equal(room.round.dealerLosesTie, true);
+});
+
+test('a king cut overrides dealer ties and makes other kings lose too', () => {
+    let room = table([13, 13, 5], 13);
+    room = act(act(room, 'hold', 'b'), 'hold', 'c');
+    room = act(room, 'cut', 'a', { cutIndex: 0 });
+    assert.equal(room.round.everyoneLoses, true);
+    assert.equal(room.round.dealerLosesTie, false);
+    assert.deepEqual(room.round.losers, ['b', 'c', 'a']);
+});
+
+test('both sides of a swap know the exchanged cards, but observers do not', () => {
+    let room = table([1, 8, 9]);
+    assert.equal(R.canSee(room.round, 'b', 'c'), false);
+    assert.equal(R.canSee(room.round, 'c', 'b'), false);
+    room = act(room, 'swap', 'b');
+    for (const viewer of ['b', 'c']) for (const holder of ['b', 'c']) assert.equal(R.canSee(room.round, viewer, holder), true);
+    assert.equal(R.canSee(room.round, 'a', 'b'), false);
+    assert.equal(R.canSee(room.round, 'a', 'c'), false);
+    assert.equal(room.round.event.fromCard.rank, 1);
+    assert.equal(room.round.event.toCard.rank, 8);
+});
+
+test('card knowledge follows subsequent passes and survives serialized reconnects', () => {
+    let room = table([1, 8, 9]);
+    room = act(room, 'swap', 'b');
+    room = act(room, 'swap', 'c');
+    room = JSON.parse(JSON.stringify(room));
+    assert.equal(room.round.hands.a.rank, 1);
+    assert.equal(R.canSee(room.round, 'b', 'a'), true, 'first player still recognizes their ace at the third seat');
+    assert.equal(R.canSee(room.round, 'b', 'c'), false, 'first player has never held the nine');
+    assert.equal(R.canSee(room.round, 'a', 'c'), true, 'dealer can see their former nine');
+    assert.equal(R.canSee(room.round, 'c', 'b'), true, 'middle player still knows their original eight');
+    assert.equal(R.canSee(room.round, 'newcomer', 'b'), false);
+});
+
+test('knowledge distinguishes suits and resets for each new deal', () => {
+    let room = table([1, 1, 7]);
+    assert.equal(R.canSee(room.round, 'b', 'c'), false, 'another ace is not the same card');
+    room = act(room, 'swap', 'b');
+    room = act(act(room, 'hold', 'c'), 'hold', 'a');
+    room = act(room, 'deal', 'a', { deck: R.shuffledDeck() });
+    for (const viewer of room.round.order) for (const holder of room.round.order) {
+        assert.equal(R.canSee(room.round, viewer, holder), viewer === holder);
+    }
+    assert.deepEqual(room.round.actions, {});
+});
+
+test('action labels describe the player’s turn, not forced exchanges afterward', () => {
+    let room = table([1, 8, 9]);
+    room = act(room, 'swap', 'b');
+    assert.equal(room.round.actions.b, 'swapped');
+    assert.equal(room.round.actions.c, undefined);
+    room = act(room, 'hold', 'c');
+    assert.equal(room.round.actions.c, 'held');
+    room = act(room, 'cut', 'a', { cutIndex: 0 });
+    assert.deepEqual(room.round.actions, { b: 'swapped', c: 'held', a: 'cut' });
+});
+
+test('a blocked swap is labeled, and a publicly revealed king stays known when passed', () => {
+    let room = table([1, 13, 9]);
+    room = act(room, 'swap', 'b');
+    assert.equal(room.round.actions.b, undefined, 'challenger has not finished yet');
+    room = act(room, 'revealKing', 'c');
+    assert.equal(room.round.actions.b, 'blocked');
+    room = act(room, 'swap', 'c');
+    assert.equal(R.canSee(room.round, 'b', 'a'), true);
+    assert.equal(R.canSee(room.round, 'newcomer', 'a'), true);
+    assert.equal(room.round.actions.c, 'swapped');
+});
+
+test('existing rooms upgrade without discarding players or the active hand', () => {
+    let room = table([1, 8, 9]);
+    room.version = 1;
+    delete room.round.knownCards;
+    delete room.round.actions;
+    room = act(room, 'swap', 'b');
+    assert.equal(room.version, 2);
+    assert.equal(room.players.length, 3);
+    assert.equal(room.round.turn, 1);
+    assert.equal(R.canSee(room.round, 'c', 'b'), true);
 });
 
 test('only the dealer can cut, and even a worse card replaces their hand', () => {

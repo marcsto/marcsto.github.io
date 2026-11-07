@@ -769,6 +769,67 @@ input::placeholder {
     transition: filter .25s,transform .3s;
 }
 
+.seat-action {
+    position: absolute;
+    top: -23px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: #183c30;
+    border: 1px solid #e8bd7366;
+    color: #f2d397;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: .3px;
+    white-space: nowrap;
+}
+
+.table-stage.top-seat {
+    margin-top: 42px;
+}
+
+.seat.is-transferring .playing-card {
+    visibility: hidden;
+}
+
+.card-flights {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.flying-card {
+    position: absolute;
+    will-change: transform;
+    filter: drop-shadow(0 8px 9px #0006);
+}
+
+.flying-card .card-inner {
+    transition: none;
+}
+
+/* Dealing always happens on the table, far from the turn controls below it. */
+.deal-actions {
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(210px, calc(100% - 160px));
+    z-index: 3;
+}
+
+.deal-actions .button {
+    padding: 14px 10px;
+    font-size: 14px;
+}
+
+.table-stage.awaiting-deal:has(.deal-actions:not(:empty)) .table-center {
+    visibility: hidden;
+}
+
 .seat.is-active .playing-card {
     filter: drop-shadow(0 0 6px #edc77d66);
     transform: translateY(-5px);
@@ -1006,10 +1067,6 @@ input::placeholder {
     transition-delay: calc(var(--seat-index)*110ms);
 }
 
-.table-stage.swapping .seat.is-swapping .playing-card {
-    animation: swap-card .65s ease-in-out;
-}
-
 .game .round-banner.result-banner h1 {
     color: var(--gold);
 }
@@ -1174,16 +1231,6 @@ input::placeholder {
     to {
         opacity: 1;
         transform: scale(1);
-    }
-}
-
-@keyframes swap-card {
-    0%,100% {
-        transform: translateX(0);
-    }
-    45% {
-        transform: translateX(20px) rotate(8deg);
-        opacity: .5;
     }
 }
 
@@ -1483,7 +1530,10 @@ input::placeholder {
 
 @media(max-width:760px) {
     .table-center {
-        top: 44%;
+        top: 40%;
+    }
+    .deal-actions {
+        width: min(170px, calc(100% - 190px));
     }
     .dense .table-center {
         top: 50%;

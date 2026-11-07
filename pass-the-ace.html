@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/pass-the-ace.css">
+    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=2">
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script defer src="assets/js/ace-rules.js"></script>
-    <script defer src="assets/js/pass-the-ace.js"></script>
+    <script defer src="assets/js/ace-rules.js?v=2"></script>
+    <script defer src="assets/js/pass-the-ace.js?v=2"></script>
 </head>
 <body>
     <header class="masthead">
@@ -59,6 +59,8 @@
                 <div class="table-shadow"></div><div class="table-rail"><div class="felt"><div class="felt-line"></div></div></div>
                 <div class="table-center"><div id="deck" class="deck" aria-label="Deck of cards"><div class="deck-layer"></div><div class="deck-layer"></div><div id="deck-card" class="playing-card deck-top"></div></div><div id="center-caption" class="center-caption">PASS THE ACE</div><div id="center-detail" class="center-detail">A seat for everyone.</div></div>
                 <div id="seats" class="seats"></div>
+                <div id="card-flights" class="card-flights" aria-hidden="true"></div>
+                <div id="deal-actions" class="deal-actions"></div>
                 <div id="table-flourish" class="table-flourish" role="status" hidden><span aria-hidden="true">♚</span><strong>Not so fast.</strong><p id="flourish-detail"></p></div>
             </div>
             <div id="event-line" class="event-line" aria-live="polite"></div>
@@ -73,11 +75,11 @@
         <div class="dialog-heading"><span class="eyebrow">OUR HOUSE RULES</span><button class="close-button" type="button" data-close aria-label="Close rules">×</button></div>
         <h2>Keep your card.<br>Or take a chance.</h2>
         <ol class="rules-list">
-            <li><strong>One card, just for you.</strong> Your card is always face up on your phone. Aces are low; kings are high. Suits don’t matter.</li>
+            <li><strong>Keep track of your cards.</strong> Your card is always face up on your phone. Cards you’ve held stay visible to you when they move to another player. Aces are low; kings are high. Suits don’t matter.</li>
             <li><strong>Hold or swap.</strong> Play goes clockwise, starting after the dealer. Keep your card or exchange it with the next player. They have to accept…</li>
             <li><strong>Unless they have a king.</strong> They tap “Reveal king!” and keep their card. You keep yours, and your turn ends.</li>
-            <li><strong>The dealer goes last.</strong> Hold, or cut the deck for a replacement. You must take the new card, even if it’s worse. Cut a king? Everyone loses!</li>
-            <li><strong>Time for the reveal.</strong> The lowest card loses, including everyone tied for lowest. Move the dealer one seat and go again.</li>
+            <li><strong>The dealer goes last.</strong> Hold, or cut the deck for a replacement. You must take the new card, even if it’s worse. Cut a king? Everyone loses, even players holding kings!</li>
+            <li><strong>Time for the reveal.</strong> The lowest card loses. If the dealer is tied for lowest, only the dealer loses. Otherwise, everyone tied for lowest loses. Move the dealer one seat and go again.</li>
         </ol>
         <p class="dialog-footnote">No scores. No lives. Just one more round.</p>
         <button type="button" class="button primary" data-close>Got it. Let’s play.</button>

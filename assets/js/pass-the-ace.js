@@ -6,6 +6,9 @@
     const ROOM_PATH = 'passTheAceRooms/';
     let db, roomRef, room, myId, roomCode, connected = false, busy = false;
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
+    let processing = false, presentationEpoch = 0;
+    const snapshots = [];
+    const flightAnimations = new Set();
     const seatNodes = new Map();
 
     function readSaved() {
@@ -78,7 +81,7 @@
         try {
             const ref = db.ref(ROOM_PATH + code);
             const existing = (await ref.once('value')).val();
-            if (existing && existing.version !== 1) throw new Error('This table needs a newer version. Please refresh the page.');
+            if (existing && ![1, 2].includes(existing.version)) throw new Error('This table needs a newer version. Please refresh the page.');
             const players = existing?.players || [];
             if (players.length >= R.MAX_PLAYERS && !players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
                 throw new Error('This table has all 8 seats filled. Try another room name.');
@@ -114,18 +117,36 @@
             toast('Your seat was removed. You can join the table again.');
             return;
         }
-        room = data;
-        render();
-        const round = room.round;
-        const key = round ? `${round.number}:${JSON.stringify(round.event)}` : '';
-        if (!firstSnapshot && key !== lastEvent) animateEvent(round);
-        lastEvent = key;
-        firstSnapshot = false;
-        if ($('table-dialog').open) renderManagement();
+        snapshots.push(data);
+        if (!processing) void presentSnapshots();
+    }
+
+    async function presentSnapshots() {
+        const epoch = presentationEpoch;
+        processing = true;
+        try {
+            // Let each exchange arrive before showing the next one, even if people play quickly.
+            while (snapshots.length && epoch === presentationEpoch) {
+                room = snapshots.shift();
+                render();
+                const round = room.round;
+                const key = round ? `${round.number}:${JSON.stringify(round.event)}` : '';
+                if (!firstSnapshot && key !== lastEvent) await animateEvent(round);
+                if (epoch !== presentationEpoch) return;
+                lastEvent = key;
+                firstSnapshot = false;
+                if ($('table-dialog').open) renderManagement();
+            }
+        } finally {
+            if (epoch === presentationEpoch) {
+                processing = false;
+                renderControls();
+            }
+        }
     }
 
     async function send(type, extra = {}) {
-        if (busy || !roomRef || !room) return false;
+        if (busy || processing || !roomRef || !room) return false;
         if (!connected) {
             showError('game-error', 'You’re offline. Your seat is saved; reconnect to keep playing.');
             return false;
@@ -148,6 +169,12 @@
     }
 
     function leaveView() {
+        presentationEpoch++;
+        snapshots.length = 0;
+        processing = false;
+        for (const animation of flightAnimations) animation.cancel();
+        flightAnimations.clear();
+        $('card-flights').replaceChildren();
         roomRef?.off('value', onRoom);
         roomRef = null;
         room = null;
@@ -211,6 +238,7 @@
         const count = Math.max(ordered.length, 3);
         const dense = ordered.length > 5;
         $('table-stage').classList.toggle('dense', dense);
+        $('table-stage').classList.toggle('top-seat', ordered.length > 1 && ordered.length !== 3);
         const wanted = new Set(ordered);
         if (!r && ordered.length < 3) for (let i = ordered.length; i < 3; i++) wanted.add(`empty_${i}`);
         for (const [id, node] of seatNodes) if (!wanted.has(id)) { node.remove(); seatNodes.delete(id); }
@@ -223,7 +251,7 @@
                 node.dataset.player = id;
                 if (empty) node.append(element('div', 'empty-card', '+'));
                 else node.append(element('div', 'playing-card'));
-                node.append(element('div', 'seat-name'), element('div', 'seat-status'));
+                node.append(element('div', 'seat-action'), element('div', 'seat-name'), element('div', 'seat-status'));
                 seatNodes.set(id, node);
                 $('seats').append(node);
             }
@@ -259,16 +287,19 @@
                 node.append(marker);
             } else if (!dealer && marker) marker.remove();
             let status = !r ? 'Ready to play' : '';
-            if (r?.phase === 'finished') status = loser ? (r.everyoneLoses ? 'King cut!' : 'Low card') : 'Safe this round';
+            if (r?.phase === 'finished') status = loser ? (r.everyoneLoses ? 'King cut!' : r.dealerLosesTie ? 'Dealer loses tie' : 'Low card') : '';
             else if (r) {
                 if (active) status = r.phase === 'challenge' ? 'Swap requested' : (mine ? 'Your turn' : 'Thinking…');
                 else if (r.revealedKings?.[id]) status = 'King revealed';
-                else if (r.order.indexOf(id) < r.turn) status = 'Turn taken';
+                else if (r.order.indexOf(id) < r.turn) status = '';
                 else if (dealer) status = 'Dealer · plays last';
             }
             node.querySelector('.seat-status').textContent = status;
-            const visible = r && (mine || r.phase === 'finished' || r.revealedKings?.[id]);
-            renderCard(node.querySelector('.playing-card'), r?.hands[id], Boolean(visible));
+            const action = r?.actions?.[id];
+            const actionLabel = node.querySelector('.seat-action');
+            actionLabel.textContent = ({ held: 'Held', swapped: 'Swapped', blocked: 'Blocked', cut: 'Cut' })[action] || '';
+            actionLabel.hidden = !action;
+            renderCard(node.querySelector('.playing-card'), r?.hands[id], R.canSee(r, myId, id));
         });
     }
 
@@ -292,6 +323,7 @@
                 title = r.losers.length === r.order.length ? 'A table full of low cards.' : r.losers.includes(myId) ? 'Ah, better luck next round.' : 'You’re off the hook.';
                 if (!r.order.includes(myId)) title = 'The cards are in.';
                 subtitle = `${losers} ${r.losers.length > 1 ? 'lose' : 'loses'} with ${r.lowRank === 1 ? 'the ace' : 'the lowest card (' + R.rankLabel(r.lowRank) + ')'}.`;
+                if (r.dealerLosesTie) subtitle = `${playerName(r.dealerId)} loses the tie. The dealer must beat the lowest card.`;
             }
         } else if (r.phase === 'challenge') {
             kicker = `ROUND ${r.number} · A LITTLE SUSPENSE`;
@@ -332,16 +364,18 @@
     }
 
     function actionButton(label, type, className = 'primary', extra) {
+        const revision = room.revision;
         const button = element('button', `button ${className}`, label);
         button.type = 'button';
         button.dataset.action = type;
-        button.disabled = busy || !connected;
+        button.disabled = busy || processing || !connected;
         button.addEventListener('click', () => {
+            if (room.revision !== revision || processing) return;
             const data = type === 'deal' ? { deck: R.shuffledDeck() } :
                 type === 'cut' ? { cutIndex: Math.floor(Math.random() * room.round.deck.length) } : extra || {};
             void send(type, data);
         });
-        $('actions').append(button);
+        $(type === 'deal' ? 'deal-actions' : 'actions').append(button);
         return button;
     }
     function renderControls() {
@@ -350,6 +384,8 @@
         const copy = $('action-copy');
         copy.replaceChildren();
         $('actions').replaceChildren();
+        $('deal-actions').replaceChildren();
+        $('table-stage').classList.toggle('awaiting-deal', !r || r.phase === 'finished');
         document.querySelector('.action-panel').classList.toggle('king-prompt', r?.phase === 'challenge' && r.pending.to === myId);
         if (!connected) {
             copy.textContent = 'Reconnecting… Your seat and cards are saved.';
@@ -358,7 +394,7 @@
         if (!r || r.phase === 'finished') {
             const enough = room.players.length >= 2;
             copy.textContent = enough ? `${playerName(room.nextDealerId)} deals ${r ? 'next' : 'first'}. Anyone can start the round.` : 'Share your room link to bring everyone together.';
-            if (enough) actionButton(r ? 'Deal another round ↗' : 'Deal the cards ↗', 'deal');
+            if (enough) actionButton(r ? 'Deal next round ↗' : 'Deal the cards ↗', 'deal');
             else {
                 const button = element('button', 'button primary', 'Invite your people ↗');
                 button.addEventListener('click', invite);
@@ -383,27 +419,68 @@
         }
     }
 
-    function animateEvent(r) {
+    async function animateEvent(r) {
         clearTimeout(animationTimer);
         const stage = $('table-stage');
-        stage.classList.remove('dealing', 'swapping', 'revealing');
-        for (const node of seatNodes.values()) node.classList.remove('is-swapping');
+        stage.classList.remove('dealing', 'revealing');
         clearTimeout(flourishTimer);
         $('table-flourish').hidden = true;
         if (!r) return;
         void stage.offsetWidth;
         if (r.event.kind === 'deal') stage.classList.add('dealing');
-        if (r.event.kind === 'swap') {
-            for (const id of [r.event.actor, r.event.target]) seatNodes.get(id)?.classList.add('is-swapping');
-            stage.classList.add('swapping');
-        }
         if (r.phase === 'finished') stage.classList.add('revealing');
         if (r.event.kind === 'king') {
             $('flourish-detail').textContent = `${playerName(r.event.actor)} has a king. No swap for you!`;
             $('table-flourish').hidden = false;
             flourishTimer = setTimeout(() => { $('table-flourish').hidden = true; }, 2400);
         }
-        animationTimer = setTimeout(() => stage.classList.remove('dealing', 'swapping', 'revealing'), 2200);
+        animationTimer = setTimeout(() => stage.classList.remove('dealing', 'revealing'), 2200);
+        if (r.event.kind === 'swap') await animateSwap(r);
+        // Also gives everyone a moment to see the new deal before turn buttons enable.
+        if (r.event.kind === 'deal') await new Promise(resolve => setTimeout(resolve, 700));
+    }
+
+    async function animateSwap(r) {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const { actor, target } = r.event;
+        const nodes = [seatNodes.get(actor), seatNodes.get(target)];
+        if (nodes.some(node => !node)) return;
+        const stage = $('table-stage').getBoundingClientRect();
+        const rects = nodes.map(node => node.querySelector('.playing-card').getBoundingClientRect());
+        const cards = [r.event.fromCard || r.hands[target], r.event.toCard || r.hands[actor]];
+        const destinations = [target, actor];
+        const flights = [];
+        const animations = [];
+        nodes.forEach(node => node.classList.add('is-transferring'));
+        try {
+            for (let i = 0; i < 2; i++) {
+                const from = rects[i], to = rects[1 - i];
+                const dx = to.left - from.left, dy = to.top - from.top;
+                const length = Math.hypot(dx, dy) || 1;
+                const curve = Math.min(38, length * .15);
+                const flight = element('div', 'playing-card flying-card');
+                flight.style.setProperty('--card-width', `${from.width}px`);
+                flight.style.left = `${from.left - stage.left}px`;
+                flight.style.top = `${from.top - stage.top}px`;
+                renderCard(flight, cards[i], R.canSee(r, myId, destinations[i]));
+                flight.classList.toggle('face-up', R.canSee(r, myId, destinations[i]));
+                flight.setAttribute('aria-hidden', 'true');
+                $('card-flights').append(flight);
+                flights.push(flight);
+                const animation = flight.animate([
+                    { transform: 'translate(0, 0) rotate(0deg)' },
+                    { transform: `translate(${dx / 2 - dy / length * curve}px, ${dy / 2 + dx / length * curve}px) rotate(${i ? -9 : 9}deg)`, offset: .5 },
+                    { transform: `translate(${dx}px, ${dy}px) rotate(0deg)` }
+                ], { duration: 1050, easing: 'cubic-bezier(.35, 0, .25, 1)', fill: 'forwards' });
+                animations.push(animation);
+                flightAnimations.add(animation);
+            }
+            await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+        } finally {
+            animations.forEach(animation => { animation.cancel(); flightAnimations.delete(animation); });
+            flights.forEach(flight => flight.remove());
+            nodes.forEach(node => node.classList.remove('is-transferring'));
+        }
     }
 
     async function invite() {
