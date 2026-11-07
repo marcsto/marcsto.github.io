@@ -586,7 +586,7 @@ input::placeholder {
 
 .table-center {
     position: absolute;
-    top: 49%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
     text-align: center;
@@ -600,7 +600,7 @@ input::placeholder {
     letter-spacing: 2px;
     color: #d9e0bf8a;
     white-space: nowrap;
-    margin-top: 17px;
+    margin-top: 0;
 }
 
 .center-detail {
@@ -634,6 +634,107 @@ input::placeholder {
 
 .deck .playing-card {
     --card-width: 53px;
+}
+
+.dealer-supply {
+    position: absolute;
+    width: 76px;
+    height: 108px;
+    z-index: 2;
+    pointer-events: none;
+    transition: left .4s ease, top .4s ease;
+}
+
+.dealer-supply .deck {
+    position: absolute;
+    top: 26px;
+    left: 15px;
+    width: 42px;
+    height: 59px;
+    margin: 0;
+}
+
+.dealer-supply .deck .playing-card {
+    --card-width: 42px;
+}
+
+.supply-caption, .before-cut-label, .discard-caption {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #ced8c5;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 16px;
+    white-space: nowrap;
+}
+
+.supply-caption {
+    top: 7px;
+    color: #b5c6ac;
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.before-cut-label {
+    top: 0;
+    background: #17382ee8;
+    border: 1px solid #b7c3ac66;
+    border-radius: 5px;
+}
+
+.cut-discard {
+    position: absolute;
+    inset: 0;
+}
+
+.cut-discard .playing-card {
+    --card-width: 44px;
+    position: absolute;
+    left: 16px;
+    top: 22px;
+    transform: rotate(-9deg);
+}
+
+.cut-discard .card-face {
+    background: #e5e3d6;
+    box-shadow: 0 3px 8px #0005;
+}
+
+.discard-caption {
+    top: 92px;
+    font-size: 8px;
+    color: #b5c6ac;
+}
+
+.dealer-supply.has-discard .deck {
+    left: 21px;
+    top: 31px;
+    transform: rotate(5deg);
+}
+
+.dense .dealer-supply {
+    width: 66px;
+    height: 102px;
+}
+
+.dense .cut-discard .playing-card {
+    --card-width: 40px;
+    left: 13px;
+}
+
+.dense .dealer-supply .deck {
+    left: 12px;
+}
+
+.dense .dealer-supply.has-discard .deck {
+    left: 16px;
+}
+
+.dense .discard-caption {
+    top: 86px;
 }
 
 .playing-card {
@@ -1404,6 +1505,9 @@ input::placeholder {
 }
 
 @media(max-width:380px) {
+    .table-stage.dense {
+        min-height: 680px;
+    }
     .masthead {
         padding: 12px 16px;
     }
@@ -1504,8 +1608,11 @@ input::placeholder {
     .table-stage:not(.dense) {
         height: clamp(320px,calc(100svh - 485px),425px);
     }
+    .table-stage.medium-table {
+        min-height: 460px;
+    }
     .table-stage.dense {
-        height: 540px;
+        height: 640px;
     }
     .action-panel {
         margin-top: 3px;
@@ -1530,7 +1637,7 @@ input::placeholder {
 
 @media(max-width:760px) {
     .table-center {
-        top: 40%;
+        top: 50%;
     }
     .deal-actions {
         width: min(170px, calc(100% - 190px));

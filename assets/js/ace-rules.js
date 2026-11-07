@@ -211,6 +211,7 @@
                     if (round.turn !== round.order.length - 1 || !Number.isInteger(action.cutIndex) ||
                         action.cutIndex < 0 || action.cutIndex >= round.deck.length) return;
                     const card = round.deck.splice(action.cutIndex, 1)[0];
+                    round.beforeCutCard = { ...round.hands[activeId] };
                     round.hands[activeId] = card;
                     remember(round, activeId, card);
                     round.actions[activeId] = 'cut';

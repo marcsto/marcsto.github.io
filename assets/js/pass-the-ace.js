@@ -8,6 +8,7 @@
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
     let processing = false, presentationEpoch = 0;
     let aiTimer, aiTimerKey = '';
+    let supplyFrame, supplyTimer;
     const snapshots = [];
     const flightAnimations = new Set();
     const seatNodes = new Map();
@@ -211,6 +212,9 @@
 
     function leaveView() {
         cancelAI();
+        cancelAnimationFrame(supplyFrame);
+        clearTimeout(supplyTimer);
+        $('dealer-supply').hidden = true;
         presentationEpoch++;
         snapshots.length = 0;
         processing = false;
@@ -278,8 +282,9 @@
         if (offset < 0) offset = 0;
         const ordered = ids.slice(offset).concat(ids.slice(0, offset));
         const count = Math.max(ordered.length, 3);
-        const dense = ordered.length > 5;
+        const dense = ordered.length > 4;
         $('table-stage').classList.toggle('dense', dense);
+        $('table-stage').classList.toggle('medium-table', ordered.length === 4 || ordered.length === 5);
         $('table-stage').classList.toggle('top-seat', ordered.length > 1 && ordered.length !== 3);
         const wanted = new Set(ordered);
         if (!r && ordered.length < 3) for (let i = ordered.length; i < 3; i++) wanted.add(`empty_${i}`);
@@ -341,15 +346,99 @@
             node.querySelector('.seat-status').textContent = status;
             const action = r?.actions?.[id];
             const actionLabel = node.querySelector('.seat-action');
-            actionLabel.textContent = ({ held: 'Held', swapped: 'Swapped', blocked: 'Blocked', cut: 'Cut' })[action] || '';
+            actionLabel.textContent = ({ held: 'Held', swapped: 'Swapped', blocked: 'Blocked', cut: 'New card' })[action] || '';
+            actionLabel.title = action === 'cut' ? 'The replacement card that counts for this round' : '';
             actionLabel.hidden = !action;
             renderCard(node.querySelector('.playing-card'), r?.hands[id], R.canSee(r, myId, id));
         });
     }
 
+    function renderDealerSupply() {
+        const r = room.round;
+        const supply = $('dealer-supply');
+        const dealerId = r?.dealerId || room.nextDealerId;
+        supply.hidden = !seatNodes.has(dealerId);
+        supply.dataset.dealer = dealerId || '';
+        supply.setAttribute('aria-label', `${playerName(dealerId)}’s deck and discarded card`);
+        const previous = r?.phase === 'finished' && r.cutCard ? r.beforeCutCard : null;
+        supply.classList.toggle('has-discard', Boolean(previous));
+        $('cut-discard').hidden = !previous;
+        $('deck-caption').hidden = Boolean(previous);
+        renderCard($('deck-card'), null, false);
+        renderCard($('discard-card'), previous, Boolean(previous));
+        if (previous) $('discard-card').setAttribute('aria-label', `Before cut: ${R.cardLabel(previous)}. Discarded; does not count for this round.`);
+    }
+
+    function scheduleSupplyLayout() {
+        cancelAnimationFrame(supplyFrame);
+        clearTimeout(supplyTimer);
+        supplyFrame = requestAnimationFrame(positionDealerSupply);
+        // Seats can move when someone joins; settle the pile beside their final position.
+        supplyTimer = setTimeout(positionDealerSupply, 460);
+    }
+
+    function positionDealerSupply() {
+        const supply = $('dealer-supply');
+        if (!room || supply.hidden || $('game-view').hidden) return;
+        const dealer = seatNodes.get(supply.dataset.dealer);
+        if (!dealer) return;
+        const stage = $('table-stage').getBoundingClientRect();
+        const hand = dealer.querySelector('.playing-card').getBoundingClientRect();
+        const width = supply.offsetWidth, height = supply.offsetHeight;
+        const origin = { x: hand.left + hand.width / 2 - stage.left, y: hand.top + hand.height / 2 - stage.top };
+        const obstacles = [...$('seats').querySelectorAll('.playing-card, .empty-card, .seat-name, .seat-action, .seat-status'),
+            ...$('deal-actions').children, document.querySelector('.table-center')]
+            .filter(node => !node.hidden && getComputedStyle(node).visibility !== 'hidden' &&
+                (!node.classList.contains('seat-status') || node.textContent.trim()))
+            .map(node => {
+                const rect = node.getBoundingClientRect();
+                return { left: rect.left - stage.left, top: rect.top - stage.top,
+                    right: rect.right - stage.left, bottom: rect.bottom - stage.top };
+            });
+        let best;
+        const spacing = (hand.width + width) / 2 + 12;
+        function consider(candidateX, candidateY) {
+            const x = Math.max(width / 2 + 4, Math.min(stage.width - width / 2 - 4, candidateX));
+            const y = Math.max(height / 2 + 4, Math.min(stage.height - height / 2 - 4, candidateY));
+            const left = x - width / 2, top = y - height / 2;
+            const overlap = obstacles.reduce((area, rect) => area +
+                Math.max(0, Math.min(left + width, rect.right) - Math.max(left, rect.left)) *
+                Math.max(0, Math.min(top + height, rect.bottom) - Math.max(top, rect.top)), 0);
+            const proximity = obstacles.reduce((area, rect) => area +
+                Math.max(0, Math.min(left + width, rect.right + 5) - Math.max(left, rect.left - 5)) *
+                Math.max(0, Math.min(top + height, rect.bottom + 5) - Math.max(top, rect.top - 5)), 0);
+            const edge = Math.max(0, ((x - stage.width / 2) / (stage.width * .43)) ** 2 +
+                ((y - stage.height / 2) / (stage.height * .42)) ** 2 - 1);
+            const score = (overlap > 0 ? 1e9 + overlap * 10000 : 0) + proximity * 10 + edge * 100 +
+                Math.hypot(x - origin.x, y - origin.y) + Math.abs(y - origin.y) * .08;
+            if (!best || score < best.score) best = { left, top, score, overlap };
+        }
+        // Pick the closest clear patch of felt, favoring the inside of the table.
+        // Checking several directions also keeps the discarded card readable at an eight-seat table.
+        for (const distance of [spacing, spacing + 22, spacing + 44, spacing + 68, spacing + 94, spacing + 122]) {
+            for (let step = 0; step < 24; step++) {
+                const angle = step * Math.PI / 12;
+                consider(origin.x + Math.cos(angle) * distance, origin.y + Math.sin(angle) * distance);
+            }
+        }
+        const centerX = best.left + width / 2, centerY = best.top + height / 2;
+        for (let dx = -24; dx <= 24; dx += 3) for (let dy = -24; dy <= 24; dy += 3) consider(centerX + dx, centerY + dy);
+        const fineX = best.left + width / 2, fineY = best.top + height / 2;
+        for (let dx = -3; dx <= 3; dx += .5) for (let dy = -3; dy <= 3; dy += .5) consider(fineX + dx, fineY + dy);
+        if (best.overlap > 0) {
+            // Very narrow tables can have only a small gap between two labels.
+            const xs = [origin.x, stage.width / 2, ...obstacles.flatMap(rect => [rect.left - width / 2 - .5, rect.right + width / 2 + .5])];
+            const ys = [origin.y, stage.height / 2, ...obstacles.flatMap(rect => [rect.top - height / 2 - .5, rect.bottom + height / 2 + .5])];
+            for (const x of xs) for (const y of ys) consider(x, y);
+        }
+        supply.style.left = `${best.left}px`;
+        supply.style.top = `${best.top}px`;
+    }
+
     function render() {
         const r = room.round;
         renderSeats();
+        renderDealerSupply();
         const finished = r?.phase === 'finished';
         document.querySelector('.round-banner').classList.toggle('result-banner', Boolean(finished));
         let title, subtitle, kicker;
@@ -385,9 +474,8 @@
         $('round-kicker').textContent = kicker;
         $('round-title').textContent = title;
         $('round-subtitle').textContent = subtitle;
-        $('center-caption').textContent = finished && r.cutCard ? 'THE CUT' : 'PASS THE ACE';
+        $('center-caption').textContent = 'PASS THE ACE';
         $('center-detail').textContent = r ? (finished ? 'Shall we go again?' : 'Clockwise · ace is low') : 'A seat for everyone.';
-        renderCard($('deck-card'), r?.cutCard, Boolean(finished && r.cutCard));
         $('event-line').textContent = eventText(r);
         const queued = r ? room.players.filter(p => !r.order.includes(p.id)) : [];
         $('queued-players').hidden = queued.length === 0;
@@ -404,7 +492,9 @@
         if (e.kind === 'hold') return `${playerName(e.actor)} held their card.`;
         if (e.kind === 'challenge') return `Waiting for ${playerName(e.target)} to respond…`;
         if (e.kind === 'king') return `${playerName(e.actor)} revealed a king! ${playerName(e.blocked)} keeps their card.`;
-        if (e.kind === 'cut') return `${playerName(e.actor)} cut the ${R.cardLabel(r.cutCard).toLowerCase()}.`;
+        if (e.kind === 'cut') return r.beforeCutCard
+            ? `${playerName(e.actor)} cut: ${R.rankLabel(r.beforeCutCard.rank)}${R.SYMBOLS[r.beforeCutCard.suit]} → ${R.rankLabel(r.cutCard.rank)}${R.SYMBOLS[r.cutCard.suit]}. The new card counts.`
+            : `${playerName(e.actor)} cut the ${R.cardLabel(r.cutCard).toLowerCase()}.`;
         return '';
     }
 
@@ -425,6 +515,7 @@
     }
     function renderControls() {
         if (!room) return;
+        scheduleSupplyLayout();
         const r = room.round;
         const copy = $('action-copy');
         copy.replaceChildren();
@@ -455,7 +546,7 @@
             copy.append(element('strong', '', `Your card: ${R.cardLabel(r.hands[myId])}. `));
             copy.append(document.createTextNode(last ? 'A cut replaces it. A king sinks everyone.' : 'Trust it, or trade it?'));
             actionButton('Hold', 'hold', 'secondary');
-            actionButton(last ? 'Cut the deck' : 'Swap →', last ? 'cut' : 'swap');
+            actionButton(last ? 'Cut the deck' : '← Swap', last ? 'cut' : 'swap');
         } else {
             const dots = element('span', 'waiting-dots');
             dots.setAttribute('aria-hidden', 'true');
@@ -601,6 +692,7 @@
     }
 
     $('join-form').addEventListener('submit', joinGame);
+    window.addEventListener('resize', scheduleSupplyLayout);
     $('rules-button').addEventListener('click', () => $('rules-dialog').showModal());
     $('table-button').addEventListener('click', () => { renderManagement(); $('table-dialog').showModal(); });
     $('invite-button').addEventListener('click', invite);

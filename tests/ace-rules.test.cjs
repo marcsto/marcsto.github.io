@@ -182,6 +182,39 @@ test('only the dealer can cut, and even a worse card replaces their hand', () =>
     assert.equal(room.round.deck.length, 48);
 });
 
+test('cut preserves the dealer’s previous card while only the new card determines the result', () => {
+    let room = table([5, 7, 1], 10);
+    room = act(act(room, 'hold', 'b'), 'hold', 'c');
+    const before = { ...room.round.hands.a };
+    room = act(room, 'cut', 'a', { cutIndex: 0 });
+    assert.deepEqual(room.round.beforeCutCard, before);
+    assert.equal(room.round.hands.a.rank, 10);
+    assert.deepEqual(room.round.losers, ['b'], 'discarded ace does not make the dealer lose');
+    room = JSON.parse(JSON.stringify(room));
+    assert.deepEqual(room.round.beforeCutCard, before, 'history survives a refresh');
+    room = act(room, 'deal', 'a', { deck: R.shuffledDeck() });
+    assert.equal(room.round.beforeCutCard, undefined, 'new round clears the previous cut');
+});
+
+test('cut history records the card held after swaps, including on a king cut', () => {
+    let room = table([2, 8, 11], 13);
+    room = act(act(room, 'swap', 'b'), 'swap', 'c');
+    const before = { ...room.round.hands.a };
+    assert.equal(before.rank, 2);
+    room = act(room, 'cut', 'a', { cutIndex: 0 });
+    assert.deepEqual(room.round.beforeCutCard, before);
+    assert.equal(room.round.cutCard.rank, 13);
+    assert.equal(room.round.everyoneLoses, true);
+    assert.deepEqual(room.round.losers, ['b', 'c', 'a']);
+});
+
+test('holding leaves no discarded card', () => {
+    let room = table();
+    for (const id of room.round.order) room = act(room, 'hold', id);
+    assert.equal(room.round.beforeCutCard, undefined);
+    assert.equal(room.round.cutCard, undefined);
+});
+
 test('cutting a king makes every player lose', () => {
     let room = table([2, 5, 8], 13);
     room = act(act(room, 'hold', 'b'), 'hold', 'c');
