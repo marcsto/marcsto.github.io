@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=6">
+    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=7">
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script defer src="assets/js/ace-rules.js?v=6"></script>
-    <script defer src="assets/js/pass-the-ace.js?v=6"></script>
+    <script defer src="assets/js/ace-rules.js?v=7"></script>
+    <script defer src="assets/js/pass-the-ace.js?v=7"></script>
 </head>
 <body>
     <header class="masthead">
@@ -35,17 +35,27 @@
                 <p class="welcome-foot">2–8 friends <span>✦</span> One card each <span>✦</span> Just for fun</p>
             </div>
             <div class="join-panel">
-                <div class="panel-heading"><span class="eyebrow">THERE’S A SEAT FOR YOU</span><h2>Come on in.</h2><p>Pick a room name and share it with your people.</p></div>
+                <div class="panel-heading"><h2>Take a seat.</h2><p>Play with your people. Or try the AI.</p></div>
                 <form id="join-form">
-                    <label for="room-name">Room name</label>
-                    <input id="room-name" name="room" placeholder="e.g. FAMILY" maxlength="24" required autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9 -]+" title="Use letters, numbers, spaces or hyphens.">
                     <label for="player-name">Your name</label>
-                    <input id="player-name" name="name" placeholder="e.g. Marc" maxlength="24" required autocomplete="given-name">
-                    <p id="join-error" class="form-error" role="alert" hidden></p>
-                    <button id="join-button" class="button primary join-button" type="submit">Take a seat <span aria-hidden="true">↗</span></button>
-                    <p class="form-note">Same room name, same table. No sign-up needed.</p>
+                    <input id="player-name" name="name" placeholder="e.g. Marc" maxlength="24" required autocomplete="given-name" enterkeyhint="next">
+                    <label for="room-name">Room name</label>
+                    <input id="room-name" name="room" placeholder="e.g. FAMILY" maxlength="24" required autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9 -]+" title="Use letters, numbers, spaces or hyphens." enterkeyhint="go">
+                    <button id="join-button" class="button primary join-button" type="submit" disabled>Join game ↗</button>
+                    <p class="form-note">Use the same room name to play together.</p>
                 </form>
-                <div id="recent-section" class="recent-section" hidden><h3>Pull up your usual chair</h3><div id="recent-rooms"></div></div>
+                <div class="ai-entry">
+                    <div class="entry-divider"><span>OR PLAY SOLO</span></div>
+                    <div class="ai-entry-controls">
+                        <select id="ai-count" aria-label="Number of AI opponents">
+                            <option value="1">1 AI</option><option value="2">2 AIs</option><option value="3">3 AIs</option><option value="4">4 AIs</option><option value="5">5 AIs</option><option value="6">6 AIs</option><option value="7">7 AIs</option>
+                        </select>
+                        <button id="ai-button" class="button secondary" type="button" disabled>Play with AI</button>
+                    </div>
+                    <p class="form-note">Your own table. No room name needed.</p>
+                </div>
+                <p id="join-error" class="form-error" role="alert" hidden></p>
+                <details id="recent-section" class="recent-section" hidden><summary>Recent tables</summary><div id="recent-rooms"></div></details>
             </div>
         </section>
 

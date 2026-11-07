@@ -320,6 +320,55 @@ test('the practice bot has a distinct name and cannot be claimed as a human seat
     assert.equal(act(room, 'remove', 'human', { target: R.PRACTICE_BOT_ID }), undefined);
 });
 
+test('new AI rooms support one to seven distinct opponents and preserve them when rejoining', () => {
+    for (let count = 1; count <= 7; count++) {
+        let room = R.reduce(null, { type: 'join', actor: 'human', name: 'Ace Bot', createPractice: true, botCount: count });
+        assert.equal(room.practice, true);
+        assert.equal(room.botCount, count);
+        assert.equal(room.players.length, count + 1);
+        assert.equal(room.players.filter(p => p.isAI).length, count);
+        assert.equal(new Set(room.players.map(p => p.id)).size, count + 1);
+        assert.equal(new Set(room.players.map(p => p.name)).size, count + 1);
+        const players = room.players;
+        room = R.reduce(room, { type: 'join', actor: 'new-device', name: 'Ace Bot' });
+        assert.deepEqual(room.players, players, 'rejoining restores the human seat without duplicating AI players');
+        if (count === 7) assert.equal(R.reduce(room, { type: 'join', actor: 'friend', name: 'Dad' }), undefined);
+        room = act(room, 'deal', 'human', { deck: R.shuffledDeck() });
+        assert.equal(room.round.order.length, count + 1);
+    }
+});
+
+test('AI creation rejects occupied rooms and invalid opponent counts without changing existing rooms', () => {
+    const action = { type: 'join', actor: 'human', name: 'Marc', createPractice: true, botCount: 3 };
+    for (const botCount of [0, 8, -1, 1.5, '2', undefined]) {
+        assert.equal(R.reduce(null, { ...action, botCount }), undefined);
+    }
+    const occupied = table();
+    const before = JSON.stringify(occupied);
+    assert.equal(R.reduce(occupied, action), undefined);
+    assert.equal(JSON.stringify(occupied), before);
+    const first = R.reduce(null, action), second = R.reduce(null, { ...action, botCount: 1 });
+    const joined = R.reduce(first, { type: 'join', actor: 'friend', name: 'Dad' });
+    assert.equal(joined.players.length, 5);
+    assert.equal(second.players.length, 2, 'a separate AI room keeps its own players');
+});
+
+test('multiple AI opponents each take their turn and stop at the human player', () => {
+    let room = R.reduce(null, { type: 'join', actor: 'human', name: 'Marc', createPractice: true, botCount: 3 });
+    const deck = R.shuffledDeck();
+    const first = [8, 9, 13, 7].map(rank => deck.splice(deck.findIndex(c => c.rank === rank), 1)[0]);
+    room = act(room, 'deal', 'human', { deck: first.concat(deck) });
+    for (const id of room.round.order.slice(0, -1)) {
+        assert.deepEqual(R.chooseAIAction(room), { type: 'hold', actor: id });
+        room = R.reduce(room, { ...R.chooseAIAction(room), revision: room.revision });
+    }
+    assert.equal(room.round.order[room.round.turn], 'human');
+    assert.equal(R.chooseAIAction(room), undefined);
+    room = act(room, 'hold', 'human');
+    assert.equal(room.round.phase, 'finished');
+    assert.equal(R.chooseAIAction(room), undefined);
+});
+
 test('bot joining an active practice room waits for the next deal', () => {
     let room = table();
     room = R.reduce(room, { type: 'join', actor: 'a', name: 'Marc', roomCode: 'marctest' });

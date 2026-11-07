@@ -8,6 +8,7 @@
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
     let processing = false, presentationEpoch = 0;
     let aiTimer, aiTimerKey = '';
+    let joiningAI = false;
     let supplyFrame, supplyTimer;
     const snapshots = [];
     const flightAnimations = new Set();
@@ -17,12 +18,13 @@
         try { return JSON.parse(localStorage.getItem(STORAGE) || '{}') || {}; }
         catch { return {}; }
     }
-    function saveVisit(code, name) {
+    function saveVisit(code, name, aiCount = 0) {
         try {
             const saved = readSaved();
             const recent = Array.isArray(saved.recent) ? saved.recent : [];
-            localStorage.setItem(STORAGE, JSON.stringify({ name, room: code,
-                recent: [{ code, name }, ...recent.filter(r => r.code !== code)].slice(0, 4) }));
+            localStorage.setItem(STORAGE, JSON.stringify({ ...saved, name, room: code,
+                aiCount: aiCount || saved.aiCount || 1,
+                recent: [{ code, name, aiCount }, ...recent.filter(r => r.code !== code)].slice(0, 4) }));
         } catch { /* Rooms still work when browser storage is unavailable. */ }
     }
     function showError(id, message = '') {
@@ -59,20 +61,35 @@
     function setBusy(value) {
         busy = value;
         $('join-button').disabled = busy || !db || !connected;
-        $('join-button').textContent = busy && !roomRef ? 'Finding your seat…' : 'Take a seat ↗';
+        $('join-button').textContent = busy && !roomRef && !joiningAI ? 'Finding your seat…' : 'Join game ↗';
+        $('ai-button').disabled = busy || !db || !connected;
+        $('ai-button').textContent = busy && joiningAI ? 'Creating your table…' : 'Play with AI';
+        $('ai-count').disabled = busy;
         if (roomRef && room) renderControls();
         if ($('table-dialog').open) renderManagement();
         $('leave-button').disabled = busy;
         scheduleAI();
     }
 
-    async function joinGame(event) {
+    function practiceCode() {
+        const bytes = new Uint8Array(6);
+        if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+        else bytes.forEach((_, i) => { bytes[i] = Math.floor(Math.random() * 256); });
+        return 'AI-' + Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    async function joinGame(event, createAI = false) {
         event?.preventDefault();
         if (busy) return;
         showError('join-error');
-        const code = $('room-name').value.trim().toUpperCase().replace(/\s+/g, '-');
+        let code = $('room-name').value.trim().toUpperCase().replace(/\s+/g, '-');
         const name = $('player-name').value.trim();
-        if (!/^[A-Z0-9-]{1,24}$/.test(code) || !name) {
+        if (!name) {
+            showError('join-error', 'Add your name to take a seat.');
+            $('player-name').focus();
+            return;
+        }
+        if (!createAI && !/^[A-Z0-9-]{1,24}$/.test(code)) {
             showError('join-error', 'Add your name and a room name using letters, numbers or hyphens.');
             return;
         }
@@ -80,20 +97,34 @@
             showError('join-error', 'Waiting for a connection. Please check your internet and try again.');
             return;
         }
+        joiningAI = createAI;
         setBusy(true);
         try {
-            const ref = db.ref(ROOM_PATH + code);
-            const existing = (await ref.once('value')).val();
-            if (existing && ![1, 2, 3].includes(existing.version)) throw new Error('This table needs a newer version. Please refresh the page.');
-            const players = existing?.players || [];
-            if (players.some(p => p.isAI && p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
-                throw new Error('That’s the practice opponent’s name. Please enter your own name.');
-            }
-            if (players.length >= R.MAX_PLAYERS && !players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
-                throw new Error('This table has all 8 seats filled. Try another room name.');
-            }
             const id = 'p_' + (window.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`);
-            const result = await transaction(ref, { type: 'join', actor: id, name, roomCode: code });
+            let ref, result;
+            if (createAI) {
+                const botCount = Number($('ai-count').value);
+                // Claim a fresh generated room atomically, retrying a name collision.
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    code = practiceCode();
+                    ref = db.ref(ROOM_PATH + code);
+                    result = await transaction(ref, { type: 'join', actor: id, name, roomCode: code, createPractice: true, botCount });
+                    if (result.committed) break;
+                }
+                if (!result.committed) throw new Error('Couldn’t create a new AI table. Please try again.');
+            } else {
+                ref = db.ref(ROOM_PATH + code);
+                const existing = (await ref.once('value')).val();
+                if (existing && ![1, 2, 3].includes(existing.version)) throw new Error('This table needs a newer version. Please refresh the page.');
+                const players = existing?.players || [];
+                if (players.some(p => p.isAI && p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+                    throw new Error('That’s an AI opponent’s name. Please enter your own name.');
+                }
+                if (players.length >= R.MAX_PLAYERS && !players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+                    throw new Error('This table has all 8 seats filled. Try another room name.');
+                }
+                result = await transaction(ref, { type: 'join', actor: id, name, roomCode: code });
+            }
             if (!result.committed) throw new Error('The table changed while you were joining. Please try again.');
             const me = result.data.players.find(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase());
             myId = me.id;
@@ -101,7 +132,8 @@
             roomRef = ref;
             firstSnapshot = true;
             lastEvent = '';
-            saveVisit(code, me.name);
+            saveVisit(code, me.name, result.data.players.filter(p => p.isAI).length);
+            $('room-name').value = code;
             const url = new URL(location.href);
             url.searchParams.set('room', code);
             history.replaceState(null, '', url);
@@ -113,7 +145,7 @@
             ref.on('value', onRoom, error => showError('game-error', `Couldn’t sync the table: ${error.message}`));
         } catch (error) {
             showError('join-error', error.message || 'Couldn’t join. Please try again.');
-        } finally { setBusy(false); }
+        } finally { joiningAI = false; setBusy(false); }
     }
 
     function onRoom(snapshot) {
@@ -183,7 +215,7 @@
     }
 
     function scheduleAI() {
-        const decision = !busy && !processing && connected && roomRef && R.isPracticeRoom(roomCode)
+        const decision = !busy && !processing && connected && roomRef && room?.practice
             ? R.chooseAIAction(room) : undefined;
         if (!decision) { cancelAI(); return; }
         const revision = room.revision;
@@ -488,7 +520,10 @@
             kicker = 'MAKE YOURSELF AT HOME';
             title = room.players.length === 1 ? 'A little company?' : 'Everyone comfortable?';
             subtitle = room.players.length === 1 ? 'Invite someone to your table. It only takes two.' : `${room.players.length} at the table. Deal whenever you’re ready.`;
-            if (room.practice && room.players.length === 2) subtitle = 'Your practice opponent is ready. Deal whenever you like.';
+            if (room.practice) {
+                const count = room.players.filter(p => p.isAI).length;
+                subtitle = `${count === 1 ? 'Your AI opponent is' : `${count} AI opponents are`} ready. Deal whenever you like.`;
+            }
         } else if (finished) {
             kicker = `ROUND ${r.number} · CARDS ON THE TABLE`;
             if (r.kingCut) {
@@ -729,7 +764,8 @@
         for (const visit of recent.slice(0, 4)) {
             const button = element('button', 'recent-room');
             button.type = 'button';
-            button.append(element('span', '', visit.code), element('small', '', `${visit.name} ↗`));
+            button.append(element('span', '', visit.aiCount ? `AI table · ${visit.aiCount} ${visit.aiCount === 1 ? 'opponent' : 'opponents'}` : visit.code), element('small', '', `${visit.name} ↗`));
+            button.title = visit.code;
             button.addEventListener('click', () => {
                 $('room-name').value = visit.code;
                 $('player-name').value = visit.name;
@@ -740,6 +776,7 @@
     }
 
     $('join-form').addEventListener('submit', joinGame);
+    $('ai-button').addEventListener('click', event => void joinGame(event, true));
     window.addEventListener('resize', scheduleSupplyLayout);
     $('rules-button').addEventListener('click', () => $('rules-dialog').showModal());
     $('table-button').addEventListener('click', () => { renderManagement(); $('table-dialog').showModal(); });
@@ -764,10 +801,12 @@
     const saved = readSaved();
     $('room-name').value = new URLSearchParams(location.search).get('room') || saved.room || '';
     $('player-name').value = saved.name || '';
+    $('ai-count').value = String(Number.isInteger(saved.aiCount) && saved.aiCount >= 1 && saved.aiCount < R?.MAX_PLAYERS ? saved.aiCount : 1);
     renderRecent();
     if (!R || !window.firebase) {
         showError('join-error', 'The game couldn’t load. Check your internet connection and refresh to try again.');
         $('join-button').disabled = true;
+        $('ai-button').disabled = true;
         return;
     }
     try {
@@ -790,5 +829,6 @@
     } catch (error) {
         showError('join-error', `Couldn’t connect to the table. ${error.message}`);
         $('join-button').disabled = true;
+        $('ai-button').disabled = true;
     }
 })();

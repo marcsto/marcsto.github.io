@@ -27,11 +27,16 @@
             round.knownCards?.[viewerId]?.[cardKey(card)]));
     }
 
-    function ensurePracticeBot(room) {
-        if (!room.practice || room.players.length >= MAX_PLAYERS || room.players.some(p => p.id === PRACTICE_BOT_ID)) return;
-        let name = 'Ace Bot', suffix = 2;
-        while (room.players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) name = `Ace Bot ${suffix++}`;
-        room.players.push({ id: PRACTICE_BOT_ID, name, isAI: true });
+    function ensurePracticeBots(room) {
+        if (!room.practice) return;
+        const count = Number.isInteger(room.botCount) ? Math.max(1, Math.min(MAX_PLAYERS - 1, room.botCount)) : 1;
+        for (let index = 0; index < count && room.players.length < MAX_PLAYERS; index++) {
+            const id = index === 0 ? PRACTICE_BOT_ID : `${PRACTICE_BOT_ID}_${index + 1}`;
+            if (room.players.some(p => p.id === id)) continue;
+            let name = 'Ace Bot', suffix = 2;
+            while (room.players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) name = `Ace Bot ${suffix++}`;
+            room.players.push({ id, name, isAI: true });
+        }
     }
 
     // A deliberately simple opponent. Only its own card and cards it knows are used;
@@ -103,6 +108,9 @@
     // Returning undefined aborts the transaction; null would delete the room.
     function reduce(current, action) {
         if (!action || !action.type) return;
+        // AI creation must claim a fresh room, never join or change somebody else's table.
+        if (action.createPractice && (action.type !== 'join' || current || !Number.isInteger(action.botCount) ||
+            action.botCount < 1 || action.botCount >= MAX_PLAYERS)) return;
         if (!current && action.type !== 'join') return;
         if (current && ![1, 2, 3].includes(current.version)) return;
         if (action.type !== 'join' && action.revision !== current.revision) return;
@@ -129,8 +137,12 @@
                 room.players.push({ id: action.actor, name });
                 if (!room.nextDealerId) room.nextDealerId = action.actor;
             }
+            if (action.createPractice) {
+                room.practice = true;
+                room.botCount = action.botCount;
+            }
             if (isPracticeRoom(action.roomCode)) room.practice = true;
-            ensurePracticeBot(room);
+            ensurePracticeBots(room);
         } else if (action.type === 'remove') {
             if (room.round && room.round.phase !== 'finished') return;
             const index = room.players.findIndex(p => p.id === action.target);
@@ -148,7 +160,7 @@
         } else if (action.type === 'reset') {
             delete room.round;
         } else if (action.type === 'deal') {
-            ensurePracticeBot(room);
+            ensurePracticeBots(room);
             if (room.players.length < 2 || (room.round && room.round.phase !== 'finished') || !validDeck(action.deck)) return;
             let dealerIndex = room.players.findIndex(p => p.id === room.nextDealerId);
             if (dealerIndex < 0) dealerIndex = 0;
