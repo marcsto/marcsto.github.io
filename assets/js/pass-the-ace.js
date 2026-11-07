@@ -275,6 +275,18 @@
         else node.classList.remove('face-up');
     }
 
+    function renderWinner(node, winner, label) {
+        node.classList.toggle('is-winner', winner);
+        node.setAttribute('aria-label', label + (winner ? '. Winner!' : ''));
+        let badge = node.querySelector('.winner-badge');
+        if (winner && !badge) {
+            badge = element('span', 'winner-badge');
+            badge.setAttribute('aria-hidden', 'true');
+            badge.append(element('span', 'winner-trophy', '🏆'), document.createTextNode('Winner'));
+            node.append(badge);
+        } else if (!winner && badge) badge.remove();
+    }
+
     function renderSeats() {
         const r = room.round;
         const ids = r ? r.seats : room.players.map(p => p.id);
@@ -317,8 +329,11 @@
             const mine = id === myId;
             const active = r && r.phase !== 'finished' && (r.phase === 'challenge' ? r.pending.to : r.order[r.turn]) === id;
             const loser = r?.phase === 'finished' && r.losers.includes(id);
+            const cut = r?.phase === 'finished' && r.cutCard && r.dealerId === id;
+            const previous = cut && r.beforeCutCard;
             node.classList.toggle('is-active', Boolean(active));
             node.classList.toggle('is-loser', Boolean(loser));
+            node.classList.toggle('has-cut', Boolean(cut));
             node.classList.toggle('is-you', mine);
             const label = node.querySelector('.seat-name');
             const name = r?.names[id] || room.players.find(p => p.id === id)?.name || 'Player';
@@ -343,13 +358,23 @@
                 else if (r.order.indexOf(id) < r.turn) status = '';
                 else if (dealer) status = 'Dealer · plays last';
             }
-            node.querySelector('.seat-status').textContent = status;
+            node.querySelector('.seat-status').textContent = cut ? (previous ? 'Discarded' : 'Card on deck') : status;
             const action = r?.actions?.[id];
             const actionLabel = node.querySelector('.seat-action');
-            actionLabel.textContent = ({ held: 'Held', swapped: 'Swapped', blocked: 'Blocked', cut: 'New card' })[action] || '';
-            actionLabel.title = action === 'cut' ? 'The replacement card that counts for this round' : '';
-            actionLabel.hidden = !action;
-            renderCard(node.querySelector('.playing-card'), r?.hands[id], R.canSee(r, myId, id));
+            const reserveCutLabel = dealer && r && r.phase !== 'finished' && !action;
+            actionLabel.textContent = ({ held: 'Held', swapped: 'Swapped', blocked: 'Blocked', cut: previous ? 'Before cut' : 'Cut' })[action] || (reserveCutLabel ? 'Before cut' : '');
+            actionLabel.title = cut ? 'This card was replaced by the new card on the deck' : '';
+            actionLabel.hidden = !action && !reserveCutLabel;
+            actionLabel.classList.toggle('layout-reserve', Boolean(reserveCutLabel));
+            if (reserveCutLabel) actionLabel.setAttribute('aria-hidden', 'true');
+            else actionLabel.removeAttribute('aria-hidden');
+            const card = node.querySelector('.playing-card');
+            const shown = cut ? previous : r?.hands[id];
+            const visible = cut ? Boolean(previous) : R.canSee(r, myId, id);
+            renderCard(card, shown, visible);
+            renderWinner(card, Boolean(r?.phase === 'finished' && !loser && !cut),
+                previous ? `Before cut: ${R.cardLabel(previous)}. Discarded; does not count for this round.` :
+                    visible && shown ? R.cardLabel(shown) : 'Face-down card');
         });
     }
 
@@ -359,14 +384,17 @@
         const dealerId = r?.dealerId || room.nextDealerId;
         supply.hidden = !seatNodes.has(dealerId);
         supply.dataset.dealer = dealerId || '';
-        supply.setAttribute('aria-label', `${playerName(dealerId)}’s deck and discarded card`);
-        const previous = r?.phase === 'finished' && r.cutCard ? r.beforeCutCard : null;
-        supply.classList.toggle('has-discard', Boolean(previous));
-        $('cut-discard').hidden = !previous;
-        $('deck-caption').hidden = Boolean(previous);
-        renderCard($('deck-card'), null, false);
-        renderCard($('discard-card'), previous, Boolean(previous));
-        if (previous) $('discard-card').setAttribute('aria-label', `Before cut: ${R.cardLabel(previous)}. Discarded; does not count for this round.`);
+        supply.setAttribute('aria-label', `${playerName(dealerId)}’s deck`);
+        const cut = r?.phase === 'finished' && r.cutCard;
+        const loser = Boolean(cut && r.losers.includes(dealerId));
+        supply.classList.toggle('has-cut', Boolean(cut));
+        supply.classList.toggle('is-loser', loser);
+        $('deck-caption').textContent = cut ? 'New card' : 'Deck';
+        const card = $('deck-card');
+        renderCard(card, cut, Boolean(cut));
+        renderWinner(card, Boolean(cut && !loser), cut
+            ? `${playerName(dealerId)}’s new card: ${R.cardLabel(cut)}. Counts for this round${loser ? '. ' + (r.everyoneLoses ? 'King cut; everyone loses' : r.dealerLosesTie ? 'Dealer loses tie' : 'Low card; loses') : ''}`
+            : 'Face-down deck');
     }
 
     function scheduleSupplyLayout() {
@@ -388,13 +416,18 @@
         const origin = { x: hand.left + hand.width / 2 - stage.left, y: hand.top + hand.height / 2 - stage.top };
         const obstacles = [...$('seats').querySelectorAll('.playing-card, .empty-card, .seat-name, .seat-action, .seat-status'),
             ...$('deal-actions').children, document.querySelector('.table-center')]
-            .filter(node => !node.hidden && getComputedStyle(node).visibility !== 'hidden' &&
+            .filter(node => !node.hidden && (getComputedStyle(node).visibility !== 'hidden' || node.classList.contains('layout-reserve')) &&
                 (!node.classList.contains('seat-status') || node.textContent.trim()))
             .map(node => {
                 const rect = node.getBoundingClientRect();
                 return { left: rect.left - stage.left, top: rect.top - stage.top,
                     right: rect.right - stage.left, bottom: rect.bottom - stage.top };
             });
+        const layoutKey = `${roomCode}:${room.round?.number || 0}:${supply.dataset.dealer}:${stage.width}:${stage.height}:${width}:${height}`;
+        const previousX = parseFloat(supply.style.left) + width / 2;
+        const previousY = parseFloat(supply.style.top) + height / 2;
+        const keepNearby = supply.dataset.layoutKey === layoutKey && Number.isFinite(previousX) && Number.isFinite(previousY) &&
+            Math.hypot(previousX - origin.x, previousY - origin.y) < 200;
         let best;
         const spacing = (hand.width + width) / 2 + 12;
         function consider(candidateX, candidateY) {
@@ -410,11 +443,19 @@
             const edge = Math.max(0, ((x - stage.width / 2) / (stage.width * .43)) ** 2 +
                 ((y - stage.height / 2) / (stage.height * .42)) ** 2 - 1);
             const score = (overlap > 0 ? 1e9 + overlap * 10000 : 0) + proximity * 10 + edge * 100 +
-                Math.hypot(x - origin.x, y - origin.y) + Math.abs(y - origin.y) * .08;
+                Math.hypot(x - origin.x, y - origin.y) + Math.abs(y - origin.y) * .08 +
+                (keepNearby ? Math.hypot(x - previousX, y - previousY) * 2 : 0);
             if (!best || score < best.score) best = { left, top, score, overlap };
         }
+        if (keepNearby) {
+            consider(previousX, previousY);
+            // Turn the cut card over where the deck already sits, unless new labels need the space.
+            if (best.overlap === 0) return;
+            for (let dx = -24; dx <= 24; dx += 4) for (let dy = -24; dy <= 24; dy += 4) consider(previousX + dx, previousY + dy);
+        }
+        supply.dataset.layoutKey = layoutKey;
         // Pick the closest clear patch of felt, favoring the inside of the table.
-        // Checking several directions also keeps the discarded card readable at an eight-seat table.
+        // Checking several directions also keeps the cut card readable at an eight-seat table.
         for (const distance of [spacing, spacing + 22, spacing + 44, spacing + 68, spacing + 94, spacing + 122]) {
             for (let step = 0; step < 24; step++) {
                 const angle = step * Math.PI / 12;
@@ -521,6 +562,12 @@
         copy.replaceChildren();
         $('actions').replaceChildren();
         $('deal-actions').replaceChildren();
+        if (r && r.phase !== 'finished') {
+            // Keep space for the result controls so they won't push the deck away after a cut.
+            const reserve = element('span', 'button layout-reserve', 'Deal next round ↗');
+            reserve.setAttribute('aria-hidden', 'true');
+            $('deal-actions').append(reserve);
+        }
         $('table-stage').classList.toggle('awaiting-deal', !r || r.phase === 'finished');
         document.querySelector('.action-panel').classList.toggle('king-prompt', r?.phase === 'challenge' && r.pending.to === myId);
         if (!connected) {
