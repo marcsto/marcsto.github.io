@@ -6,6 +6,8 @@
     'use strict';
 
     const MAX_PLAYERS = 8;
+    const PRACTICE_BOT_ID = 'ace_practice_bot';
+    const isPracticeRoom = code => String(code || '').trim().toUpperCase() === 'MARCTEST';
     const SUITS = ['spades', 'hearts', 'clubs', 'diamonds'];
     const SYMBOLS = { spades: '♠', hearts: '♥', clubs: '♣', diamonds: '♦' };
     const rankLabel = rank => ({ 1: 'A', 11: 'J', 12: 'Q', 13: 'K' }[rank] || String(rank));
@@ -23,6 +25,43 @@
         return Boolean(card && (viewerId === holderId || round.phase === 'finished' ||
             round.revealedKings?.[holderId] || round.publicCards?.[cardKey(card)] ||
             round.knownCards?.[viewerId]?.[cardKey(card)]));
+    }
+
+    function ensurePracticeBot(room) {
+        if (!room.practice || room.players.length >= MAX_PLAYERS || room.players.some(p => p.id === PRACTICE_BOT_ID)) return;
+        let name = 'Ace Bot', suffix = 2;
+        while (room.players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) name = `Ace Bot ${suffix++}`;
+        room.players.push({ id: PRACTICE_BOT_ID, name, isAI: true });
+    }
+
+    // A deliberately simple opponent. Only its own card and cards it knows are used;
+    // neither hidden opponents' ranks nor the undealt deck influence its choice.
+    function chooseAIAction(room) {
+        const round = room?.round;
+        if (!room?.practice || !round || round.phase === 'finished') return;
+        const actor = round.phase === 'challenge' ? round.pending.to : round.order[round.turn];
+        if (!room.players.some(p => p.id === actor && p.isAI)) return;
+        if (round.phase === 'challenge') return { type: 'revealKing', actor };
+        if (round.phase !== 'playing') return;
+
+        const rank = round.hands[actor].rank;
+        if (rank === 13) return { type: 'hold', actor };
+        const known = round.order.filter(id => id !== actor && canSee(round, actor, id));
+        const safelyAboveSomeone = known.some(id => round.order.indexOf(id) < round.turn && round.hands[id].rank < rank);
+        if (safelyAboveSomeone) return { type: 'hold', actor };
+
+        const dealer = round.turn === round.order.length - 1;
+        if (dealer) {
+            const certainLoss = known.length === round.order.length - 1 &&
+                known.every(id => round.hands[id].rank >= rank);
+            return { type: certainLoss || rank <= 6 ? 'cut' : 'hold', actor };
+        }
+        const next = round.order[round.turn + 1];
+        if (canSee(round, actor, next)) {
+            const nextRank = round.hands[next].rank;
+            return { type: nextRank > rank && nextRank !== 13 ? 'swap' : 'hold', actor };
+        }
+        return { type: rank <= 6 ? 'swap' : 'hold', actor };
     }
 
     function shuffledDeck(random = Math.random) {
@@ -79,14 +118,19 @@
             const name = String(action.name || '').trim().slice(0, 24);
             if (!name || !/^[a-zA-Z0-9_-]{1,80}$/.test(action.actor || '')) return;
             const existing = room.players.find(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase());
-            if (existing) return room;
-            if (room.players.length >= MAX_PLAYERS || player) return;
-            room.players.push({ id: action.actor, name });
-            if (!room.nextDealerId) room.nextDealerId = action.actor;
+            if (existing?.isAI) return;
+            if (!existing) {
+                if (room.players.length >= MAX_PLAYERS || player) return;
+                room.players.push({ id: action.actor, name });
+                if (!room.nextDealerId) room.nextDealerId = action.actor;
+            }
+            if (isPracticeRoom(action.roomCode)) room.practice = true;
+            ensurePracticeBot(room);
         } else if (action.type === 'remove') {
             if (room.round && room.round.phase !== 'finished') return;
             const index = room.players.findIndex(p => p.id === action.target);
             if (index < 0) return;
+            if (room.practice && room.players[index].isAI) return;
             if (room.nextDealerId === action.target) {
                 room.nextDealerId = room.players[(index + 1) % room.players.length].id;
             }
@@ -99,6 +143,7 @@
         } else if (action.type === 'reset') {
             delete room.round;
         } else if (action.type === 'deal') {
+            ensurePracticeBot(room);
             if (room.players.length < 2 || (room.round && room.round.phase !== 'finished') || !validDeck(action.deck)) return;
             let dealerIndex = room.players.findIndex(p => p.id === room.nextDealerId);
             if (dealerIndex < 0) dealerIndex = 0;
@@ -179,5 +224,6 @@
         return room;
     }
 
-    return { MAX_PLAYERS, SUITS, SYMBOLS, rankLabel, cardLabel, cardKey, canSee, shuffledDeck, reduce };
+    return { MAX_PLAYERS, PRACTICE_BOT_ID, isPracticeRoom, chooseAIAction,
+        SUITS, SYMBOLS, rankLabel, cardLabel, cardKey, canSee, shuffledDeck, reduce };
 });

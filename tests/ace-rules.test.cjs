@@ -232,3 +232,107 @@ test('full tables, single-player deals and invalid decks are rejected', () => {
     assert.equal(R.reduce(room, { type: 'join', actor: 'p8', name: 'Player 8' }), undefined);
     assert.equal(act(room, 'deal', 'p0', { deck: Array(52).fill({ rank: 1, suit: 'hearts' }) }), undefined);
 });
+
+function practice(ranks = [3, 9], dealer = 'human') {
+    let room = R.reduce(null, { type: 'join', actor: 'human', name: 'Marc', roomCode: 'marctest' });
+    room.nextDealerId = dealer;
+    const deck = R.shuffledDeck();
+    const first = ranks.map(rank => deck.splice(deck.findIndex(c => c.rank === rank), 1)[0]);
+    return act(room, 'deal', 'human', { deck: first.concat(deck) });
+}
+
+test('only marctest automatically adds one bot, including rejoining an existing room', () => {
+    for (const code of ['marctest', 'MARCTEST', ' MarcTest ']) {
+        let room = R.reduce(null, { type: 'join', actor: 'human', name: 'Marc', roomCode: code });
+        assert.equal(room.players.length, 2);
+        assert.equal(room.players[1].id, R.PRACTICE_BOT_ID);
+        room = R.reduce(room, { type: 'join', actor: 'new-device', name: 'Marc', roomCode: code });
+        room = R.reduce(room, { type: 'join', actor: 'friend', name: 'Dad', roomCode: code });
+        assert.equal(room.players.filter(p => p.isAI).length, 1);
+        assert.equal(room.players.length, 3);
+    }
+    let normal = R.reduce(null, { type: 'join', actor: 'human', name: 'Marc', roomCode: 'FAMILY' });
+    assert.equal(normal.players.length, 1);
+    assert.equal(normal.practice, undefined);
+    normal = R.reduce(normal, { type: 'join', actor: 'new-device', name: 'Marc', roomCode: 'MARCTEST' });
+    assert.equal(normal.players.filter(p => p.isAI).length, 1);
+    assert.equal(R.isPracticeRoom('MARCTEST-2'), false);
+});
+
+test('the practice bot has a distinct name and cannot be claimed as a human seat', () => {
+    const room = R.reduce(null, { type: 'join', actor: 'human', name: 'Ace Bot', roomCode: 'MARCTEST' });
+    assert.equal(room.players[1].name, 'Ace Bot 2');
+    assert.equal(R.reduce(room, { type: 'join', actor: 'other', name: 'Ace Bot 2', roomCode: 'MARCTEST' }), undefined);
+    assert.equal(act(room, 'remove', 'human', { target: R.PRACTICE_BOT_ID }), undefined);
+});
+
+test('bot joining an active practice room waits for the next deal', () => {
+    let room = table();
+    room = R.reduce(room, { type: 'join', actor: 'a', name: 'Marc', roomCode: 'marctest' });
+    assert.equal(room.players.length, 4);
+    assert.equal(room.round.order.length, 3);
+    assert.equal(R.chooseAIAction(room), undefined);
+    for (const id of room.round.order) room = act(room, 'hold', id);
+    room = act(room, 'deal', 'a', { deck: R.shuffledDeck() });
+    assert.ok(room.round.order.includes(R.PRACTICE_BOT_ID));
+});
+
+test('AI trades low cards and holds stronger cards without looking at hidden hands or the deck', () => {
+    for (const [rank, expected] of [[1, 'swap'], [6, 'swap'], [7, 'hold'], [12, 'hold'], [13, 'hold']]) {
+        const room = practice([rank, 8]);
+        assert.equal(R.chooseAIAction(room).type, expected);
+        room.round.hands.human.rank = 13;
+        room.round.deck.reverse();
+        assert.equal(R.chooseAIAction(room).type, expected);
+    }
+});
+
+test('AI uses known next cards and holds when safely above a finished player', () => {
+    for (const [nextRank, expected] of [[3, 'hold'], [9, 'swap'], [13, 'hold']]) {
+        let room = table([1, 4, nextRank]);
+        room.practice = true;
+        room.players.find(p => p.id === 'c').isAI = true;
+        room = act(room, 'hold', 'b');
+        room.round.knownCards.c[R.cardKey(room.round.hands.a)] = true;
+        assert.equal(R.chooseAIAction(room).type, expected);
+        room.round.knownCards.c[R.cardKey(room.round.hands.b)] = true;
+        assert.equal(R.chooseAIAction(room).type, 'hold', 'the settled ace makes four safe');
+    }
+});
+
+test('AI dealer cuts a weak card or a known losing tie, but holds a known safe card', () => {
+    const bot = R.PRACTICE_BOT_ID;
+    for (const [humanRank, botRank, known, expected] of [
+        [9, 4, false, 'cut'], [2, 9, false, 'hold'], [9, 8, true, 'cut'],
+        [8, 8, true, 'cut'], [3, 4, true, 'hold']
+    ]) {
+        let room = practice([humanRank, botRank], bot);
+        room = act(room, 'hold', 'human');
+        if (known) room.round.knownCards[bot][R.cardKey(room.round.hands.human)] = true;
+        assert.equal(R.chooseAIAction(room).type, expected);
+    }
+});
+
+test('AI reveals its king, waits for human king reveals, and never acts for a human', () => {
+    const bot = R.PRACTICE_BOT_ID;
+    let room = practice([1, 13], bot);
+    assert.equal(R.chooseAIAction(room), undefined);
+    room = act(room, 'swap', 'human');
+    assert.deepEqual(R.chooseAIAction(room), { type: 'revealKing', actor: bot });
+    room = act(room, 'revealKing', bot);
+    assert.deepEqual(R.chooseAIAction(room), { type: 'hold', actor: bot });
+    room = act(room, 'hold', bot);
+    assert.equal(R.chooseAIAction(room), undefined);
+    room = practice([1, 13]);
+    room = act(room, 'swap', bot);
+    assert.equal(R.chooseAIAction(room), undefined, 'human must reveal their own king');
+});
+
+test('competing phones cannot commit the same AI move twice', () => {
+    const room = practice([2, 9]);
+    const command = { ...R.chooseAIAction(room), revision: room.revision };
+    const next = R.reduce(room, command);
+    assert.equal(next.round.turn, 1);
+    assert.equal(next.round.actions[R.PRACTICE_BOT_ID], 'swapped');
+    assert.equal(R.reduce(next, command), undefined);
+});

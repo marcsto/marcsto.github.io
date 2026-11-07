@@ -7,6 +7,7 @@
     let db, roomRef, room, myId, roomCode, connected = false, busy = false;
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
     let processing = false, presentationEpoch = 0;
+    let aiTimer, aiTimerKey = '';
     const snapshots = [];
     const flightAnimations = new Set();
     const seatNodes = new Map();
@@ -61,6 +62,7 @@
         if (roomRef && room) renderControls();
         if ($('table-dialog').open) renderManagement();
         $('leave-button').disabled = busy;
+        scheduleAI();
     }
 
     async function joinGame(event) {
@@ -83,11 +85,14 @@
             const existing = (await ref.once('value')).val();
             if (existing && ![1, 2].includes(existing.version)) throw new Error('This table needs a newer version. Please refresh the page.');
             const players = existing?.players || [];
+            if (players.some(p => p.isAI && p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+                throw new Error('That’s the practice opponent’s name. Please enter your own name.');
+            }
             if (players.length >= R.MAX_PLAYERS && !players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
                 throw new Error('This table has all 8 seats filled. Try another room name.');
             }
             const id = 'p_' + (window.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`);
-            const result = await transaction(ref, { type: 'join', actor: id, name });
+            const result = await transaction(ref, { type: 'join', actor: id, name, roomCode: code });
             if (!result.committed) throw new Error('The table changed while you were joining. Please try again.');
             const me = result.data.players.find(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase());
             myId = me.id;
@@ -111,6 +116,7 @@
     }
 
     function onRoom(snapshot) {
+        cancelAI();
         const data = snapshot.val();
         if (!data || !(data.players || []).some(p => p.id === myId)) {
             leaveView();
@@ -141,6 +147,7 @@
             if (epoch === presentationEpoch) {
                 processing = false;
                 renderControls();
+                scheduleAI();
             }
         }
     }
@@ -168,7 +175,42 @@
         } finally { setBusy(false); }
     }
 
+    function cancelAI() {
+        clearTimeout(aiTimer);
+        aiTimer = undefined;
+        aiTimerKey = '';
+    }
+
+    function scheduleAI() {
+        const decision = !busy && !processing && connected && roomRef && R.isPracticeRoom(roomCode)
+            ? R.chooseAIAction(room) : undefined;
+        if (!decision) { cancelAI(); return; }
+        const revision = room.revision;
+        const key = `${roomCode}:${revision}:${decision.actor}:${decision.type}`;
+        if (aiTimerKey === key) return;
+        cancelAI();
+        aiTimerKey = key;
+        const ref = roomRef;
+        // Leave time to watch exchanges and the king reveal before the bot moves again.
+        const delay = room.round.event.kind === 'king' ? 2800 : 1700;
+        aiTimer = setTimeout(async () => {
+            if (aiTimerKey !== key || roomRef !== ref || room?.revision !== revision || !connected || processing || busy) return;
+            const action = { ...decision, revision };
+            if (decision.type === 'cut') action.cutIndex = Math.floor(Math.random() * room.round.deck.length);
+            try {
+                // Every connected phone can drive the bot. The revision check lets only
+                // one commit, so another phone can take over without a host or a server.
+                await transaction(ref, action);
+            } catch (error) {
+                if (roomRef === ref && connected) showError('game-error', `Ace Bot couldn’t move. Refresh to try again. ${error.message || ''}`);
+            } finally {
+                if (aiTimerKey === key) { aiTimerKey = ''; aiTimer = undefined; }
+            }
+        }, delay);
+    }
+
     function leaveView() {
+        cancelAI();
         presentationEpoch++;
         snapshots.length = 0;
         processing = false;
@@ -275,9 +317,11 @@
             node.classList.toggle('is-you', mine);
             const label = node.querySelector('.seat-name');
             const name = r?.names[id] || room.players.find(p => p.id === id)?.name || 'Player';
+            const isAI = room.players.some(p => p.id === id && p.isAI);
             label.replaceChildren(document.createTextNode(name));
             if (mine) label.append(element('span', 'you-marker', ' · you'));
-            label.title = name + (mine ? ' (you)' : '');
+            if (isAI) label.append(element('span', 'you-marker', ' · AI'));
+            label.title = name + (mine ? ' (you)' : isAI ? ' (AI practice opponent)' : '');
             const dealer = (r?.dealerId || room.nextDealerId) === id;
             let marker = node.querySelector('.dealer-marker');
             if (dealer && !marker) {
@@ -313,6 +357,7 @@
             kicker = 'MAKE YOURSELF AT HOME';
             title = room.players.length === 1 ? 'A little company?' : 'Everyone comfortable?';
             subtitle = room.players.length === 1 ? 'Invite someone to your table. It only takes two.' : `${room.players.length} at the table. Deal whenever you’re ready.`;
+            if (room.practice && room.players.length === 2) subtitle = 'Your practice opponent is ready. Deal whenever you like.';
         } else if (finished) {
             kicker = `ROUND ${r.number} · CARDS ON THE TABLE`;
             if (r.everyoneLoses) {
@@ -518,9 +563,10 @@
         for (const player of room.players) {
             const row = element('div', 'manage-row');
             const name = element('span', '', player.name + (player.id === myId ? ' (you)' : ''));
+            if (player.isAI) name.append(element('small', '', 'AI practice opponent'));
             if (player.id === room.nextDealerId) name.append(element('small', '', 'Deals next'));
             row.append(name);
-            if (!playing) {
+            if (!playing && !player.isAI) {
                 const button = element('button', '', 'Remove');
                 button.disabled = busy || !connected;
                 button.addEventListener('click', async () => {
