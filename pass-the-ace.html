@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#102f2c">
+    <meta name="description" content="A little luck. A little mischief. Play Pass the Ace around a table with family and friends.">
+    <title>Pass the Ace · A seat for everyone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/pass-the-ace.css">
+    <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script defer src="assets/js/ace-rules.js"></script>
+    <script defer src="assets/js/pass-the-ace.js"></script>
+</head>
+<body>
+    <header class="masthead">
+        <a class="wordmark" href="pass-the-ace.html" aria-label="Pass the Ace home"><span class="brand-suit">♠</span> Pass the Ace<span class="brand-dot">.</span></a>
+        <button class="text-button" id="rules-button" type="button"><span class="help-icon" aria-hidden="true">?</span> How to play</button>
+    </header>
+
+    <main>
+        <section id="lobby-view" class="lobby">
+            <div class="welcome">
+                <p class="eyebrow">GOOD COMPANY. QUESTIONABLE CARDS.</p>
+                <h1>A little luck.<br>A little <em>mischief.</em></h1>
+                <p class="intro">Pull up a chair. Keep your nerve.<br>And try not to get stuck with the ace.</p>
+                <div class="card-fan" aria-hidden="true">
+                    <div class="hero-card hero-back"><span>♠</span></div>
+                    <div class="hero-card hero-king"><span class="hero-corner">K<small>♠</small></span><span class="hero-art">♚</span><span class="hero-corner bottom">K<small>♠</small></span></div>
+                    <div class="hero-card hero-ace"><span class="hero-corner">A<small>♥</small></span><span class="hero-art">♥</span><span class="hero-corner bottom">A<small>♥</small></span></div>
+                </div>
+                <p class="welcome-foot">2–8 friends <span>✦</span> One card each <span>✦</span> Just for fun</p>
+            </div>
+            <div class="join-panel">
+                <div class="panel-heading"><span class="eyebrow">THERE’S A SEAT FOR YOU</span><h2>Come on in.</h2><p>Pick a room name and share it with your people.</p></div>
+                <form id="join-form">
+                    <label for="room-name">Room name</label>
+                    <input id="room-name" name="room" placeholder="e.g. FAMILY" maxlength="24" required autocomplete="off" autocapitalize="characters" spellcheck="false" pattern="[A-Za-z0-9 -]+" title="Use letters, numbers, spaces or hyphens.">
+                    <label for="player-name">Your name</label>
+                    <input id="player-name" name="name" placeholder="e.g. Marc" maxlength="24" required autocomplete="given-name">
+                    <p id="join-error" class="form-error" role="alert" hidden></p>
+                    <button id="join-button" class="button primary join-button" type="submit">Take a seat <span aria-hidden="true">↗</span></button>
+                    <p class="form-note">Same room name, same table. No sign-up needed.</p>
+                </form>
+                <div id="recent-section" class="recent-section" hidden><h3>Pull up your usual chair</h3><div id="recent-rooms"></div></div>
+            </div>
+        </section>
+
+        <section id="game-view" class="game" hidden>
+            <div class="table-toolbar">
+                <div class="room-heading"><span class="eyebrow">YOUR TABLE</span><div><strong id="room-label"></strong><span id="connection" class="connection" role="status">Connecting</span></div></div>
+                <div class="toolbar-actions"><button id="invite-button" class="small-button" type="button">Invite <span aria-hidden="true">↗</span></button><button id="table-button" class="small-button icon-button" type="button" aria-label="Table options">•••</button></div>
+            </div>
+            <div class="round-banner" aria-live="polite" aria-atomic="true"><p id="round-kicker" class="eyebrow">MAKE YOURSELF AT HOME</p><h1 id="round-title">The table is yours.</h1><p id="round-subtitle">Invite your people, then deal the cards.</p></div>
+            <div id="table-stage" class="table-stage">
+                <div class="table-shadow"></div><div class="table-rail"><div class="felt"><div class="felt-line"></div></div></div>
+                <div class="table-center"><div id="deck" class="deck" aria-label="Deck of cards"><div class="deck-layer"></div><div class="deck-layer"></div><div id="deck-card" class="playing-card deck-top"></div></div><div id="center-caption" class="center-caption">PASS THE ACE</div><div id="center-detail" class="center-detail">A seat for everyone.</div></div>
+                <div id="seats" class="seats"></div>
+                <div id="table-flourish" class="table-flourish" role="status" hidden><span aria-hidden="true">♚</span><strong>Not so fast.</strong><p id="flourish-detail"></p></div>
+            </div>
+            <div id="event-line" class="event-line" aria-live="polite"></div>
+            <div class="action-panel"><div id="action-copy" class="action-copy"></div><div id="actions" class="actions"></div></div>
+            <p id="game-error" class="game-error" role="alert" hidden></p>
+            <p id="queued-players" class="queued-players" hidden></p>
+            <div class="table-footer"><span>Low card loses. Good company wins.</span><button id="leave-button" class="text-button" type="button">Leave table</button></div>
+        </section>
+    </main>
+
+    <dialog id="rules-dialog" class="dialog">
+        <div class="dialog-heading"><span class="eyebrow">OUR HOUSE RULES</span><button class="close-button" type="button" data-close aria-label="Close rules">×</button></div>
+        <h2>Keep your card.<br>Or take a chance.</h2>
+        <ol class="rules-list">
+            <li><strong>One card, just for you.</strong> Your card is always face up on your phone. Aces are low; kings are high. Suits don’t matter.</li>
+            <li><strong>Hold or swap.</strong> Play goes clockwise, starting after the dealer. Keep your card or exchange it with the next player. They have to accept…</li>
+            <li><strong>Unless they have a king.</strong> They tap “Reveal king!” and keep their card. You keep yours, and your turn ends.</li>
+            <li><strong>The dealer goes last.</strong> Hold, or cut the deck for a replacement. You must take the new card, even if it’s worse. Cut a king? Everyone loses!</li>
+            <li><strong>Time for the reveal.</strong> The lowest card loses, including everyone tied for lowest. Move the dealer one seat and go again.</li>
+        </ol>
+        <p class="dialog-footnote">No scores. No lives. Just one more round.</p>
+        <button type="button" class="button primary" data-close>Got it. Let’s play.</button>
+    </dialog>
+
+    <dialog id="table-dialog" class="dialog">
+        <div class="dialog-heading"><span class="eyebrow">AROUND THE TABLE</span><button class="close-button" type="button" data-close aria-label="Close table options">×</button></div>
+        <h2>Your people.</h2><p id="manage-hint" class="dialog-description"></p><div id="manage-players" class="manage-players"></div>
+        <button id="reset-button" class="button secondary" type="button">End this round</button>
+    </dialog>
+
+    <dialog id="confirm-dialog" class="dialog compact-dialog">
+        <h2 id="confirm-title"></h2><p id="confirm-detail" class="dialog-description"></p><div class="confirm-actions"><button id="confirm-cancel" class="button secondary" type="button">Cancel</button><button id="confirm-ok" class="button primary" type="button">Continue</button></div>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <noscript><p class="noscript">Please enable JavaScript to take a seat at the table.</p></noscript>
+</body>
+</html>

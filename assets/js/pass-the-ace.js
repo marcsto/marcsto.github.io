@@ -1,0 +1,531 @@
+(() => {
+    'use strict';
+    const R = window.AceRules;
+    const $ = id => document.getElementById(id);
+    const STORAGE = 'pass_the_ace';
+    const ROOM_PATH = 'passTheAceRooms/';
+    let db, roomRef, room, myId, roomCode, connected = false, busy = false;
+    let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
+    const seatNodes = new Map();
+
+    function readSaved() {
+        try { return JSON.parse(localStorage.getItem(STORAGE) || '{}') || {}; }
+        catch { return {}; }
+    }
+    function saveVisit(code, name) {
+        try {
+            const saved = readSaved();
+            const recent = Array.isArray(saved.recent) ? saved.recent : [];
+            localStorage.setItem(STORAGE, JSON.stringify({ name, room: code,
+                recent: [{ code, name }, ...recent.filter(r => r.code !== code)].slice(0, 4) }));
+        } catch { /* Rooms still work when browser storage is unavailable. */ }
+    }
+    function showError(id, message = '') {
+        $(id).textContent = message;
+        $(id).hidden = !message;
+    }
+    function toast(message) {
+        clearTimeout(toastTimer);
+        $('toast').textContent = message;
+        $('toast').hidden = false;
+        toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3500);
+    }
+    function playerName(id) {
+        return room?.round?.names?.[id] || room?.players?.find(p => p.id === id)?.name || 'A player';
+    }
+    function joinNames(names) {
+        if (names.length < 2) return names[0] || '';
+        return names.slice(0, -1).join(', ') + ' & ' + names.at(-1);
+    }
+    function element(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+    }
+    function transaction(ref, action) {
+        return new Promise((resolve, reject) => {
+            ref.transaction(data => R.reduce(data, action), (error, committed, snapshot) => {
+                if (error) reject(error);
+                else resolve({ committed, data: snapshot?.val() });
+            }, false);
+        });
+    }
+    function setBusy(value) {
+        busy = value;
+        $('join-button').disabled = busy || !db || !connected;
+        $('join-button').textContent = busy && !roomRef ? 'Finding your seat…' : 'Take a seat ↗';
+        if (roomRef && room) renderControls();
+        if ($('table-dialog').open) renderManagement();
+        $('leave-button').disabled = busy;
+    }
+
+    async function joinGame(event) {
+        event?.preventDefault();
+        if (busy) return;
+        showError('join-error');
+        const code = $('room-name').value.trim().toUpperCase().replace(/\s+/g, '-');
+        const name = $('player-name').value.trim();
+        if (!/^[A-Z0-9-]{1,24}$/.test(code) || !name) {
+            showError('join-error', 'Add your name and a room name using letters, numbers or hyphens.');
+            return;
+        }
+        if (!db || !connected) {
+            showError('join-error', 'Waiting for a connection. Please check your internet and try again.');
+            return;
+        }
+        setBusy(true);
+        try {
+            const ref = db.ref(ROOM_PATH + code);
+            const existing = (await ref.once('value')).val();
+            if (existing && existing.version !== 1) throw new Error('This table needs a newer version. Please refresh the page.');
+            const players = existing?.players || [];
+            if (players.length >= R.MAX_PLAYERS && !players.some(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+                throw new Error('This table has all 8 seats filled. Try another room name.');
+            }
+            const id = 'p_' + (window.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`);
+            const result = await transaction(ref, { type: 'join', actor: id, name });
+            if (!result.committed) throw new Error('The table changed while you were joining. Please try again.');
+            const me = result.data.players.find(p => p.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+            myId = me.id;
+            roomCode = code;
+            roomRef = ref;
+            firstSnapshot = true;
+            lastEvent = '';
+            saveVisit(code, me.name);
+            const url = new URL(location.href);
+            url.searchParams.set('room', code);
+            history.replaceState(null, '', url);
+            $('lobby-view').hidden = true;
+            $('game-view').hidden = false;
+            $('room-label').textContent = code;
+            $('room-label').title = code;
+            window.scrollTo({ top: 0, behavior: 'instant' });
+            ref.on('value', onRoom, error => showError('game-error', `Couldn’t sync the table: ${error.message}`));
+        } catch (error) {
+            showError('join-error', error.message || 'Couldn’t join. Please try again.');
+        } finally { setBusy(false); }
+    }
+
+    function onRoom(snapshot) {
+        const data = snapshot.val();
+        if (!data || !(data.players || []).some(p => p.id === myId)) {
+            leaveView();
+            toast('Your seat was removed. You can join the table again.');
+            return;
+        }
+        room = data;
+        render();
+        const round = room.round;
+        const key = round ? `${round.number}:${JSON.stringify(round.event)}` : '';
+        if (!firstSnapshot && key !== lastEvent) animateEvent(round);
+        lastEvent = key;
+        firstSnapshot = false;
+        if ($('table-dialog').open) renderManagement();
+    }
+
+    async function send(type, extra = {}) {
+        if (busy || !roomRef || !room) return false;
+        if (!connected) {
+            showError('game-error', 'You’re offline. Your seat is saved; reconnect to keep playing.');
+            return false;
+        }
+        const ref = roomRef;
+        const command = { type, actor: myId, revision: room.revision, ...extra };
+        showError('game-error');
+        setBusy(true);
+        try {
+            const result = await transaction(ref, command);
+            if (!result.committed) {
+                toast('The table just changed. Take another look and try again.');
+                return false;
+            }
+            return true;
+        } catch (error) {
+            showError('game-error', `That didn’t go through. Please try again. ${error.message || ''}`);
+            return false;
+        } finally { setBusy(false); }
+    }
+
+    function leaveView() {
+        roomRef?.off('value', onRoom);
+        roomRef = null;
+        room = null;
+        seatNodes.clear();
+        $('seats').replaceChildren();
+        clearTimeout(flourishTimer);
+        $('table-flourish').hidden = true;
+        $('game-view').hidden = true;
+        $('lobby-view').hidden = false;
+        for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
+        const url = new URL(location.href);
+        url.searchParams.delete('room');
+        history.replaceState(null, '', url);
+        renderRecent();
+        setBusy(false);
+    }
+
+    function renderCard(node, card, visible) {
+        const key = visible && card ? `${card.rank}-${card.suit}` : 'back';
+        if (node.dataset.card === key) return;
+        node.dataset.card = key;
+        node.setAttribute('role', 'img');
+        node.setAttribute('aria-label', visible && card ? R.cardLabel(card) : 'Face-down card');
+        let inner = node.querySelector('.card-inner');
+        if (!inner) {
+            inner = element('div', 'card-inner');
+            const front = element('div', 'card-face');
+            const back = element('div', 'card-back');
+            const diamond = element('span');
+            diamond.append(element('b', '', '♠'));
+            back.append(diamond);
+            inner.append(front, back);
+            node.append(inner);
+        }
+        const front = inner.querySelector('.card-face');
+        front.replaceChildren();
+        front.classList.toggle('red', Boolean(card && ['hearts', 'diamonds'].includes(card.suit) && visible));
+        if (visible && card) {
+            for (const position of ['', ' bottom']) {
+                const corner = element('span', 'card-corner' + position, R.rankLabel(card.rank));
+                corner.append(element('small', '', R.SYMBOLS[card.suit]));
+                front.append(corner);
+            }
+            const royal = card.rank >= 11;
+            front.append(element('span', 'card-pip' + (royal ? ' royal' : ''),
+                royal ? ({ 11: '♝', 12: '♛', 13: '♚' }[card.rank]) : R.SYMBOLS[card.suit]));
+        }
+        // A newly built card needs its initial back transform before it can flip.
+        if (visible && card) requestAnimationFrame(() => {
+            if (node.dataset.card === key) node.classList.add('face-up');
+        });
+        else node.classList.remove('face-up');
+    }
+
+    function renderSeats() {
+        const r = room.round;
+        const ids = r ? r.seats : room.players.map(p => p.id);
+        let offset = ids.indexOf(myId);
+        if (offset < 0) offset = 0;
+        const ordered = ids.slice(offset).concat(ids.slice(0, offset));
+        const count = Math.max(ordered.length, 3);
+        const dense = ordered.length > 5;
+        $('table-stage').classList.toggle('dense', dense);
+        const wanted = new Set(ordered);
+        if (!r && ordered.length < 3) for (let i = ordered.length; i < 3; i++) wanted.add(`empty_${i}`);
+        for (const [id, node] of seatNodes) if (!wanted.has(id)) { node.remove(); seatNodes.delete(id); }
+        const allIds = [...ordered, ...[...wanted].filter(id => id.startsWith('empty_'))];
+        allIds.forEach((id, index) => {
+            const empty = id.startsWith('empty_');
+            let node = seatNodes.get(id);
+            if (!node) {
+                node = element('div', 'seat');
+                node.dataset.player = id;
+                if (empty) node.append(element('div', 'empty-card', '+'));
+                else node.append(element('div', 'playing-card'));
+                node.append(element('div', 'seat-name'), element('div', 'seat-status'));
+                seatNodes.set(id, node);
+                $('seats').append(node);
+            }
+            const angle = (90 + index * 360 / (r ? ordered.length : count)) * Math.PI / 180;
+            const radiusX = r && ordered.length === 2 ? 0 : (dense ? 37 : 35);
+            const radiusY = dense ? 37 : 35;
+            node.style.left = `${50 + Math.cos(angle) * radiusX}%`;
+            node.style.top = `${50 + Math.sin(angle) * radiusY}%`;
+            node.style.setProperty('--seat-index', index);
+            node.classList.toggle('is-empty', empty);
+            if (empty) {
+                node.querySelector('.seat-name').textContent = 'Open seat';
+                node.querySelector('.seat-status').textContent = 'Invite a friend';
+                return;
+            }
+            const mine = id === myId;
+            const active = r && r.phase !== 'finished' && (r.phase === 'challenge' ? r.pending.to : r.order[r.turn]) === id;
+            const loser = r?.phase === 'finished' && r.losers.includes(id);
+            node.classList.toggle('is-active', Boolean(active));
+            node.classList.toggle('is-loser', Boolean(loser));
+            node.classList.toggle('is-you', mine);
+            const label = node.querySelector('.seat-name');
+            const name = r?.names[id] || room.players.find(p => p.id === id)?.name || 'Player';
+            label.replaceChildren(document.createTextNode(name));
+            if (mine) label.append(element('span', 'you-marker', ' · you'));
+            label.title = name + (mine ? ' (you)' : '');
+            const dealer = (r?.dealerId || room.nextDealerId) === id;
+            let marker = node.querySelector('.dealer-marker');
+            if (dealer && !marker) {
+                marker = element('span', 'dealer-marker', 'D');
+                marker.title = 'Dealer · plays last';
+                marker.setAttribute('aria-label', 'Dealer');
+                node.append(marker);
+            } else if (!dealer && marker) marker.remove();
+            let status = !r ? 'Ready to play' : '';
+            if (r?.phase === 'finished') status = loser ? (r.everyoneLoses ? 'King cut!' : 'Low card') : 'Safe this round';
+            else if (r) {
+                if (active) status = r.phase === 'challenge' ? 'Swap requested' : (mine ? 'Your turn' : 'Thinking…');
+                else if (r.revealedKings?.[id]) status = 'King revealed';
+                else if (r.order.indexOf(id) < r.turn) status = 'Turn taken';
+                else if (dealer) status = 'Dealer · plays last';
+            }
+            node.querySelector('.seat-status').textContent = status;
+            const visible = r && (mine || r.phase === 'finished' || r.revealedKings?.[id]);
+            renderCard(node.querySelector('.playing-card'), r?.hands[id], Boolean(visible));
+        });
+    }
+
+    function render() {
+        const r = room.round;
+        renderSeats();
+        const finished = r?.phase === 'finished';
+        document.querySelector('.round-banner').classList.toggle('result-banner', Boolean(finished));
+        let title, subtitle, kicker;
+        if (!r) {
+            kicker = 'MAKE YOURSELF AT HOME';
+            title = room.players.length === 1 ? 'A little company?' : 'Everyone comfortable?';
+            subtitle = room.players.length === 1 ? 'Invite someone to your table. It only takes two.' : `${room.players.length} at the table. Deal whenever you’re ready.`;
+        } else if (finished) {
+            kicker = `ROUND ${r.number} · CARDS ON THE TABLE`;
+            if (r.everyoneLoses) {
+                title = 'A king. Of course.';
+                subtitle = `${playerName(r.dealerId)} cut a king. Everyone loses this one!`;
+            } else {
+                const losers = joinNames(r.losers.map(playerName));
+                title = r.losers.length === r.order.length ? 'A table full of low cards.' : r.losers.includes(myId) ? 'Ah, better luck next round.' : 'You’re off the hook.';
+                if (!r.order.includes(myId)) title = 'The cards are in.';
+                subtitle = `${losers} ${r.losers.length > 1 ? 'lose' : 'loses'} with ${r.lowRank === 1 ? 'the ace' : 'the lowest card (' + R.rankLabel(r.lowRank) + ')'}.`;
+            }
+        } else if (r.phase === 'challenge') {
+            kicker = `ROUND ${r.number} · A LITTLE SUSPENSE`;
+            title = r.pending.to === myId ? 'Something up your sleeve?' : 'Not so fast…';
+            subtitle = `${playerName(r.pending.from)} wants to swap with ${playerName(r.pending.to)}.`;
+        } else {
+            const active = r.order[r.turn];
+            const mine = active === myId;
+            const last = r.turn === r.order.length - 1;
+            kicker = `ROUND ${r.number} · ${last ? 'THE DEALER’S CHOICE' : 'HOLD YOUR NERVE'}`;
+            title = mine ? 'Your move.' : `${playerName(active)}’s move.`;
+            subtitle = last ? 'Keep your card, or see what the deck has in store.' : mine ? `Like your card? Hold. Feeling brave? Swap with ${playerName(r.order[r.turn + 1])}.` : 'A little patience. A little poker face.';
+        }
+        $('round-kicker').textContent = kicker;
+        $('round-title').textContent = title;
+        $('round-subtitle').textContent = subtitle;
+        $('center-caption').textContent = finished && r.cutCard ? 'THE CUT' : 'PASS THE ACE';
+        $('center-detail').textContent = r ? (finished ? 'Shall we go again?' : 'Clockwise · ace is low') : 'A seat for everyone.';
+        renderCard($('deck-card'), r?.cutCard, Boolean(finished && r.cutCard));
+        $('event-line').textContent = eventText(r);
+        const queued = r ? room.players.filter(p => !r.order.includes(p.id)) : [];
+        $('queued-players').hidden = queued.length === 0;
+        $('queued-players').textContent = queued.length ? `${joinNames(queued.map(p => p.name))} ${queued.length === 1 ? 'joins' : 'join'} on the next deal.` : '';
+        renderControls();
+    }
+
+    function eventText(r) {
+        if (!r) return 'Your card stays face up on your own phone.';
+        const e = r.event;
+        if (!e) return '';
+        if (e.kind === 'deal') return `${playerName(r.dealerId)} is the dealer. ${playerName(r.order[0])} starts.`;
+        if (e.kind === 'swap') return `${playerName(e.actor)} swapped with ${playerName(e.target)}.`;
+        if (e.kind === 'hold') return `${playerName(e.actor)} held their card.`;
+        if (e.kind === 'challenge') return `Waiting for ${playerName(e.target)} to respond…`;
+        if (e.kind === 'king') return `${playerName(e.actor)} revealed a king! ${playerName(e.blocked)} keeps their card.`;
+        if (e.kind === 'cut') return `${playerName(e.actor)} cut the ${R.cardLabel(r.cutCard).toLowerCase()}.`;
+        return '';
+    }
+
+    function actionButton(label, type, className = 'primary', extra) {
+        const button = element('button', `button ${className}`, label);
+        button.type = 'button';
+        button.dataset.action = type;
+        button.disabled = busy || !connected;
+        button.addEventListener('click', () => {
+            const data = type === 'deal' ? { deck: R.shuffledDeck() } :
+                type === 'cut' ? { cutIndex: Math.floor(Math.random() * room.round.deck.length) } : extra || {};
+            void send(type, data);
+        });
+        $('actions').append(button);
+        return button;
+    }
+    function renderControls() {
+        if (!room) return;
+        const r = room.round;
+        const copy = $('action-copy');
+        copy.replaceChildren();
+        $('actions').replaceChildren();
+        document.querySelector('.action-panel').classList.toggle('king-prompt', r?.phase === 'challenge' && r.pending.to === myId);
+        if (!connected) {
+            copy.textContent = 'Reconnecting… Your seat and cards are saved.';
+            return;
+        }
+        if (!r || r.phase === 'finished') {
+            const enough = room.players.length >= 2;
+            copy.textContent = enough ? `${playerName(room.nextDealerId)} deals ${r ? 'next' : 'first'}. Anyone can start the round.` : 'Share your room link to bring everyone together.';
+            if (enough) actionButton(r ? 'Deal another round ↗' : 'Deal the cards ↗', 'deal');
+            else {
+                const button = element('button', 'button primary', 'Invite your people ↗');
+                button.addEventListener('click', invite);
+                $('actions').append(button);
+            }
+        } else if (!r.order.includes(myId)) {
+            copy.textContent = 'You’ve got a seat for the next round. Enjoy the suspense!';
+        } else if (r.phase === 'challenge' && r.pending.to === myId) {
+            copy.append(element('strong', '', 'You have a king. Make an entrance.'));
+            actionButton('♚  Reveal king!', 'revealKing');
+        } else if (r.phase === 'playing' && r.order[r.turn] === myId) {
+            const last = r.turn === r.order.length - 1;
+            copy.append(element('strong', '', `Your card: ${R.cardLabel(r.hands[myId])}. `));
+            copy.append(document.createTextNode(last ? 'A cut replaces it. A king sinks everyone.' : 'Trust it, or trade it?'));
+            actionButton('Hold', 'hold', 'secondary');
+            actionButton(last ? 'Cut the deck' : 'Swap →', last ? 'cut' : 'swap');
+        } else {
+            const dots = element('span', 'waiting-dots');
+            dots.setAttribute('aria-hidden', 'true');
+            dots.append(element('i'), element('i'), element('i'));
+            copy.append(dots, document.createTextNode(r.phase === 'challenge' ? `Waiting for ${playerName(r.pending.to)}…` : `Waiting for ${playerName(r.order[r.turn])}. Make yourself comfortable.`));
+        }
+    }
+
+    function animateEvent(r) {
+        clearTimeout(animationTimer);
+        const stage = $('table-stage');
+        stage.classList.remove('dealing', 'swapping', 'revealing');
+        for (const node of seatNodes.values()) node.classList.remove('is-swapping');
+        clearTimeout(flourishTimer);
+        $('table-flourish').hidden = true;
+        if (!r) return;
+        void stage.offsetWidth;
+        if (r.event.kind === 'deal') stage.classList.add('dealing');
+        if (r.event.kind === 'swap') {
+            for (const id of [r.event.actor, r.event.target]) seatNodes.get(id)?.classList.add('is-swapping');
+            stage.classList.add('swapping');
+        }
+        if (r.phase === 'finished') stage.classList.add('revealing');
+        if (r.event.kind === 'king') {
+            $('flourish-detail').textContent = `${playerName(r.event.actor)} has a king. No swap for you!`;
+            $('table-flourish').hidden = false;
+            flourishTimer = setTimeout(() => { $('table-flourish').hidden = true; }, 2400);
+        }
+        animationTimer = setTimeout(() => stage.classList.remove('dealing', 'swapping', 'revealing'), 2200);
+    }
+
+    async function invite() {
+        const url = new URL(location.href);
+        url.search = '';
+        url.hash = '';
+        url.searchParams.set('room', roomCode);
+        try {
+            if (navigator.share) await navigator.share({ title: 'Pass the Ace', text: `Come play! Join our ${roomCode} table.`, url: url.href });
+            else { await navigator.clipboard.writeText(url.href); toast('Invite link copied. Send it to your people.'); }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                toast(`Join room ${roomCode} at this page’s address.`);
+            }
+        }
+    }
+
+    function confirmAction(title, detail, label) {
+        return new Promise(resolve => {
+            const dialog = $('confirm-dialog');
+            $('confirm-title').textContent = title;
+            $('confirm-detail').textContent = detail;
+            $('confirm-ok').textContent = label;
+            dialog.returnValue = '';
+            dialog.addEventListener('close', () => resolve(dialog.returnValue === 'yes'), { once: true });
+            dialog.showModal();
+        });
+    }
+
+    function renderManagement() {
+        if (!room) return;
+        const playing = room.round && room.round.phase !== 'finished';
+        $('manage-hint').textContent = playing ? 'A round is in progress. You can tidy up seats between rounds. If someone has left, end the round to get everyone playing again.' : 'Seats run clockwise in join order. Remove someone who has left to free up their chair.';
+        $('manage-players').replaceChildren();
+        for (const player of room.players) {
+            const row = element('div', 'manage-row');
+            const name = element('span', '', player.name + (player.id === myId ? ' (you)' : ''));
+            if (player.id === room.nextDealerId) name.append(element('small', '', 'Deals next'));
+            row.append(name);
+            if (!playing) {
+                const button = element('button', '', 'Remove');
+                button.disabled = busy || !connected;
+                button.addEventListener('click', async () => {
+                    if (await confirmAction(`Remove ${player.name}?`, 'They can join again with the same room name whenever they like.', 'Remove')) {
+                        await send('remove', { target: player.id });
+                    }
+                });
+                row.append(button);
+            }
+            $('manage-players').append(row);
+        }
+        $('reset-button').hidden = !playing;
+        $('reset-button').disabled = busy || !connected;
+    }
+
+    function renderRecent() {
+        const recent = readSaved().recent;
+        $('recent-rooms').replaceChildren();
+        $('recent-section').hidden = !Array.isArray(recent) || !recent.length;
+        if (!Array.isArray(recent)) return;
+        for (const visit of recent.slice(0, 4)) {
+            const button = element('button', 'recent-room');
+            button.type = 'button';
+            button.append(element('span', '', visit.code), element('small', '', `${visit.name} ↗`));
+            button.addEventListener('click', () => {
+                $('room-name').value = visit.code;
+                $('player-name').value = visit.name;
+                void joinGame();
+            });
+            $('recent-rooms').append(button);
+        }
+    }
+
+    $('join-form').addEventListener('submit', joinGame);
+    $('rules-button').addEventListener('click', () => $('rules-dialog').showModal());
+    $('table-button').addEventListener('click', () => { renderManagement(); $('table-dialog').showModal(); });
+    $('invite-button').addEventListener('click', invite);
+    $('confirm-ok').addEventListener('click', () => $('confirm-dialog').close('yes'));
+    $('confirm-cancel').addEventListener('click', () => $('confirm-dialog').close('no'));
+    document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
+    $('reset-button').addEventListener('click', async () => {
+        if (await confirmAction('Call this one off?', 'Everyone’s cards will be put away. You can remove empty seats and deal a fresh round.', 'End round')) {
+            if (await send('reset')) $('table-dialog').close();
+        }
+    });
+    $('leave-button').addEventListener('click', async () => {
+        const playing = room?.round && room.round.phase !== 'finished';
+        if (playing) {
+            if (await confirmAction('Step away from the table?', 'Your seat stays in this round. Rejoin with the same name to carry on. The table can end the round if you’re done for now.', 'Step away')) leaveView();
+        } else if (await confirmAction('Leave the table?', 'This frees up your seat. You can come back with the same room name.', 'Leave table')) {
+            if (await send('remove', { target: myId })) leaveView();
+        }
+    });
+
+    const saved = readSaved();
+    $('room-name').value = new URLSearchParams(location.search).get('room') || saved.room || '';
+    $('player-name').value = saved.name || '';
+    renderRecent();
+    if (!R || !window.firebase) {
+        showError('join-error', 'The game couldn’t load. Check your internet connection and refresh to try again.');
+        $('join-button').disabled = true;
+        return;
+    }
+    try {
+        const app = firebase.initializeApp({ databaseURL: 'https://photobookshelf.firebaseio.com/' }, 'pass-the-ace');
+        db = app.database();
+        db.ref('.info/connected').on('value', snapshot => {
+            connected = snapshot.val() === true;
+            $('connection').textContent = connected ? 'Connected' : 'Reconnecting';
+            $('connection').classList.toggle('online', connected);
+            if (connected) {
+                showError('game-error');
+                if (!roomRef) showError('join-error');
+            }
+            setBusy(busy);
+        });
+        setBusy(false);
+        setTimeout(() => {
+            if (!connected && !roomRef) showError('join-error', 'Still connecting. Check your internet connection; we’ll keep trying.');
+        }, 10000);
+    } catch (error) {
+        showError('join-error', `Couldn’t connect to the table. ${error.message}`);
+        $('join-button').disabled = true;
+    }
+})();
