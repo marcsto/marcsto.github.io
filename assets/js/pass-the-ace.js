@@ -84,7 +84,7 @@
         try {
             const ref = db.ref(ROOM_PATH + code);
             const existing = (await ref.once('value')).val();
-            if (existing && ![1, 2].includes(existing.version)) throw new Error('This table needs a newer version. Please refresh the page.');
+            if (existing && ![1, 2, 3].includes(existing.version)) throw new Error('This table needs a newer version. Please refresh the page.');
             const players = existing?.players || [];
             if (players.some(p => p.isAI && p.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
                 throw new Error('That’s the practice opponent’s name. Please enter your own name.');
@@ -275,16 +275,17 @@
         else node.classList.remove('face-up');
     }
 
-    function renderWinner(node, winner, label) {
+    function renderWinner(node, winner, label, icon = '🏆') {
         node.classList.toggle('is-winner', winner);
         node.setAttribute('aria-label', label + (winner ? '. Winner!' : ''));
         let badge = node.querySelector('.winner-badge');
         if (winner && !badge) {
             badge = element('span', 'winner-badge');
             badge.setAttribute('aria-hidden', 'true');
-            badge.append(element('span', 'winner-trophy', '🏆'), document.createTextNode('Winner'));
+            badge.append(element('span', 'winner-trophy'), document.createTextNode('Winner'));
             node.append(badge);
         } else if (!winner && badge) badge.remove();
+        if (winner) badge.querySelector('.winner-trophy').textContent = icon;
     }
 
     function renderSeats() {
@@ -351,7 +352,7 @@
                 node.append(marker);
             } else if (!dealer && marker) marker.remove();
             let status = !r ? 'Ready to play' : '';
-            if (r?.phase === 'finished') status = loser ? (r.everyoneLoses ? 'King cut!' : r.dealerLosesTie ? 'Dealer loses tie' : 'Low card') : '';
+            if (r?.phase === 'finished') status = loser ? (r.kingCut ? 'King cut!' : r.dealerLosesTie ? 'Dealer loses tie' : 'Low card') : '';
             else if (r) {
                 if (active) status = r.phase === 'challenge' ? 'Swap requested' : (mine ? 'Your turn' : 'Thinking…');
                 else if (r.revealedKings?.[id]) status = 'King revealed';
@@ -393,8 +394,8 @@
         const card = $('deck-card');
         renderCard(card, cut, Boolean(cut));
         renderWinner(card, Boolean(cut && !loser), cut
-            ? `${playerName(dealerId)}’s new card: ${R.cardLabel(cut)}. Counts for this round${loser ? '. ' + (r.everyoneLoses ? 'King cut; everyone loses' : r.dealerLosesTie ? 'Dealer loses tie' : 'Low card; loses') : ''}`
-            : 'Face-down deck');
+            ? `${playerName(dealerId)}’s new card: ${R.cardLabel(cut)}. ${r.kingCut ? 'King cut; only the dealer wins' : 'Counts for this round'}${loser ? '. ' + (r.dealerLosesTie ? 'Dealer loses tie' : 'Low card; loses') : ''}`
+            : 'Face-down deck', r?.kingCut ? '👑' : '🏆');
     }
 
     function scheduleSupplyLayout() {
@@ -490,9 +491,9 @@
             if (room.practice && room.players.length === 2) subtitle = 'Your practice opponent is ready. Deal whenever you like.';
         } else if (finished) {
             kicker = `ROUND ${r.number} · CARDS ON THE TABLE`;
-            if (r.everyoneLoses) {
-                title = 'A king. Of course.';
-                subtitle = `${playerName(r.dealerId)} cut a king. Everyone loses this one!`;
+            if (r.kingCut) {
+                title = r.dealerId === myId ? 'Long live the king!' : 'The dealer takes the crown.';
+                subtitle = `${playerName(r.dealerId)} cut a king and wins! Everyone else loses, even with a king.`;
             } else {
                 const losers = joinNames(r.losers.map(playerName));
                 title = r.losers.length === r.order.length ? 'A table full of low cards.' : r.losers.includes(myId) ? 'Ah, better luck next round.' : 'You’re off the hook.';
@@ -591,7 +592,7 @@
         } else if (r.phase === 'playing' && r.order[r.turn] === myId) {
             const last = r.turn === r.order.length - 1;
             copy.append(element('strong', '', `Your card: ${R.cardLabel(r.hands[myId])}. `));
-            copy.append(document.createTextNode(last ? 'A cut replaces it. A king sinks everyone.' : 'Trust it, or trade it?'));
+            copy.append(document.createTextNode(last ? 'A cut replaces it. Cut a king and only you win.' : 'Trust it, or trade it?'));
             actionButton('Hold', 'hold', 'secondary');
             actionButton(last ? 'Cut the deck' : '← Swap', last ? 'cut' : 'swap');
         } else {

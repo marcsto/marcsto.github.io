@@ -60,7 +60,7 @@ test('lowest rank loses; tied non-dealers lose and aces are low', () => {
     assert.equal(room.round.phase, 'finished');
     assert.deepEqual(room.round.losers, ['b', 'c']);
     assert.equal(room.round.lowRank, 1);
-    assert.equal(room.round.everyoneLoses, false);
+    assert.equal(room.round.kingCut, false);
     assert.equal(act(room, 'hold', 'a'), undefined);
 });
 
@@ -70,7 +70,7 @@ test('dealer alone loses a tie for lowest, including a whole-table tie', () => {
         for (const id of room.round.order) room = act(room, 'hold', id);
         assert.deepEqual(room.round.losers, ['a']);
         assert.equal(room.round.dealerLosesTie, true);
-        assert.equal(room.round.everyoneLoses, false);
+        assert.equal(room.round.kingCut, false);
     }
 });
 
@@ -93,9 +93,9 @@ test('a king cut overrides dealer ties and makes other kings lose too', () => {
     let room = table([13, 13, 5], 13);
     room = act(act(room, 'hold', 'b'), 'hold', 'c');
     room = act(room, 'cut', 'a', { cutIndex: 0 });
-    assert.equal(room.round.everyoneLoses, true);
+    assert.equal(room.round.kingCut, true);
     assert.equal(room.round.dealerLosesTie, false);
-    assert.deepEqual(room.round.losers, ['b', 'c', 'a']);
+    assert.deepEqual(room.round.losers, ['b', 'c']);
 });
 
 test('both sides of a swap know the exchanged cards, but observers do not', () => {
@@ -164,7 +164,7 @@ test('existing rooms upgrade without discarding players or the active hand', () 
     delete room.round.knownCards;
     delete room.round.actions;
     room = act(room, 'swap', 'b');
-    assert.equal(room.version, 2);
+    assert.equal(room.version, 3);
     assert.equal(room.players.length, 3);
     assert.equal(room.round.turn, 1);
     assert.equal(R.canSee(room.round, 'c', 'b'), true);
@@ -204,8 +204,8 @@ test('cut history records the card held after swaps, including on a king cut', (
     room = act(room, 'cut', 'a', { cutIndex: 0 });
     assert.deepEqual(room.round.beforeCutCard, before);
     assert.equal(room.round.cutCard.rank, 13);
-    assert.equal(room.round.everyoneLoses, true);
-    assert.deepEqual(room.round.losers, ['b', 'c', 'a']);
+    assert.equal(room.round.kingCut, true);
+    assert.deepEqual(room.round.losers, ['b', 'c']);
 });
 
 test('holding leaves no discarded card', () => {
@@ -215,12 +215,33 @@ test('holding leaves no discarded card', () => {
     assert.equal(room.round.cutCard, undefined);
 });
 
-test('cutting a king makes every player lose', () => {
+test('cutting a king makes the dealer the only winner', () => {
     let room = table([2, 5, 8], 13);
     room = act(act(room, 'hold', 'b'), 'hold', 'c');
     room = act(room, 'cut', 'a', { cutIndex: 0 });
-    assert.equal(room.round.everyoneLoses, true);
-    assert.deepEqual(room.round.losers, ['b', 'c', 'a']);
+    assert.equal(room.round.kingCut, true);
+    assert.deepEqual(room.round.losers, ['b', 'c']);
+});
+
+test('rejoining an older king-cut result corrects the winner without losing cards or seats', () => {
+    let room = table([13, 13, 8], 13);
+    room = act(act(room, 'hold', 'b'), 'hold', 'c');
+    room = act(room, 'cut', 'a', { cutIndex: 0 });
+    room.version = 2;
+    delete room.round.kingCut;
+    room.round.everyoneLoses = true;
+    room.round.losers = [...room.round.order];
+    const updated = R.reduce(room, { type: 'join', actor: 'new-device', name: 'Marc' });
+    assert.equal(updated.version, 3);
+    assert.deepEqual(updated.players, room.players);
+    assert.deepEqual(updated.round.hands, room.round.hands);
+    assert.deepEqual(updated.round.beforeCutCard, room.round.beforeCutCard);
+    assert.equal(updated.round.number, room.round.number);
+    assert.equal(updated.round.kingCut, true);
+    assert.equal(updated.round.everyoneLoses, undefined);
+    assert.deepEqual(updated.round.losers, ['b', 'c']);
+    const next = act(updated, 'deal', 'a', { deck: R.shuffledDeck() });
+    assert.equal(next.round.kingCut, undefined, 'new round clears the king-cut result');
 });
 
 test('dealer rotates, late arrivals wait for the next round, and names restore existing seats', () => {

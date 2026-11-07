@@ -79,13 +79,14 @@
             new Set(deck.map(c => `${c.rank}-${c.suit}`)).size === 52;
     }
 
-    function finish(round, everyone = false) {
+    function finish(round, kingCut = false) {
         round.phase = 'finished';
-        round.everyoneLoses = everyone;
+        round.kingCut = kingCut;
+        delete round.everyoneLoses;
         const low = Math.min(...round.order.map(id => round.hands[id].rank));
         const tied = round.order.filter(id => round.hands[id].rank === low);
-        round.dealerLosesTie = !everyone && tied.length > 1 && tied.includes(round.dealerId);
-        round.losers = everyone ? [...round.order] : round.dealerLosesTie ? [round.dealerId] : tied;
+        round.dealerLosesTie = !kingCut && tied.length > 1 && tied.includes(round.dealerId);
+        round.losers = kingCut ? round.order.filter(id => id !== round.dealerId) : round.dealerLosesTie ? [round.dealerId] : tied;
         round.lowRank = low;
         delete round.pending;
     }
@@ -103,13 +104,17 @@
     function reduce(current, action) {
         if (!action || !action.type) return;
         if (!current && action.type !== 'join') return;
-        if (current && ![1, 2].includes(current.version)) return;
+        if (current && ![1, 2, 3].includes(current.version)) return;
         if (action.type !== 'join' && action.revision !== current.revision) return;
         const room = current ? JSON.parse(JSON.stringify(current)) : {
-            version: 2, revision: 0, players: [], roundNumber: 0
+            version: 3, revision: 0, players: [], roundNumber: 0
         };
         // Older clients must refresh before they can apply the previous house rules.
-        room.version = 2;
+        room.version = 3;
+        // Rejoining a finished table also corrects king cuts saved under the old rule.
+        if (current?.version < 3 && room.round?.phase === 'finished' && room.round.cutCard?.rank === 13) {
+            finish(room.round, true);
+        }
         room.players = room.players || [];
         const player = room.players.find(p => p.id === action.actor);
         if (action.type !== 'join' && !player) return;
