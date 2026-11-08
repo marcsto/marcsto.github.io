@@ -4,6 +4,9 @@
     const $ = id => document.getElementById(id);
     const STORAGE = 'pass_the_ace';
     const ROOM_PATH = 'passTheAceRooms/';
+    let soundEnabled = readSaved().sound !== false;
+    const sounds = window.AceSounds?.create({ enabled: soundEnabled });
+    let soundTimer, soundEpoch = 0, quietNextSnapshot = true;
     let db, roomRef, room, myId, roomCode, connected = false, busy = false;
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
     let processing = false, presentationEpoch = 0;
@@ -17,6 +20,31 @@
     function readSaved() {
         try { return JSON.parse(localStorage.getItem(STORAGE) || '{}') || {}; }
         catch { return {}; }
+    }
+    function cancelSounds() {
+        clearTimeout(soundTimer);
+        sounds?.stop();
+    }
+    function silenceSounds() {
+        soundEpoch++;
+        cancelSounds();
+    }
+    function renderSoundSetting() {
+        $('sound-button').textContent = soundEnabled ? 'On' : 'Off';
+        $('sound-button').setAttribute('aria-pressed', String(soundEnabled));
+    }
+    function playRoundSound(round) {
+        cancelSounds();
+        if (!round) return;
+        sounds?.play(round.event.kind);
+        if (round.phase !== 'finished' || !round.order.includes(myId)) return;
+        const epoch = soundEpoch;
+        // Let the final card/tap land before the personal result cue.
+        soundTimer = setTimeout(() => {
+            if (epoch !== soundEpoch || room?.round?.number !== round.number || room.round.phase !== 'finished') return;
+            const result = round.losers.includes(myId) ? 'loss' : round.kingCut ? 'crown' : 'win';
+            sounds?.play(result);
+        }, round.event.kind === 'cut' ? 500 : 340);
     }
     function saveVisit(code, name, aiCount = 0) {
         try {
@@ -158,7 +186,9 @@
             toast('Your seat was removed. You can join the table again.');
             return;
         }
-        snapshots.push(data);
+        snapshots.push({ data, audible: connected && !document.hidden && !quietNextSnapshot,
+            soundEpoch, receivedAt: performance.now() });
+        quietNextSnapshot = false;
         if (!processing) void presentSnapshots();
     }
 
@@ -168,11 +198,15 @@
         try {
             // Let each exchange arrive before showing the next one, even if people play quickly.
             while (snapshots.length && epoch === presentationEpoch) {
-                room = snapshots.shift();
+                const snapshot = snapshots.shift();
+                room = snapshot.data;
                 render();
                 const round = room.round;
                 const key = round ? `${round.number}:${JSON.stringify(round.event)}` : '';
-                if (!firstSnapshot && key !== lastEvent) await animateEvent(round);
+                if (!firstSnapshot && key !== lastEvent) {
+                    if (snapshot.audible && snapshot.soundEpoch === soundEpoch && performance.now() - snapshot.receivedAt < 2500) playRoundSound(round);
+                    await animateEvent(round);
+                }
                 if (epoch !== presentationEpoch) return;
                 lastEvent = key;
                 firstSnapshot = false;
@@ -245,6 +279,7 @@
     }
 
     function leaveView() {
+        silenceSounds();
         cancelAI();
         cancelAnimationFrame(supplyFrame);
         clearTimeout(supplyTimer);
@@ -800,6 +835,25 @@
         }
     }
 
+    // Resume audio within a user gesture; incoming network events never request autoplay.
+    document.addEventListener('pointerdown', () => { void sounds?.unlock(); }, { passive: true });
+    document.addEventListener('keydown', () => { void sounds?.unlock(); });
+    document.addEventListener('click', () => { void sounds?.unlock(); });
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) silenceSounds();
+    });
+    window.addEventListener('pagehide', silenceSounds);
+    $('sound-button').addEventListener('click', async () => {
+        soundEnabled = !soundEnabled;
+        silenceSounds();
+        sounds?.setEnabled(soundEnabled);
+        renderSoundSetting();
+        try { localStorage.setItem(STORAGE, JSON.stringify({ ...readSaved(), sound: soundEnabled })); }
+        catch { /* The toggle still works for this visit without storage. */ }
+        if (soundEnabled && await sounds?.unlock()) sounds.play('hold');
+    });
+    renderSoundSetting();
+
     $('join-form').addEventListener('submit', joinGame);
     $('ai-button').addEventListener('click', event => void joinGame(event, true));
     window.addEventListener('resize', () => { placeDealControl(); scheduleSupplyLayout(); });
@@ -842,6 +896,7 @@
         db = app.database();
         db.ref('.info/connected').on('value', snapshot => {
             connected = snapshot.val() === true;
+            if (!connected) { quietNextSnapshot = true; silenceSounds(); }
             $('connection').textContent = connected ? 'Connected' : 'Reconnecting';
             $('connection').classList.toggle('online', connected);
             if (connected) {

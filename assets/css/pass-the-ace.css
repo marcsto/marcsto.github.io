@@ -582,6 +582,36 @@ input::placeholder {
     margin: 16px 0 8px;
 }
 
+.sound-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid #b1cda421;
+    font-size: 14px;
+}
+
+.sound-setting p {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#sound-button {
+    min-width: 64px;
+    min-height: 44px;
+    flex: none;
+}
+
+#sound-button[aria-pressed="true"] {
+    color: var(--gold);
+    border-color: #d6b57470;
+    background: #d6b57415;
+}
+
 .table-menu-actions .button {
     padding: 12px 8px;
     font-size: 13px;

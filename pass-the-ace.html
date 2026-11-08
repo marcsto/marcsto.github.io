@@ -9,11 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=8">
+    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=9">
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script defer src="assets/js/ace-rules.js?v=8"></script>
-    <script defer src="assets/js/pass-the-ace.js?v=8"></script>
+    <script defer src="assets/js/ace-rules.js?v=9"></script>
+    <script defer src="assets/js/ace-sounds.js?v=9"></script>
+    <script defer src="assets/js/pass-the-ace.js?v=9"></script>
 </head>
 <body>
     <header class="masthead">
@@ -103,7 +104,9 @@
 
     <dialog id="table-dialog" class="dialog">
         <div class="dialog-heading"><span class="eyebrow">AROUND THE TABLE</span><button class="close-button" type="button" data-close aria-label="Close table options">×</button></div>
-        <h2>Your people.</h2><p id="manage-hint" class="dialog-description"></p><div id="manage-players" class="manage-players"></div>
+        <h2>Your people.</h2>
+        <div class="sound-setting"><div><strong id="sound-label">Sound effects</strong><p id="sound-description">Soft &amp; short. Just on this device.</p></div><button id="sound-button" class="small-button" type="button" aria-labelledby="sound-label" aria-describedby="sound-description" aria-pressed="true">On</button></div>
+        <p id="manage-hint" class="dialog-description"></p><div id="manage-players" class="manage-players"></div>
         <div class="table-menu-actions"><button id="table-rules-button" class="button secondary" type="button">How to play</button><button id="table-invite-button" class="button secondary" type="button">Invite a friend</button><button id="table-leave-button" class="button secondary" type="button">Leave table</button></div>
         <button id="reset-button" class="button secondary" type="button">End this round</button>
     </dialog>
