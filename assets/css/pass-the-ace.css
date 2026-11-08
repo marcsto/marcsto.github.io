@@ -571,6 +571,26 @@ input::placeholder {
     padding: 16px 0 8px;
 }
 
+.compact-status, .compact-action-copy {
+    display: none;
+}
+
+.table-menu-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 16px 0 8px;
+}
+
+.table-menu-actions .button {
+    padding: 12px 8px;
+    font-size: 13px;
+}
+
+#table-leave-button {
+    grid-column: 1 / -1;
+}
+
 .round-banner h1 {
     font-size: 32px;
     line-height: 1.18;
@@ -578,7 +598,7 @@ input::placeholder {
     letter-spacing: -.8px;
 }
 
-.round-banner>p:last-child {
+.round-banner #round-subtitle {
     font-size: 13px;
     line-height: 1.6;
     color: var(--muted);
@@ -1495,7 +1515,7 @@ input::placeholder {
     .round-banner h1 {
         font-size: 27px;
     }
-    .round-banner>p:last-child {
+    .round-banner #round-subtitle {
         font-size: 12px;
     }
     .playing-card {
@@ -1719,5 +1739,171 @@ input::placeholder {
     }
     .card-fan {
         height: 191px;
+    }
+}
+
+/* Keep phone controls in the viewport; only a crowded table needs to scroll. */
+@media(max-width:760px) {
+    body.at-table {
+        height: 100dvh;
+        overflow: hidden;
+    }
+    .at-table .masthead {
+        display: none;
+    }
+    .at-table .game {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        padding: env(safe-area-inset-top, 0px) max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+    .at-table .table-toolbar {
+        flex: 0 0 52px;
+        padding: 4px 0;
+        gap: 8px;
+    }
+    .at-table .room-heading {
+        flex: 1;
+        min-width: 0;
+    }
+    .at-table .room-heading>.eyebrow {
+        display: none;
+    }
+    .at-table .room-heading>div {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+    .at-table .room-heading strong {
+        max-width: none;
+        min-width: 0;
+        font-size: 13px;
+        letter-spacing: .5px;
+    }
+    .at-table .connection {
+        flex: none;
+        margin: 0;
+        font-size: 0;
+    }
+    .at-table .connection:before {
+        width: 6px;
+        height: 6px;
+        margin: 0;
+    }
+    .at-table .toolbar-actions {
+        gap: 6px;
+    }
+    .at-table .small-button {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 8px 10px;
+    }
+    .at-table.has-deal-control #invite-button {
+        display: none;
+    }
+    .at-table .toolbar-actions .deal-actions {
+        position: static;
+        transform: none;
+        width: 124px;
+    }
+    .at-table .toolbar-actions .deal-actions:not(:has(button)) {
+        display: none;
+    }
+    .at-table .toolbar-actions .deal-actions .button {
+        min-height: 44px;
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    .at-table .round-banner {
+        flex: 0 0 26px;
+        min-height: 0;
+        padding: 2px 0 6px;
+    }
+    .at-table .round-banner>p, .at-table .round-banner>h1 {
+        display: none;
+    }
+    .at-table .round-banner .compact-status {
+        display: block;
+        font-family: var(--sans);
+        font-size: 13px;
+        line-height: 18px;
+        color: var(--gold);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .at-table .table-viewport {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        padding: 0 0 28px;
+    }
+    .at-table .table-stage {
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .at-table .table-stage:not(.dense):not(.medium-table) {
+        height: clamp(300px, calc(100dvh - 225px), 520px);
+    }
+    .at-table .table-stage.top-seat:not(.dense):not(.medium-table) {
+        height: clamp(280px, calc(100dvh - 270px), 500px);
+        margin-top: 52px;
+    }
+    .at-table .event-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+    .at-table .action-panel {
+        flex: 0 0 96px;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 8px 10px;
+        background: #173b32;
+    }
+    .at-table .action-copy {
+        display: none;
+    }
+    .at-table .compact-action-copy {
+        display: block;
+        font-size: 12px;
+        line-height: 18px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .at-table .action-panel:not(:has(.actions:not(:empty))) .compact-action-copy {
+        padding-top: 28px;
+    }
+    .at-table .actions:not(:empty) {
+        margin-top: 6px;
+    }
+    .at-table .actions .button {
+        min-height: 54px;
+        padding: 12px;
+        font-size: 16px;
+    }
+    .at-table .table-footer {
+        display: none;
+    }
+    .at-table .game-error, .at-table .queued-players {
+        flex: none;
+        margin: 4px 0 0;
+        padding: 0;
+        max-height: 48px;
+        overflow: auto;
+        font-size: 11px;
     }
 }

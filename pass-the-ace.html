@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=7">
+    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=8">
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script defer src="assets/js/ace-rules.js?v=7"></script>
-    <script defer src="assets/js/pass-the-ace.js?v=7"></script>
+    <script defer src="assets/js/ace-rules.js?v=8"></script>
+    <script defer src="assets/js/pass-the-ace.js?v=8"></script>
 </head>
 <body>
     <header class="masthead">
@@ -62,9 +62,10 @@
         <section id="game-view" class="game" hidden>
             <div class="table-toolbar">
                 <div class="room-heading"><span class="eyebrow">YOUR TABLE</span><div><strong id="room-label"></strong><span id="connection" class="connection" role="status">Connecting</span></div></div>
-                <div class="toolbar-actions"><button id="invite-button" class="small-button" type="button">Invite <span aria-hidden="true">↗</span></button><button id="table-button" class="small-button icon-button" type="button" aria-label="Table options">•••</button></div>
+                <div id="toolbar-actions" class="toolbar-actions"><button id="invite-button" class="small-button" type="button">Invite <span aria-hidden="true">↗</span></button><button id="table-button" class="small-button icon-button" type="button" aria-label="Table options">•••</button></div>
             </div>
-            <div class="round-banner" aria-live="polite" aria-atomic="true"><p id="round-kicker" class="eyebrow">MAKE YOURSELF AT HOME</p><h1 id="round-title">The table is yours.</h1><p id="round-subtitle">Invite your people, then deal the cards.</p></div>
+            <div class="round-banner" aria-live="polite" aria-atomic="true"><p id="round-kicker" class="eyebrow">MAKE YOURSELF AT HOME</p><h1 id="round-title">The table is yours.</h1><p id="round-subtitle">Invite your people, then deal the cards.</p><p id="compact-status" class="compact-status"></p></div>
+            <div class="table-viewport">
             <div id="table-stage" class="table-stage">
                 <div class="table-shadow"></div><div class="table-rail"><div class="felt"><div class="felt-line"></div></div></div>
                 <div class="table-center"><div id="center-caption" class="center-caption">PASS THE ACE</div><div id="center-detail" class="center-detail">A seat for everyone.</div></div>
@@ -78,7 +79,8 @@
                 <div id="table-flourish" class="table-flourish" role="status" hidden><span aria-hidden="true">♚</span><strong>Not so fast.</strong><p id="flourish-detail"></p></div>
             </div>
             <div id="event-line" class="event-line" aria-live="polite"></div>
-            <div class="action-panel"><div id="action-copy" class="action-copy"></div><div id="actions" class="actions"></div></div>
+            </div>
+            <div class="action-panel"><div id="action-copy" class="action-copy"></div><div id="compact-action-copy" class="compact-action-copy"></div><div id="actions" class="actions"></div></div>
             <p id="game-error" class="game-error" role="alert" hidden></p>
             <p id="queued-players" class="queued-players" hidden></p>
             <div class="table-footer"><span>Low card loses. Good company wins.</span><button id="leave-button" class="text-button" type="button">Leave table</button></div>
@@ -102,6 +104,7 @@
     <dialog id="table-dialog" class="dialog">
         <div class="dialog-heading"><span class="eyebrow">AROUND THE TABLE</span><button class="close-button" type="button" data-close aria-label="Close table options">×</button></div>
         <h2>Your people.</h2><p id="manage-hint" class="dialog-description"></p><div id="manage-players" class="manage-players"></div>
+        <div class="table-menu-actions"><button id="table-rules-button" class="button secondary" type="button">How to play</button><button id="table-invite-button" class="button secondary" type="button">Invite a friend</button><button id="table-leave-button" class="button secondary" type="button">Leave table</button></div>
         <button id="reset-button" class="button secondary" type="button">End this round</button>
     </dialog>
 

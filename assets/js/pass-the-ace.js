@@ -68,6 +68,7 @@
         if (roomRef && room) renderControls();
         if ($('table-dialog').open) renderManagement();
         $('leave-button').disabled = busy;
+        $('table-leave-button').disabled = busy;
         scheduleAI();
     }
 
@@ -139,6 +140,7 @@
             history.replaceState(null, '', url);
             $('lobby-view').hidden = true;
             $('game-view').hidden = false;
+            document.body.classList.add('at-table');
             $('room-label').textContent = code;
             $('room-label').title = code;
             window.scrollTo({ top: 0, behavior: 'instant' });
@@ -261,6 +263,7 @@
         clearTimeout(flourishTimer);
         $('table-flourish').hidden = true;
         $('game-view').hidden = true;
+        document.body.classList.remove('at-table');
         $('lobby-view').hidden = false;
         for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
         const url = new URL(location.href);
@@ -551,6 +554,11 @@
         $('round-kicker').textContent = kicker;
         $('round-title').textContent = title;
         $('round-subtitle').textContent = subtitle;
+        const compactStatus = !r ? 'Ready when you are.' : finished
+            ? r.kingCut ? `${playerName(r.dealerId)} wins with a king!` : r.dealerLosesTie ? `${playerName(r.dealerId)} loses the tie.` : `${joinNames(r.losers.map(playerName))} ${r.losers.length > 1 ? 'lose' : 'loses'} this round.`
+            : `Round ${r.number} · ${r.phase === 'challenge' ? 'Waiting for ' + playerName(r.pending.to) : r.order[r.turn] === myId ? 'Your turn' : playerName(r.order[r.turn]) + '’s turn'}`;
+        $('compact-status').textContent = compactStatus;
+        $('compact-status').title = compactStatus;
         $('center-caption').textContent = 'PASS THE ACE';
         $('center-detail').textContent = r ? (finished ? 'Shall we go again?' : 'Clockwise · ace is low') : 'A seat for everyone.';
         $('event-line').textContent = eventText(r);
@@ -590,10 +598,27 @@
         $(type === 'deal' ? 'deal-actions' : 'actions').append(button);
         return button;
     }
+    function placeDealControl() {
+        const parent = window.matchMedia('(max-width: 760px)').matches ? $('toolbar-actions') : $('table-stage');
+        if ($('deal-actions').parentElement !== parent) parent.prepend($('deal-actions'));
+    }
+
     function renderControls() {
         if (!room) return;
+        placeDealControl();
         scheduleSupplyLayout();
         const r = room.round;
+        const finished = !r || r.phase === 'finished';
+        document.body.classList.toggle('has-deal-control', finished && room.players.length >= 2);
+        let compactCopy;
+        if (!connected) compactCopy = 'Reconnecting… Your seat is saved.';
+        else if (finished) compactCopy = room.players.length < 2 ? 'Invite a friend to get started.' : `${playerName(room.nextDealerId)} deals ${r ? 'next' : 'first'}. Tap Deal above.`;
+        else if (!r.order.includes(myId)) compactCopy = 'You’re in on the next deal.';
+        else if (r.phase === 'challenge') compactCopy = r.pending.to === myId ? 'Your king blocks the swap.' : `Waiting for ${playerName(r.pending.to)}…`;
+        else if (r.order[r.turn] === myId) compactCopy = r.dealerId === myId ? 'Keep your card, or cut the deck.' : 'Keep your card, or swap.';
+        else compactCopy = `Waiting for ${playerName(r.order[r.turn])}…`;
+        $('compact-action-copy').textContent = compactCopy;
+        $('compact-action-copy').title = compactCopy;
         const copy = $('action-copy');
         copy.replaceChildren();
         $('actions').replaceChildren();
@@ -613,7 +638,7 @@
         if (!r || r.phase === 'finished') {
             const enough = room.players.length >= 2;
             copy.textContent = enough ? `${playerName(room.nextDealerId)} deals ${r ? 'next' : 'first'}. Anyone can start the round.` : 'Share your room link to bring everyone together.';
-            if (enough) actionButton(r ? 'Deal next round ↗' : 'Deal the cards ↗', 'deal');
+            if (enough) actionButton(r ? 'Deal again ↗' : 'Deal cards ↗', 'deal');
             else {
                 const button = element('button', 'button primary', 'Invite your people ↗');
                 button.addEventListener('click', invite);
@@ -777,9 +802,12 @@
 
     $('join-form').addEventListener('submit', joinGame);
     $('ai-button').addEventListener('click', event => void joinGame(event, true));
-    window.addEventListener('resize', scheduleSupplyLayout);
+    window.addEventListener('resize', () => { placeDealControl(); scheduleSupplyLayout(); });
     $('rules-button').addEventListener('click', () => $('rules-dialog').showModal());
     $('table-button').addEventListener('click', () => { renderManagement(); $('table-dialog').showModal(); });
+    $('table-rules-button').addEventListener('click', () => { $('table-dialog').close(); $('rules-dialog').showModal(); });
+    $('table-invite-button').addEventListener('click', () => { $('table-dialog').close(); void invite(); });
+    $('table-leave-button').addEventListener('click', () => { $('table-dialog').close(); $('leave-button').click(); });
     $('invite-button').addEventListener('click', invite);
     $('confirm-ok').addEventListener('click', () => $('confirm-dialog').close('yes'));
     $('confirm-cancel').addEventListener('click', () => $('confirm-dialog').close('no'));
