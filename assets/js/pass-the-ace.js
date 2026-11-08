@@ -11,6 +11,8 @@
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
     let processing = false, presentationEpoch = 0;
     let aiTimer, aiTimerKey = '';
+    let autoDealTimer, autoDealKey = '', autoDealDeadline = 0, autoDealPending = '';
+    let autoDealRetryAt = 0, serverTimeOffset = 0;
     let joiningAI = false;
     let supplyFrame, supplyTimer;
     const snapshots = [];
@@ -36,15 +38,16 @@
     function playRoundSound(round) {
         cancelSounds();
         if (!round) return;
-        sounds?.play(round.event.kind);
+        sounds?.play(round.kingCut ? 'crown' : round.event.kind);
         if (round.phase !== 'finished' || !round.order.includes(myId)) return;
+        if (round.kingCut && !round.losers.includes(myId)) return;
         const epoch = soundEpoch;
         // Let the final card/tap land before the personal result cue.
         soundTimer = setTimeout(() => {
             if (epoch !== soundEpoch || room?.round?.number !== round.number || room.round.phase !== 'finished') return;
-            const result = round.losers.includes(myId) ? 'loss' : round.kingCut ? 'crown' : 'win';
+            const result = round.losers.includes(myId) ? 'loss' : 'win';
             sounds?.play(result);
-        }, round.event.kind === 'cut' ? 500 : 340);
+        }, round.kingCut ? 2150 : round.event.kind === 'cut' ? 500 : 340);
     }
     function saveVisit(code, name, aiCount = 0) {
         try {
@@ -80,7 +83,7 @@
     }
     function transaction(ref, action) {
         return new Promise((resolve, reject) => {
-            ref.transaction(data => R.reduce(data, action), (error, committed, snapshot) => {
+            ref.transaction(data => R.reduce(data, { ...action, finishedAt: firebase.database.ServerValue.TIMESTAMP }), (error, committed, snapshot) => {
                 if (error) reject(error);
                 else resolve({ committed, data: snapshot?.val() });
             }, false);
@@ -234,7 +237,7 @@
         try {
             const result = await transaction(ref, command);
             if (!result.committed) {
-                toast('The table just changed. Take another look and try again.');
+                if (type !== 'deal') toast('The table just changed. Take another look and try again.');
                 return false;
             }
             return true;
@@ -248,6 +251,60 @@
         clearTimeout(aiTimer);
         aiTimer = undefined;
         aiTimerKey = '';
+    }
+
+    function cancelAutoDeal() {
+        clearInterval(autoDealTimer);
+        autoDealTimer = undefined;
+        autoDealKey = '';
+        autoDealPending = '';
+    }
+
+    function syncAutoDeal() {
+        const round = room?.round;
+        if (!roomRef || round?.phase !== 'finished' || room.players.length < 2) {
+            cancelAutoDeal();
+            return;
+        }
+        const key = `${roomCode}:${round.number}`;
+        if (autoDealKey !== key) {
+            cancelAutoDeal();
+            autoDealKey = key;
+            // A saved round from an older version gets a fresh three-second countdown.
+            autoDealDeadline = (Number.isFinite(round.finishedAt) ? round.finishedAt : Date.now() + serverTimeOffset) + 3000;
+            autoDealRetryAt = 0;
+            autoDealTimer = setInterval(tickAutoDeal, 100);
+        }
+        tickAutoDeal();
+    }
+
+    function tickAutoDeal() {
+        if (!roomRef || room?.round?.phase !== 'finished' || room.players.length < 2) {
+            cancelAutoDeal();
+            return;
+        }
+        const remaining = Math.max(0, Math.min(3, Math.ceil((autoDealDeadline - Date.now() - serverTimeOffset) / 1000)));
+        const button = $('deal-actions').querySelector('button');
+        if (button) {
+            const badge = button.querySelector('.deal-countdown');
+            const count = String(remaining || '…');
+            const label = remaining ? `Deal again. Automatically deals in ${remaining} seconds.` : 'Deal again. Dealing now.';
+            if (badge && badge.textContent !== count) badge.textContent = count;
+            if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label);
+        }
+        if (remaining || !connected || busy || processing || autoDealPending || Date.now() < autoDealRetryAt) return;
+        const ref = roomRef, key = autoDealKey, revision = room.revision;
+        const pending = `${key}:${revision}`;
+        autoDealPending = pending;
+        autoDealRetryAt = Date.now() + 1000;
+        // Every phone can take over. The transaction revision lets only one deal win,
+        // including a manual tap arriving at the same time as another phone's timer.
+        void transaction(ref, { type: 'deal', actor: myId, revision, deck: R.shuffledDeck() })
+            .then(result => { if (result.committed && roomRef === ref) showError('game-error'); })
+            .catch(error => {
+                if (roomRef === ref && autoDealKey === key && connected) showError('game-error', `Couldn’t deal yet. We’ll retry. ${error.message || ''}`);
+            })
+            .finally(() => { if (autoDealPending === pending) autoDealPending = ''; });
     }
 
     function scheduleAI() {
@@ -281,6 +338,7 @@
     function leaveView() {
         silenceSounds();
         cancelAI();
+        cancelAutoDeal();
         cancelAnimationFrame(supplyFrame);
         clearTimeout(supplyTimer);
         $('dealer-supply').hidden = true;
@@ -486,7 +544,7 @@
         const width = supply.offsetWidth, height = supply.offsetHeight;
         const origin = { x: hand.left + hand.width / 2 - stage.left, y: hand.top + hand.height / 2 - stage.top };
         const obstacles = [...$('seats').querySelectorAll('.playing-card, .empty-card, .seat-name, .seat-action, .seat-status'),
-            ...$('deal-actions').children, document.querySelector('.table-center')]
+            document.querySelector('.table-center')]
             .filter(node => !node.hidden && (getComputedStyle(node).visibility !== 'hidden' || node.classList.contains('layout-reserve')) &&
                 (!node.classList.contains('seat-status') || node.textContent.trim()))
             .map(node => {
@@ -633,21 +691,14 @@
         $(type === 'deal' ? 'deal-actions' : 'actions').append(button);
         return button;
     }
-    function placeDealControl() {
-        const parent = window.matchMedia('(max-width: 760px)').matches ? $('toolbar-actions') : $('table-stage');
-        if ($('deal-actions').parentElement !== parent) parent.prepend($('deal-actions'));
-    }
-
     function renderControls() {
         if (!room) return;
-        placeDealControl();
         scheduleSupplyLayout();
         const r = room.round;
         const finished = !r || r.phase === 'finished';
-        document.body.classList.toggle('has-deal-control', finished && room.players.length >= 2);
         let compactCopy;
         if (!connected) compactCopy = 'Reconnecting… Your seat is saved.';
-        else if (finished) compactCopy = room.players.length < 2 ? 'Invite a friend to get started.' : `${playerName(room.nextDealerId)} deals ${r ? 'next' : 'first'}. Tap Deal above.`;
+        else if (finished) compactCopy = room.players.length < 2 ? 'Invite a friend to get started.' : `${playerName(room.nextDealerId)} deals ${r ? 'next. Starting automatically.' : 'first. Tap Deal cards.'}`;
         else if (!r.order.includes(myId)) compactCopy = 'You’re in on the next deal.';
         else if (r.phase === 'challenge') compactCopy = r.pending.to === myId ? 'Your king blocks the swap.' : `Waiting for ${playerName(r.pending.to)}…`;
         else if (r.order[r.turn] === myId) compactCopy = r.dealerId === myId ? 'Keep your card, or cut the deck.' : 'Keep your card, or swap.';
@@ -658,22 +709,24 @@
         copy.replaceChildren();
         $('actions').replaceChildren();
         $('deal-actions').replaceChildren();
-        if (r && r.phase !== 'finished') {
-            // Keep space for the result controls so they won't push the deck away after a cut.
-            const reserve = element('span', 'button layout-reserve', 'Deal next round ↗');
-            reserve.setAttribute('aria-hidden', 'true');
-            $('deal-actions').append(reserve);
-        }
-        $('table-stage').classList.toggle('awaiting-deal', !r || r.phase === 'finished');
         document.querySelector('.action-panel').classList.toggle('king-prompt', r?.phase === 'challenge' && r.pending.to === myId);
         if (!connected) {
             copy.textContent = 'Reconnecting… Your seat and cards are saved.';
+            syncAutoDeal();
             return;
         }
         if (!r || r.phase === 'finished') {
             const enough = room.players.length >= 2;
-            copy.textContent = enough ? `${playerName(room.nextDealerId)} deals ${r ? 'next' : 'first'}. Anyone can start the round.` : 'Share your room link to bring everyone together.';
-            if (enough) actionButton(r ? 'Deal again ↗' : 'Deal cards ↗', 'deal');
+            copy.textContent = enough ? `${playerName(room.nextDealerId)} deals ${r ? 'next. Starting automatically, or tap to deal now.' : 'first. Tap Deal cards when everyone is ready.'}` : 'Share your room link to bring everyone together.';
+            if (enough) {
+                const button = actionButton(r ? 'Deal again ' : 'Deal cards ↗', 'deal');
+                if (r) {
+                    const badge = element('span', 'deal-countdown', '3');
+                    badge.setAttribute('aria-hidden', 'true');
+                    button.append(badge);
+                    button.title = 'Next round starts automatically after 3 seconds. Tap to deal sooner.';
+                }
+            }
             else {
                 const button = element('button', 'button primary', 'Invite your people ↗');
                 button.addEventListener('click', invite);
@@ -696,6 +749,7 @@
             dots.append(element('i'), element('i'), element('i'));
             copy.append(dots, document.createTextNode(r.phase === 'challenge' ? `Waiting for ${playerName(r.pending.to)}…` : `Waiting for ${playerName(r.order[r.turn])}. Make yourself comfortable.`));
         }
+        syncAutoDeal();
     }
 
     async function animateEvent(r) {
@@ -856,7 +910,7 @@
 
     $('join-form').addEventListener('submit', joinGame);
     $('ai-button').addEventListener('click', event => void joinGame(event, true));
-    window.addEventListener('resize', () => { placeDealControl(); scheduleSupplyLayout(); });
+    window.addEventListener('resize', scheduleSupplyLayout);
     $('rules-button').addEventListener('click', () => $('rules-dialog').showModal());
     $('table-button').addEventListener('click', () => { renderManagement(); $('table-dialog').showModal(); });
     $('table-rules-button').addEventListener('click', () => { $('table-dialog').close(); $('rules-dialog').showModal(); });
@@ -894,6 +948,9 @@
     try {
         const app = firebase.initializeApp({ databaseURL: 'https://photobookshelf.firebaseio.com/' }, 'pass-the-ace');
         db = app.database();
+        db.ref('.info/serverTimeOffset').on('value', snapshot => {
+            serverTimeOffset = Number(snapshot.val()) || 0;
+        });
         db.ref('.info/connected').on('value', snapshot => {
             connected = snapshot.val() === true;
             if (!connected) { quietNextSnapshot = true; silenceSounds(); }

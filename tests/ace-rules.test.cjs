@@ -439,3 +439,30 @@ test('competing phones cannot commit the same AI move twice', () => {
     assert.equal(next.round.actions[R.PRACTICE_BOT_ID], 'swapped');
     assert.equal(R.reduce(next, command), undefined);
 });
+
+test('round completion records a shared deadline anchor without restarting it on a rejoin', () => {
+    let room = table();
+    room = act(room, 'hold', 'b', { finishedAt: 1000 });
+    assert.equal(room.round.finishedAt, undefined);
+    room = act(room, 'hold', 'c');
+    room = act(room, 'hold', 'a', { finishedAt: 5000 });
+    assert.equal(room.round.finishedAt, 5000);
+    room = R.reduce(room, { type: 'join', actor: 'a', name: 'Marc', finishedAt: 6000 });
+    assert.equal(room.round.finishedAt, 5000);
+    room = act(room, 'deal', 'b', { deck: R.shuffledDeck() });
+    assert.equal(room.round.finishedAt, undefined);
+});
+
+test('king cuts retain the server timestamp and concurrent timer/manual deals only advance once', () => {
+    let room = table([2, 13, 9], 13);
+    room = act(room, 'hold', 'b');
+    room = act(room, 'hold', 'c');
+    room = act(room, 'cut', 'a', { cutIndex: 0, finishedAt: { '.sv': 'timestamp' } });
+    assert.deepEqual(room.round.finishedAt, { '.sv': 'timestamp' });
+    assert.equal(room.round.kingCut, true);
+    const commands = ['a', 'b', 'c'].map(actor => ({ type: 'deal', actor, revision: room.revision, deck: R.shuffledDeck() }));
+    const next = R.reduce(room, commands[0]);
+    assert.equal(next.round.number, room.round.number + 1);
+    assert.equal(R.reduce(next, commands[1]), undefined);
+    assert.equal(R.reduce(next, commands[2]), undefined);
+});

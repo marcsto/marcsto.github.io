@@ -9,12 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=9">
+    <link rel="stylesheet" href="assets/css/pass-the-ace.css?v=10">
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script defer src="assets/js/ace-rules.js?v=9"></script>
-    <script defer src="assets/js/ace-sounds.js?v=9"></script>
-    <script defer src="assets/js/pass-the-ace.js?v=9"></script>
+    <script defer src="assets/js/ace-rules.js?v=10"></script>
+    <script defer src="assets/js/ace-sounds.js?v=10"></script>
+    <script defer src="assets/js/pass-the-ace.js?v=10"></script>
 </head>
 <body>
     <header class="masthead">
@@ -76,12 +76,11 @@
                     <div id="deck" class="deck" aria-label="Dealer’s deck"><div class="deck-layer"></div><div class="deck-layer"></div><div id="deck-card" class="playing-card deck-top"></div></div>
                 </div>
                 <div id="card-flights" class="card-flights" aria-hidden="true"></div>
-                <div id="deal-actions" class="deal-actions"></div>
                 <div id="table-flourish" class="table-flourish" role="status" hidden><span aria-hidden="true">♚</span><strong>Not so fast.</strong><p id="flourish-detail"></p></div>
             </div>
             <div id="event-line" class="event-line" aria-live="polite"></div>
             </div>
-            <div class="action-panel"><div id="action-copy" class="action-copy"></div><div id="compact-action-copy" class="compact-action-copy"></div><div id="actions" class="actions"></div></div>
+            <div class="action-panel"><div class="action-heading"><div id="action-copy" class="action-copy"></div><div id="compact-action-copy" class="compact-action-copy"></div><div id="deal-actions" class="deal-actions"></div></div><div id="actions" class="actions"></div></div>
             <p id="game-error" class="game-error" role="alert" hidden></p>
             <p id="queued-players" class="queued-players" hidden></p>
             <div class="table-footer"><span>Low card loses. Good company wins.</span><button id="leave-button" class="text-button" type="button">Leave table</button></div>

@@ -237,6 +237,11 @@
                     finish(round, card.rank === 13);
                 } else return;
             }
+            // The caller supplies Firebase's server timestamp so every phone shares
+            // the same next-deal deadline. Older clients can still finish a round.
+            if (round.phase === 'finished' && (Number.isFinite(action.finishedAt) || action.finishedAt?.['.sv'] === 'timestamp')) {
+                round.finishedAt = action.finishedAt;
+            }
         }
         room.revision++;
         return room;

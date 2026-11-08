@@ -88,6 +88,34 @@
             voice(oscillator, [gain], start, .1);
         }
 
+        function horn(frequency, start, duration, volume = .15) {
+            // Rounded brass harmonics with a little sustain, rather than a sharp beep.
+            for (const [multiple, level] of [[1, 1], [2, .34], [3, .14], [4, .06]]) {
+                const oscillator = context.createOscillator();
+                oscillator.frequency.value = frequency * multiple;
+                const gain = context.createGain();
+                gain.gain.setValueAtTime(0, start);
+                gain.gain.linearRampToValueAtTime(volume * level, start + .022);
+                gain.gain.linearRampToValueAtTime(volume * level * .65, start + duration * .55);
+                gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+                gain.gain.linearRampToValueAtTime(0, start + duration + .01);
+                oscillator.connect(gain);
+                gain.connect(output);
+                voice(oscillator, [gain], start, duration + .01);
+            }
+        }
+
+        function fanfare(at, crowned = false) {
+            // A cheeky royal entrance; the rarer king cut gets a fuller final chord.
+            horn(392, at, .14);
+            horn(392, at + .17, .14);
+            horn(523.25, at + .34, .25);
+            const finish = at + (crowned ? .76 : .61);
+            if (crowned) horn(659.25, at + .57, .18);
+            horn(crowned ? 1046.5 : 783.99, finish, crowned ? .72 : .48, .14);
+            [261.63, 329.63, 392].forEach(hz => horn(hz, finish, crowned ? .7 : .46, .055));
+        }
+
         function brush(start, duration = .16, volume = .38, frequency = 1200) {
             const source = context.createBufferSource();
             source.buffer = paper;
@@ -127,8 +155,7 @@
                         tap(at + .28, .15);
                         break;
                     case 'king':
-                        note(523.25, at, .25, .15);
-                        note(783.99, at + .15, .32, .13);
+                        fanfare(at);
                         break;
                     case 'win':
                         [523.25, 659.25, 783.99].forEach((hz, i) => note(hz, at + i * .11, .28, .14));
@@ -139,7 +166,10 @@
                         note(329.63, at + .14, .3, .12);
                         break;
                     case 'crown':
-                        [392, 523.25, 659.25, 783.99].forEach((hz, i) => note(hz, at + i * .1, .3, .14));
+                        brush(at, .14, .4, 900);
+                        brush(at + .13, .18, .38, 1300);
+                        tap(at + .28, .15);
+                        fanfare(at + .42, true);
                         break;
                 }
             } catch {
