@@ -466,3 +466,35 @@ test('king cuts retain the server timestamp and concurrent timer/manual deals on
     assert.equal(R.reduce(next, commands[1]), undefined);
     assert.equal(R.reduce(next, commands[2]), undefined);
 });
+
+test('a king reveal records its shared hold deadline and holding consumes only the king holder’s turn', () => {
+    let room = table([2, 13, 9]);
+    room = act(room, 'swap', 'b');
+    assert.equal(room.round.event.revealedAt, undefined);
+    room = act(room, 'revealKing', 'c', { revealedAt: 1000 });
+    assert.equal(room.round.event.revealedAt, 1000);
+    assert.equal(room.round.order[room.round.turn], 'c');
+    room = R.reduce(room, { type: 'join', actor: 'c', name: 'Dad', revealedAt: 2000 });
+    assert.equal(room.round.event.revealedAt, 1000, 'rejoining must not restart the clock');
+    const hold = { type: 'hold', actor: 'c', revision: room.revision };
+    const next = R.reduce(room, hold);
+    assert.equal(next.round.actions.c, 'held');
+    assert.equal(next.round.order[next.round.turn], 'a');
+    assert.equal(next.round.event.revealedAt, undefined);
+    assert.equal(R.reduce(next, hold), undefined, 'competing timers or manual hold cannot advance twice');
+});
+
+test('a dealer’s revealed king can be held to finish, or manually cut before the scheduled hold', () => {
+    let room = table([2, 7, 13]);
+    room = act(room, 'hold', 'b');
+    room = act(room, 'swap', 'c');
+    room = act(room, 'revealKing', 'a', { revealedAt: { '.sv': 'timestamp' } });
+    assert.deepEqual(room.round.event.revealedAt, { '.sv': 'timestamp' });
+    const hold = { type: 'hold', actor: 'a', revision: room.revision, finishedAt: 4000 };
+    const held = R.reduce(room, hold);
+    assert.equal(held.round.phase, 'finished');
+    assert.equal(held.round.finishedAt, 4000);
+    const cut = act(room, 'cut', 'a', { cutIndex: 0, finishedAt: 2500 });
+    assert.equal(cut.round.event.kind, 'cut');
+    assert.equal(R.reduce(cut, hold), undefined, 'the old timer cannot act after a different choice');
+});

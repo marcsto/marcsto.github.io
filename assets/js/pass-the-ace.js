@@ -11,8 +11,9 @@
     let lastEvent = '', firstSnapshot = true, toastTimer, flourishTimer, animationTimer;
     let processing = false, presentationEpoch = 0;
     let aiTimer, aiTimerKey = '';
-    let autoDealTimer, autoDealKey = '', autoDealDeadline = 0, autoDealPending = '';
-    let autoDealRetryAt = 0, serverTimeOffset = 0;
+    let autoTimer, autoKey = '', autoDeadline = 0, autoPending = '';
+    let autoRetryAt = 0, serverTimeOffset = 0;
+    const DEAL_SECONDS = 4, KING_HOLD_SECONDS = 3;
     let joiningAI = false;
     let supplyFrame, supplyTimer;
     const snapshots = [];
@@ -38,7 +39,9 @@
     function playRoundSound(round) {
         cancelSounds();
         if (!round) return;
-        sounds?.play(round.kingCut ? 'crown' : round.event.kind);
+        const event = round.event;
+        const worseSwap = event.kind === 'swap' && event.fromCard?.rank > event.toCard?.rank;
+        sounds?.play(round.kingCut ? 'crown' : worseSwap ? 'badSwap' : event.kind);
         if (round.phase !== 'finished' || !round.order.includes(myId)) return;
         if (round.kingCut && !round.losers.includes(myId)) return;
         const epoch = soundEpoch;
@@ -83,7 +86,8 @@
     }
     function transaction(ref, action) {
         return new Promise((resolve, reject) => {
-            ref.transaction(data => R.reduce(data, { ...action, finishedAt: firebase.database.ServerValue.TIMESTAMP }), (error, committed, snapshot) => {
+            const timestamp = firebase.database.ServerValue.TIMESTAMP;
+            ref.transaction(data => R.reduce(data, { ...action, finishedAt: timestamp, revealedAt: timestamp }), (error, committed, snapshot) => {
                 if (error) reject(error);
                 else resolve({ committed, data: snapshot?.val() });
             }, false);
@@ -232,12 +236,13 @@
         }
         const ref = roomRef;
         const command = { type, actor: myId, revision: room.revision, ...extra };
+        const mayRaceTimer = automaticAction()?.type === type;
         showError('game-error');
         setBusy(true);
         try {
             const result = await transaction(ref, command);
             if (!result.committed) {
-                if (type !== 'deal') toast('The table just changed. Take another look and try again.');
+                if (type !== 'deal' && !mayRaceTimer) toast('The table just changed. Take another look and try again.');
                 return false;
             }
             return true;
@@ -253,62 +258,72 @@
         aiTimerKey = '';
     }
 
-    function cancelAutoDeal() {
-        clearInterval(autoDealTimer);
-        autoDealTimer = undefined;
-        autoDealKey = '';
-        autoDealPending = '';
-    }
-
-    function syncAutoDeal() {
+    function automaticAction() {
         const round = room?.round;
-        if (!roomRef || round?.phase !== 'finished' || room.players.length < 2) {
-            cancelAutoDeal();
-            return;
+        if (!roomRef || !round) return;
+        if (round.phase === 'finished' && room.players.length >= 2) {
+            return { type: 'deal', actor: myId, at: round.finishedAt, seconds: DEAL_SECONDS, label: 'Deal again' };
         }
-        const key = `${roomCode}:${round.number}`;
-        if (autoDealKey !== key) {
-            cancelAutoDeal();
-            autoDealKey = key;
-            // A saved round from an older version gets a fresh three-second countdown.
-            autoDealDeadline = (Number.isFinite(round.finishedAt) ? round.finishedAt : Date.now() + serverTimeOffset) + 3000;
-            autoDealRetryAt = 0;
-            autoDealTimer = setInterval(tickAutoDeal, 100);
+        const king = round.event?.actor;
+        if (round.phase === 'playing' && round.event?.kind === 'king' &&
+            round.order[round.turn] === king && round.hands[king]?.rank === 13) {
+            return { type: 'hold', actor: king, at: round.event.revealedAt, seconds: KING_HOLD_SECONDS, label: 'Hold' };
         }
-        tickAutoDeal();
     }
 
-    function tickAutoDeal() {
-        if (!roomRef || room?.round?.phase !== 'finished' || room.players.length < 2) {
-            cancelAutoDeal();
-            return;
+    function cancelAutomaticAction() {
+        clearInterval(autoTimer);
+        autoTimer = undefined;
+        autoKey = '';
+        autoPending = '';
+    }
+
+    function syncAutomaticAction() {
+        const action = automaticAction();
+        if (!action) { cancelAutomaticAction(); return; }
+        const key = `${roomCode}:${room.round.number}:${action.type}:${action.actor}`;
+        if (autoKey !== key) {
+            cancelAutomaticAction();
+            autoKey = key;
+            // Older saved events without a timestamp get a fresh countdown.
+            autoDeadline = (Number.isFinite(action.at) ? action.at : Date.now() + serverTimeOffset) + action.seconds * 1000;
+            autoRetryAt = 0;
+            autoTimer = setInterval(tickAutomaticAction, 100);
         }
-        const remaining = Math.max(0, Math.min(3, Math.ceil((autoDealDeadline - Date.now() - serverTimeOffset) / 1000)));
-        const button = $('deal-actions').querySelector('button');
+        tickAutomaticAction();
+    }
+
+    function tickAutomaticAction() {
+        const action = automaticAction();
+        if (!action) { cancelAutomaticAction(); return; }
+        const remaining = Math.max(0, Math.min(action.seconds, Math.ceil((autoDeadline - Date.now() - serverTimeOffset) / 1000)));
+        const button = document.querySelector(`[data-action="${action.type}"]`);
         if (button) {
-            const badge = button.querySelector('.deal-countdown');
+            const badge = button.querySelector('.action-countdown');
             const count = String(remaining || '…');
-            const label = remaining ? `Deal again. Automatically deals in ${remaining} seconds.` : 'Deal again. Dealing now.';
+            const label = remaining ? `${action.label}. Automatically ${action.type === 'deal' ? 'deals' : 'holds'} in ${remaining} seconds.` : `${action.label}. ${action.type === 'deal' ? 'Dealing' : 'Holding'} now.`;
             if (badge && badge.textContent !== count) badge.textContent = count;
             if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label);
         }
-        if (remaining || !connected || busy || processing || autoDealPending || Date.now() < autoDealRetryAt) return;
-        const ref = roomRef, key = autoDealKey, revision = room.revision;
+        if (remaining || !connected || busy || processing || autoPending || Date.now() < autoRetryAt) return;
+        const ref = roomRef, key = autoKey, revision = room.revision;
         const pending = `${key}:${revision}`;
-        autoDealPending = pending;
-        autoDealRetryAt = Date.now() + 1000;
-        // Every phone can take over. The transaction revision lets only one deal win,
-        // including a manual tap arriving at the same time as another phone's timer.
-        void transaction(ref, { type: 'deal', actor: myId, revision, deck: R.shuffledDeck() })
+        autoPending = pending;
+        autoRetryAt = Date.now() + 1000;
+        // Any phone can carry out the countdown, even if the king holder disconnects.
+        // The revision guard prevents a timer and a manual tap from acting twice.
+        const command = { type: action.type, actor: action.actor, revision };
+        if (action.type === 'deal') command.deck = R.shuffledDeck();
+        void transaction(ref, command)
             .then(result => { if (result.committed && roomRef === ref) showError('game-error'); })
             .catch(error => {
-                if (roomRef === ref && autoDealKey === key && connected) showError('game-error', `Couldn’t deal yet. We’ll retry. ${error.message || ''}`);
+                if (roomRef === ref && autoKey === key && connected) showError('game-error', `Couldn’t ${action.type} yet. We’ll retry. ${error.message || ''}`);
             })
-            .finally(() => { if (autoDealPending === pending) autoDealPending = ''; });
+            .finally(() => { if (autoPending === pending) autoPending = ''; });
     }
 
     function scheduleAI() {
-        const decision = !busy && !processing && connected && roomRef && room?.practice
+        const decision = !busy && !processing && connected && roomRef && room?.practice && !automaticAction()
             ? R.chooseAIAction(room) : undefined;
         if (!decision) { cancelAI(); return; }
         const revision = room.revision;
@@ -317,8 +332,8 @@
         cancelAI();
         aiTimerKey = key;
         const ref = roomRef;
-        // Leave time to watch exchanges and the king reveal before the bot moves again.
-        const delay = room.round.event.kind === 'king' ? 2800 : 1700;
+        // King reveals use the shared hold countdown instead of the bot's usual delay.
+        const delay = 1700;
         aiTimer = setTimeout(async () => {
             if (aiTimerKey !== key || roomRef !== ref || room?.revision !== revision || !connected || processing || busy) return;
             const action = { ...decision, revision };
@@ -338,7 +353,7 @@
     function leaveView() {
         silenceSounds();
         cancelAI();
-        cancelAutoDeal();
+        cancelAutomaticAction();
         cancelAnimationFrame(supplyFrame);
         clearTimeout(supplyTimer);
         $('dealer-supply').hidden = true;
@@ -696,11 +711,13 @@
         scheduleSupplyLayout();
         const r = room.round;
         const finished = !r || r.phase === 'finished';
+        const kingHold = automaticAction()?.type === 'hold';
         let compactCopy;
         if (!connected) compactCopy = 'Reconnecting… Your seat is saved.';
         else if (finished) compactCopy = room.players.length < 2 ? 'Invite a friend to get started.' : `${playerName(room.nextDealerId)} deals ${r ? 'next. Starting automatically.' : 'first. Tap Deal cards.'}`;
         else if (!r.order.includes(myId)) compactCopy = 'You’re in on the next deal.';
         else if (r.phase === 'challenge') compactCopy = r.pending.to === myId ? 'Your king blocks the swap.' : `Waiting for ${playerName(r.pending.to)}…`;
+        else if (kingHold) compactCopy = r.event.actor === myId ? 'Your king will hold automatically.' : `${playerName(r.event.actor)} will hold their king.`;
         else if (r.order[r.turn] === myId) compactCopy = r.dealerId === myId ? 'Keep your card, or cut the deck.' : 'Keep your card, or swap.';
         else compactCopy = `Waiting for ${playerName(r.order[r.turn])}…`;
         $('compact-action-copy').textContent = compactCopy;
@@ -712,7 +729,7 @@
         document.querySelector('.action-panel').classList.toggle('king-prompt', r?.phase === 'challenge' && r.pending.to === myId);
         if (!connected) {
             copy.textContent = 'Reconnecting… Your seat and cards are saved.';
-            syncAutoDeal();
+            syncAutomaticAction();
             return;
         }
         if (!r || r.phase === 'finished') {
@@ -721,10 +738,10 @@
             if (enough) {
                 const button = actionButton(r ? 'Deal again ' : 'Deal cards ↗', 'deal');
                 if (r) {
-                    const badge = element('span', 'deal-countdown', '3');
+                    const badge = element('span', 'action-countdown deal-countdown', String(DEAL_SECONDS));
                     badge.setAttribute('aria-hidden', 'true');
                     button.append(badge);
-                    button.title = 'Next round starts automatically after 3 seconds. Tap to deal sooner.';
+                    button.title = `Next round starts automatically after ${DEAL_SECONDS} seconds. Tap to deal sooner.`;
                 }
             }
             else {
@@ -740,8 +757,14 @@
         } else if (r.phase === 'playing' && r.order[r.turn] === myId) {
             const last = r.turn === r.order.length - 1;
             copy.append(element('strong', '', `Your card: ${R.cardLabel(r.hands[myId])}. `));
-            copy.append(document.createTextNode(last ? 'A cut replaces it. Cut a king and only you win.' : 'Trust it, or trade it?'));
-            actionButton('Hold', 'hold', 'secondary');
+            copy.append(document.createTextNode(kingHold ? 'Holding automatically in 3 seconds. You can still choose sooner.' : last ? 'A cut replaces it. Cut a king and only you win.' : 'Trust it, or trade it?'));
+            const hold = actionButton(kingHold ? 'Hold ' : 'Hold', 'hold', 'secondary');
+            if (kingHold) {
+                const badge = element('span', 'action-countdown hold-countdown', String(KING_HOLD_SECONDS));
+                badge.setAttribute('aria-hidden', 'true');
+                hold.append(badge);
+                hold.title = 'Your revealed king will be held automatically after 3 seconds. Tap to hold sooner.';
+            }
             actionButton(last ? 'Cut the deck' : '← Swap', last ? 'cut' : 'swap');
         } else {
             const dots = element('span', 'waiting-dots');
@@ -749,7 +772,7 @@
             dots.append(element('i'), element('i'), element('i'));
             copy.append(dots, document.createTextNode(r.phase === 'challenge' ? `Waiting for ${playerName(r.pending.to)}…` : `Waiting for ${playerName(r.order[r.turn])}. Make yourself comfortable.`));
         }
-        syncAutoDeal();
+        syncAutomaticAction();
     }
 
     async function animateEvent(r) {

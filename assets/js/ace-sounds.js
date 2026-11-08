@@ -88,6 +88,20 @@
             voice(oscillator, [gain], start, .1);
         }
 
+        function oops(start) {
+            // A small, rubbery downward slide: the joke lands with the exchanged cards.
+            const oscillator = context.createOscillator();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(587.33, start);
+            oscillator.frequency.exponentialRampToValueAtTime(220, start + .28);
+            oscillator.frequency.linearRampToValueAtTime(246.94, start + .34);
+            oscillator.frequency.linearRampToValueAtTime(196, start + .42);
+            const gain = envelope(start, .44, .2, .018);
+            oscillator.connect(gain);
+            voice(oscillator, [gain], start, .45);
+            note(196, start + .33, .19, .14);
+        }
+
         function horn(frequency, start, duration, volume = .15) {
             // Rounded brass harmonics with a little sustain, rather than a sharp beep.
             for (const [multiple, level] of [[1, 1], [2, .34], [3, .14], [4, .06]]) {
@@ -140,8 +154,10 @@
                         [0, .09, .18].forEach(offset => brush(at + offset, .12, .32));
                         break;
                     case 'swap':
+                    case 'badSwap':
                         brush(at, .25, .42, 1450);
                         brush(at + .14, .23, .3, 950);
+                        if (kind === 'badSwap') oops(at + .57);
                         break;
                     case 'challenge':
                         brush(at, .13, .24);

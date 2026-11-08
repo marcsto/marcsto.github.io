@@ -193,6 +193,9 @@
                 round.publicCards[cardKey(round.hands[action.actor])] = true;
                 round.actions[round.pending.from] = 'blocked';
                 round.event = { kind: 'king', actor: action.actor, blocked: round.pending.from };
+                if (Number.isFinite(action.revealedAt) || action.revealedAt?.['.sv'] === 'timestamp') {
+                    round.event.revealedAt = action.revealedAt;
+                }
                 delete round.pending;
                 advance(round);
             } else {
