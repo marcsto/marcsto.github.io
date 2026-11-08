@@ -130,6 +130,28 @@
             [261.63, 329.63, 392].forEach(hz => horn(hz, finish, crowned ? .7 : .46, .055));
         }
 
+        function impact(start, volume) {
+            // The upper drum harmonics keep the low impact audible on phone speakers.
+            for (const [multiple, level] of [[1, 1], [2, .34], [3, .16]]) {
+                const oscillator = context.createOscillator();
+                oscillator.frequency.setValueAtTime(170 * multiple, start);
+                oscillator.frequency.exponentialRampToValueAtTime(85 * multiple, start + .48);
+                const gain = envelope(start, .62, volume * level, .008);
+                oscillator.connect(gain);
+                voice(oscillator, [gain], start, .63);
+            }
+        }
+
+        function doubleDoom(at) {
+            // Two weighty blows for the dreaded ace cut, then a theatrical brass fall.
+            impact(at, .28);
+            horn(293.66, at, .32, .16);
+            impact(at + .48, .36);
+            horn(261.63, at + .48, .38, .18);
+            horn(196, at + .83, .75, .18);
+            [146.83, 233.08].forEach(hz => horn(hz, at + .83, .73, .055));
+        }
+
         function brush(start, duration = .16, volume = .38, frequency = 1200) {
             const source = context.createBufferSource();
             source.buffer = paper;
@@ -186,6 +208,12 @@
                         brush(at + .13, .18, .38, 1300);
                         tap(at + .28, .15);
                         fanfare(at + .42, true);
+                        break;
+                    case 'aceCut':
+                        brush(at, .14, .4, 900);
+                        brush(at + .13, .18, .38, 1300);
+                        tap(at + .28, .15);
+                        doubleDoom(at + .42);
                         break;
                 }
             } catch {

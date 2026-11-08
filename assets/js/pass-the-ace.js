@@ -40,17 +40,20 @@
         cancelSounds();
         if (!round) return;
         const event = round.event;
+        const aceCut = event.kind === 'cut' && event.actor === round.dealerId && round.cutCard?.rank === 1;
         const worseSwap = event.kind === 'swap' && event.fromCard?.rank > event.toCard?.rank;
-        sounds?.play(round.kingCut ? 'crown' : worseSwap ? 'badSwap' : event.kind);
+        sounds?.play(round.kingCut ? 'crown' : aceCut ? 'aceCut' : worseSwap ? 'badSwap' : event.kind);
         if (round.phase !== 'finished' || !round.order.includes(myId)) return;
         if (round.kingCut && !round.losers.includes(myId)) return;
+        // The double impact is the dealer's loss cue; let it finish before others' wins.
+        if (aceCut && myId === round.dealerId) return;
         const epoch = soundEpoch;
         // Let the final card/tap land before the personal result cue.
         soundTimer = setTimeout(() => {
             if (epoch !== soundEpoch || room?.round?.number !== round.number || room.round.phase !== 'finished') return;
             const result = round.losers.includes(myId) ? 'loss' : 'win';
             sounds?.play(result);
-        }, round.kingCut ? 2150 : round.event.kind === 'cut' ? 500 : 340);
+        }, aceCut ? 2300 : round.kingCut ? 2150 : round.event.kind === 'cut' ? 500 : 340);
     }
     function saveVisit(code, name, aiCount = 0) {
         try {
