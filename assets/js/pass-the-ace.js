@@ -226,6 +226,7 @@
             if (epoch === presentationEpoch) {
                 processing = false;
                 renderControls();
+                if ($('table-dialog').open) renderManagement();
                 scheduleAI();
             }
         }
@@ -488,7 +489,7 @@
             label.replaceChildren(document.createTextNode(name));
             if (mine) label.append(element('span', 'you-marker', ' · you'));
             if (isAI) label.append(element('span', 'you-marker', ' · AI'));
-            label.title = name + (mine ? ' (you)' : isAI ? ' (AI practice opponent)' : '');
+            label.title = name + (mine ? ' (you)' : isAI ? ' (AI opponent)' : '');
             const dealer = (r?.dealerId || room.nextDealerId) === id;
             let marker = node.querySelector('.dealer-marker');
             if (dealer && !marker) {
@@ -872,12 +873,21 @@
     function renderManagement() {
         if (!room) return;
         const playing = room.round && room.round.phase !== 'finished';
-        $('manage-hint').textContent = playing ? 'A round is in progress. You can tidy up seats between rounds. If someone has left, end the round to get everyone playing again.' : 'Seats run clockwise in join order. Remove someone who has left to free up their chair.';
+        const full = room.players.length >= R.MAX_PLAYERS;
+        const disabled = busy || processing || !connected;
+        $('add-ai-button').disabled = disabled || full;
+        $('add-ai-button').textContent = full ? 'Table full' : 'Add AI player';
+        $('shuffle-seats-button').disabled = disabled || room.players.length < 3;
+        $('table-setup-hint').textContent = `${room.players.length} of ${R.MAX_PLAYERS} seats. ${full ? 'All seats are filled.' : 'Add one AI per tap.'}` +
+            (room.round ? ' Changes apply on the next deal.' : '') +
+            (room.players.length < 3 ? ' Shuffling needs 3 players.' : '');
+        $('manage-hint').textContent = room.round ? 'Clockwise seats for the next deal. You can remove players between rounds.' : 'Clockwise seats. Remove someone who has left to free up their chair.';
         $('manage-players').replaceChildren();
         for (const player of room.players) {
             const row = element('div', 'manage-row');
             const name = element('span', '', player.name + (player.id === myId ? ' (you)' : ''));
-            if (player.isAI) name.append(element('small', '', 'AI practice opponent'));
+            if (player.isAI) name.append(element('small', '', 'AI opponent'));
+            if (room.round && !room.round.order.includes(player.id)) name.append(element('small', '', 'Joins next deal'));
             if (player.id === room.nextDealerId) name.append(element('small', '', 'Deals next'));
             row.append(name);
             if (!playing && !player.isAI) {
@@ -939,6 +949,14 @@
     window.addEventListener('resize', scheduleSupplyLayout);
     $('rules-button').addEventListener('click', () => $('rules-dialog').showModal());
     $('table-button').addEventListener('click', () => { renderManagement(); $('table-dialog').showModal(); });
+    $('add-ai-button').addEventListener('click', async () => {
+        if (await send('addAI')) toast(room.round ? 'AI player added. Joins on the next deal.' : 'AI player added. Tap again to add another.');
+    });
+    $('shuffle-seats-button').addEventListener('click', async () => {
+        if (!room) return;
+        const seats = R.shuffledSeats(room.players.map(p => p.id));
+        if (await send('shuffleSeats', { seats })) toast(room.round ? 'Seats shuffled for the next deal.' : 'Seats shuffled. Find your new neighbours!');
+    });
     $('table-rules-button').addEventListener('click', () => { $('table-dialog').close(); $('rules-dialog').showModal(); });
     $('table-invite-button').addEventListener('click', () => { $('table-dialog').close(); void invite(); });
     $('table-leave-button').addEventListener('click', () => { $('table-dialog').close(); $('leave-button').click(); });

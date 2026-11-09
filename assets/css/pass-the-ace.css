@@ -617,6 +617,18 @@ input::placeholder {
     font-size: 13px;
 }
 
+.table-setup-actions .button {
+    min-height: 48px;
+    color: var(--gold);
+    border-color: #d6b57470;
+    background: #d6b57415;
+}
+
+#table-setup-hint {
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
 #table-leave-button {
     grid-column: 1 / -1;
 }

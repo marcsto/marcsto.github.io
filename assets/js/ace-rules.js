@@ -78,6 +78,20 @@
         return deck;
     }
 
+    function shuffledSeats(ids, random = Math.random) {
+        const seats = ids.slice();
+        // Keep one seat as the anchor: rotating the whole table looks unchanged
+        // because each phone always places its owner at the bottom.
+        for (let i = seats.length - 1; i > 1; i--) {
+            const j = 1 + Math.floor(random() * i);
+            [seats[i], seats[j]] = [seats[j], seats[i]];
+        }
+        if (seats.length >= 3 && seats.every((id, i) => id === ids[i])) {
+            [seats[1], seats[2]] = [seats[2], seats[1]];
+        }
+        return seats;
+    }
+
     function validDeck(deck) {
         return Array.isArray(deck) && deck.length === 52 &&
             deck.every(c => Number.isInteger(c.rank) && c.rank >= 1 && c.rank <= 13 && SUITS.includes(c.suit)) &&
@@ -143,6 +157,19 @@
             }
             if (isPracticeRoom(action.roomCode)) room.practice = true;
             ensurePracticeBots(room);
+        } else if (action.type === 'addAI') {
+            if (room.players.length >= MAX_PLAYERS) return;
+            room.practice = true;
+            room.botCount = room.players.filter(p => p.isAI).length + 1;
+            ensurePracticeBots(room);
+        } else if (action.type === 'shuffleSeats') {
+            const seats = action.seats;
+            if (room.players.length < 3 || !Array.isArray(seats) || seats.length !== room.players.length ||
+                new Set(seats).size !== seats.length || !seats.every(id => room.players.some(p => p.id === id))) return;
+            const offset = seats.indexOf(room.players[0].id);
+            if (room.players.every((p, i) => seats[(offset + i) % seats.length] === p.id)) return;
+            // Round seats, cards, and turn order stay intact until the next deal.
+            room.players = seats.map(id => room.players.find(p => p.id === id));
         } else if (action.type === 'remove') {
             if (room.round && room.round.phase !== 'finished') return;
             const index = room.players.findIndex(p => p.id === action.target);
@@ -251,5 +278,5 @@
     }
 
     return { MAX_PLAYERS, PRACTICE_BOT_ID, isPracticeRoom, chooseAIAction,
-        SUITS, SYMBOLS, rankLabel, cardLabel, cardKey, canSee, shuffledDeck, reduce };
+        SUITS, SYMBOLS, rankLabel, cardLabel, cardKey, canSee, shuffledDeck, shuffledSeats, reduce };
 });

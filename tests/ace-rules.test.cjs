@@ -498,3 +498,96 @@ test('a dealer’s revealed king can be held to finish, or manually cut before t
     assert.equal(cut.round.event.kind, 'cut');
     assert.equal(R.reduce(cut, hold), undefined, 'the old timer cannot act after a different choice');
 });
+
+test('any seated player can add multiple AI opponents to an ordinary table', () => {
+    let room = R.reduce(null, { type: 'join', actor: 'human', name: 'Ace Bot' });
+    room = act(room, 'addAI', 'human');
+    room = act(room, 'addAI', 'human');
+    assert.deepEqual(room.players.map(p => p.name), ['Ace Bot', 'Ace Bot 2', 'Ace Bot 3']);
+    assert.equal(room.botCount, 2);
+    assert.equal(room.practice, true);
+    room = R.reduce(room, { type: 'join', actor: 'friend', name: 'Dad' });
+    assert.equal(room.players.length, 4, 'rejoining does not duplicate bots');
+    room = act(room, 'addAI', 'friend');
+    assert.equal(room.players.filter(p => p.isAI).length, 3);
+    room = act(room, 'deal', 'human', { deck: R.shuffledDeck() });
+    assert.equal(R.chooseAIAction(room).actor, R.PRACTICE_BOT_ID, 'added bots play in ordinary rooms');
+    assert.equal(act(room, 'addAI', 'stranger'), undefined);
+});
+
+test('AI additions preserve an active king challenge and enter on the next deal', () => {
+    let room = act(table([2, 13, 9]), 'swap', 'b');
+    const round = structuredClone(room.round), dealer = room.nextDealerId;
+    room = act(room, 'addAI', 'a');
+    assert.deepEqual(room.round, round);
+    assert.equal(room.nextDealerId, dealer);
+    assert.equal(R.chooseAIAction(room), undefined);
+    room = act(room, 'revealKing', 'c');
+    for (const id of ['c', 'a']) room = act(room, 'hold', id);
+    room = act(room, 'deal', 'a', { deck: R.shuffledDeck() });
+    assert.equal(room.round.order.length, 4);
+    assert.ok(room.round.hands[R.PRACTICE_BOT_ID]);
+});
+
+test('concurrent or repeated AI additions cannot exceed eight seats', () => {
+    let room = R.reduce(null, { type: 'join', actor: 'human', name: 'Marc', createPractice: true, botCount: 6 });
+    const command = { type: 'addAI', actor: 'human', revision: room.revision };
+    room = R.reduce(room, command);
+    assert.equal(room.players.length, 8);
+    assert.equal(new Set(room.players.map(p => p.id)).size, 8);
+    assert.equal(room.botCount, 7);
+    assert.equal(R.reduce(room, command), undefined);
+    assert.equal(act(room, 'addAI', 'human'), undefined);
+});
+
+test('seat shuffles change neighbours, retain every player, and leave the input intact', () => {
+    for (let count = 3; count <= 8; count++) {
+        const ids = Array.from({ length: count }, (_, i) => String(i)), before = ids.slice();
+        for (const random of [() => 0, () => 0.999, Math.random]) {
+            const seats = R.shuffledSeats(ids, random);
+            assert.equal(seats[0], ids[0]);
+            assert.notDeepEqual(seats, ids, 'a shuffle cannot merely rotate the table');
+            assert.deepEqual([...seats].sort(), [...ids].sort());
+            assert.deepEqual(ids, before);
+        }
+    }
+});
+
+test('shuffling during play preserves cards and turn order, then applies on the next deal', () => {
+    let room = table(), before = structuredClone(room.round);
+    const nextDealer = room.nextDealerId;
+    const command = { type: 'shuffleSeats', actor: 'c', revision: room.revision, seats: ['a', 'c', 'b'] };
+    room = R.reduce(room, command);
+    assert.deepEqual(room.round, before);
+    assert.equal(room.nextDealerId, nextDealer);
+    assert.equal(R.reduce(room, command), undefined);
+    for (const id of before.order) room = act(room, 'hold', id);
+    room = act(room, 'deal', 'a', { deck: R.shuffledDeck() });
+    assert.deepEqual(room.round.seats, ['a', 'c', 'b']);
+    assert.deepEqual(room.round.order, ['a', 'c', 'b']);
+    assert.equal(room.round.dealerId, nextDealer);
+    assert.equal(room.nextDealerId, 'a', 'dealer rotation follows the new clockwise order');
+});
+
+test('shuffling a waiting table applies immediately and works with newly added AI', () => {
+    let room = act(table(), 'reset', 'a');
+    room = act(room, 'addAI', 'a');
+    const ids = room.players.map(p => p.id), seats = R.shuffledSeats(ids, () => 0);
+    room = act(room, 'shuffleSeats', 'a', { seats });
+    assert.deepEqual(room.players.map(p => p.id), seats);
+    assert.equal(room.round, undefined);
+    room = act(room, 'deal', 'a', { deck: R.shuffledDeck() });
+    assert.deepEqual(room.round.seats, seats);
+});
+
+test('seat shuffles reject missing, repeated, unknown, or unchanged places and stale membership', () => {
+    const room = table(), before = structuredClone(room);
+    for (const seats of [undefined, 'abc', ['a', 'b'], ['a', 'a', 'c'], ['a', 'b', 'x'], ['a', 'b', 'c'], ['b', 'c', 'a']]) {
+        assert.equal(act(room, 'shuffleSeats', 'a', { seats }), undefined);
+    }
+    const joined = R.reduce(room, { type: 'join', actor: 'd', name: 'Friend' });
+    assert.equal(R.reduce(joined, { type: 'shuffleSeats', actor: 'a', revision: room.revision, seats: ['a', 'c', 'b'] }), undefined);
+    assert.deepEqual(room, before);
+    const two = R.reduce(R.reduce(null, { type: 'join', actor: 'a', name: 'Marc' }), { type: 'join', actor: 'b', name: 'Dad' });
+    assert.equal(act(two, 'shuffleSeats', 'a', { seats: ['b', 'a'] }), undefined);
+});
